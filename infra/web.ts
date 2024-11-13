@@ -10,7 +10,7 @@ export const frontend = new sst.aws.StaticSite("Frontend", {
     command: "npm run build",
   },
   domain:
-    $app.stage === "production"
+    $app.stage === "prod"
       ? {
           name: "educatr.uk",
           redirects: ["www.educatr.uk"],
