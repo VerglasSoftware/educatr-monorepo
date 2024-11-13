@@ -1,35 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { AppContext, AppContextType } from "./lib/contextLib";
+import "./App.css";
+import Routes from "./Routes.tsx";
+import { useEffect, useState } from "react";
+import { Auth } from "aws-amplify";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isAuthenticated, userHasAuthenticated] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  useEffect(() => {
+    onLoad();
+  }, []);
+  
+  async function onLoad() {
+    try {
+      await Auth.currentSession();
+      userHasAuthenticated(true);
+    } catch (e) {
+      if (e !== "No current user") {
+        alert(e);
+      }
+    }
+  
+    setIsAuthenticating(false);
+  }
+
+  return !isAuthenticating && (
+    <div className="App">
+      { /* navbar here */}
+      <AppContext.Provider
+        value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
+      >
+        <Routes />
+      </AppContext.Provider>
+    </div>
+  );
 }
 
-export default App
+export default App;
