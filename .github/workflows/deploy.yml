@@ -1,0 +1,29 @@
+name: SST workflow
+on:
+  push:
+    branches:
+      - main
+
+# Concurrency group name ensures concurrent workflow runs wait for any in-progress job to finish
+concurrency:
+  group: merge-${{ github.ref }}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::205930631235:role/GitHub
+          role-duration-seconds: 14390
+          aws-region: eu-west-1
+      - name: Deploy app
+        run: |
+          npm i && npx sst deploy --stage prod
