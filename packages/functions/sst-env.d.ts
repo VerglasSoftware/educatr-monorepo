@@ -6,9 +6,25 @@ import "sst"
 export {}
 declare module "sst" {
   export interface Resource {
+    "Competitions": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
     "EducatrApi": {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
+    }
+    "Organisations": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "Packs": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "Users": {
+      "name": string
+      "type": "sst.aws.Dynamo"
     }
   }
 }
