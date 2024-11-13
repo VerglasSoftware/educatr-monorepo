@@ -4,13 +4,10 @@ import Stack from "react-bootstrap/Stack";
 import "./Login.css";
 import { Auth } from "aws-amplify";
 import { useAppContext } from "../lib/contextLib";
-import { useNavigate } from "react-router-dom";
 import LoaderButton from "../components/LoaderButton";
 import { useFormFields } from "../lib/hooksLib";
 
 export default function Login() {
-    const nav = useNavigate();
-
     const { isAuthenticated, userHasAuthenticated } = useAppContext();
 
     const [fields, handleFieldChange] = useFormFields({
@@ -32,7 +29,6 @@ export default function Login() {
         try {
             await Auth.signIn(fields.email, fields.password);
             userHasAuthenticated(true);
-            nav("/");
         } catch (error) {
             console.error(error);
             if (error instanceof Error) {
