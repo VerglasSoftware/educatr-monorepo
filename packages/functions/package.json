@@ -1,8 +1,8 @@
 {
-  "name": "@monorepo-template/functions",
+  "name": "@educatr/functions",
   "version": "0.0.0",
   "dependencies": {
-    "@monorepo-template/core": "*",
+    "@educatr/core": "*",
     "sst": "*"
   },
   "devDependencies": {
