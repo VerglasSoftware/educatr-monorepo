@@ -7,8 +7,22 @@ import UnauthenticatedRoute from "./components/UnauthenticatedRoute.tsx";
 export default function Links() {
   return (
     <Routes>
-      <Route path="/" element={<AuthenticatedRoute><Home /></AuthenticatedRoute>} />
-      <Route path="/login" element={<UnauthenticatedRoute><Login /></UnauthenticatedRoute>} />
+      <Route
+        path="/"
+        element={
+          <AuthenticatedRoute>
+            <Home />
+          </AuthenticatedRoute>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <UnauthenticatedRoute>
+            <Login />
+          </UnauthenticatedRoute>
+        }
+      />
     </Routes>
   );
 }

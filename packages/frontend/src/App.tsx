@@ -11,7 +11,7 @@ function App() {
   useEffect(() => {
     onLoad();
   }, []);
-  
+
   async function onLoad() {
     try {
       await Auth.currentSession();
@@ -21,19 +21,21 @@ function App() {
         alert(e);
       }
     }
-  
+
     setIsAuthenticating(false);
   }
 
-  return !isAuthenticating && (
-    <div className="App">
-      { /* navbar here */}
-      <AppContext.Provider
-        value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
-      >
-        <Routes />
-      </AppContext.Provider>
-    </div>
+  return (
+    !isAuthenticating && (
+      <div className="App">
+        {/* navbar here */}
+        <AppContext.Provider
+          value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
+        >
+          <Routes />
+        </AppContext.Provider>
+      </div>
+    )
   );
 }
 
