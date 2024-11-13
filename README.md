@@ -8,23 +8,23 @@ A template to create a monorepo SST ❍ Ion project.
 
 2. Clone the new repo.
 
-   ```bash
-   git clone MY_APP
-   cd MY_APP
-   ```
+    ```bash
+    git clone MY_APP
+    cd MY_APP
+    ```
 
 3. Rename the files in the project to the name of your app.
 
-   ```bash
-   npx replace-in-file '/educatr/g' MY_APP **/*.* --verbose
-   ```
+    ```bash
+    npx replace-in-file '/educatr/g' MY_APP **/*.* --verbose
+    ```
 
 4. Deploy!
 
-   ```bash
-   npm install
-   npx sst deploy
-   ```
+    ```bash
+    npm install
+    npx sst deploy
+    ```
 
 5. Optionally, enable [_git push to deploy_](https://ion.sst.dev/docs/console/#autodeploy).
 
@@ -34,35 +34,35 @@ This template uses [npm Workspaces](https://docs.npmjs.com/cli/v8/using-npm/work
 
 1. `core/`
 
-   This is for any shared code. It's defined as modules. For example, there's the `Example` module.
+    This is for any shared code. It's defined as modules. For example, there's the `Example` module.
 
-   ```ts
-   export module Example {
-     export function hello() {
-       return "Hello, world!";
-     }
-   }
-   ```
+    ```ts
+    export module Example {
+    	export function hello() {
+    		return "Hello, world!";
+    	}
+    }
+    ```
 
-   That you can use across other packages using.
+    That you can use across other packages using.
 
-   ```ts
-   import { Example } from "@aws-monorepo/core/example";
+    ```ts
+    import { Example } from "@aws-monorepo/core/example";
 
-   Example.hello();
-   ```
+    Example.hello();
+    ```
 
 2. `functions/`
 
-   This is for your Lambda functions and it uses the `core` package as a local dependency.
+    This is for your Lambda functions and it uses the `core` package as a local dependency.
 
 3. `scripts/`
 
-   This is for any scripts that you can run on your SST app using the `sst shell` CLI and [`tsx`](https://www.npmjs.com/package/tsx). For example, you can run the example script using:
+    This is for any scripts that you can run on your SST app using the `sst shell` CLI and [`tsx`](https://www.npmjs.com/package/tsx). For example, you can run the example script using:
 
-   ```bash
-   npm run shell src/example.ts
-   ```
+    ```bash
+    npm run shell src/example.ts
+    ```
 
 ### Infrastructure
 
