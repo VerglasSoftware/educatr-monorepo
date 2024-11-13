@@ -6,13 +6,17 @@ import "sst"
 export {}
 declare module "sst" {
   export interface Resource {
+    "Api": {
+      "type": "sst.aws.ApiGatewayV2"
+      "url": string
+    }
     "Competitions": {
       "name": string
       "type": "sst.aws.Dynamo"
     }
-    "EducatrApi": {
-      "type": "sst.aws.ApiGatewayV2"
-      "url": string
+    "IdentityPool": {
+      "id": string
+      "type": "sst.aws.CognitoIdentityPool"
     }
     "Organisations": {
       "name": string
@@ -21,6 +25,15 @@ declare module "sst" {
     "Packs": {
       "name": string
       "type": "sst.aws.Dynamo"
+    }
+    "UserPool": {
+      "id": string
+      "type": "sst.aws.CognitoUserPool"
+    }
+    "UserPoolClient": {
+      "id": string
+      "secret": string
+      "type": "sst.aws.CognitoUserPoolClient"
     }
     "Users": {
       "name": string
