@@ -36,3 +36,4 @@ jobs:
           branch: "${{ github.head_ref }}"
           file_pattern: "."
           only_changed: True
+          github_token: ${{ secrets.GITHUB_TOKEN }}
