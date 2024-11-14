@@ -2,8 +2,21 @@ name: Prettier
 
 on:
   pull_request:
-    types:
-      - opened
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.json'
+      - '*.md'
+      - '*.yml'
+      - '*.css'
+      - '*.scss'
+      - '**/*.js'
+      - '**/*.html'
+      - '**/*.json'
+      - '**/*.md'
+      - '**/*.yml'
+      - '**/*.css'
+      - '**/*.scss'
 
 jobs:
   Prettier:
