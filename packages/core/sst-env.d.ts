@@ -2,46 +2,46 @@
 /* tslint:disable */
 /* eslint-disable */
 /* deno-fmt-ignore-file */
-import "sst";
-export {};
+import "sst"
+export {}
 declare module "sst" {
   export interface Resource {
-    Api: {
-      type: "sst.aws.ApiGatewayV2";
-      url: string;
-    };
-    Competitions: {
-      name: string;
-      type: "sst.aws.Dynamo";
-    };
-    Frontend: {
-      type: "sst.aws.StaticSite";
-      url: string;
-    };
-    IdentityPool: {
-      id: string;
-      type: "sst.aws.CognitoIdentityPool";
-    };
-    Organisations: {
-      name: string;
-      type: "sst.aws.Dynamo";
-    };
-    Packs: {
-      name: string;
-      type: "sst.aws.Dynamo";
-    };
-    UserPool: {
-      id: string;
-      type: "sst.aws.CognitoUserPool";
-    };
-    UserPoolClient: {
-      id: string;
-      secret: string;
-      type: "sst.aws.CognitoUserPoolClient";
-    };
-    Users: {
-      name: string;
-      type: "sst.aws.Dynamo";
-    };
+    "Api": {
+      "type": "sst.aws.ApiGatewayV2"
+      "url": string
+    }
+    "Competitions": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "Frontend": {
+      "type": "sst.aws.StaticSite"
+      "url": string
+    }
+    "IdentityPool": {
+      "id": string
+      "type": "sst.aws.CognitoIdentityPool"
+    }
+    "Organisations": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "Packs": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "UserPool": {
+      "id": string
+      "type": "sst.aws.CognitoUserPool"
+    }
+    "UserPoolClient": {
+      "id": string
+      "secret": string
+      "type": "sst.aws.CognitoUserPoolClient"
+    }
+    "Users": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
   }
 }
