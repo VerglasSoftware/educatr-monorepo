@@ -1,19 +1,19 @@
 {
-  "name": "educatr",
-  "version": "0.0.0",
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "aws:login": "aws-azure-login",
-    "start:dev": "npm run aws:login && npx sst dev"
-  },
-  "devDependencies": {
-    "@tsconfig/node20": "^20.1.4",
-    "prettier": "3.3.3",
-    "typescript": "5.6.2"
-  },
-  "dependencies": {
-    "sst": "^3"
-  }
+	"name": "educatr",
+	"version": "0.0.0",
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"aws:login": "aws-azure-login",
+		"start:dev": "npm run aws:login && npx sst dev"
+	},
+	"devDependencies": {
+		"@tsconfig/node20": "^20.1.4",
+		"prettier": "3.3.3",
+		"typescript": "5.6.2"
+	},
+	"dependencies": {
+		"sst": "^3"
+	}
 }
