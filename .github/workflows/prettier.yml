@@ -18,6 +18,9 @@ on:
       - '**/*.css'
       - '**/*.scss'
 
+permissions:
+  contents: write
+
 jobs:
   Prettier:
     runs-on: ubuntu-latest
