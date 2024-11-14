@@ -1,11 +1,11 @@
 {
-  "name": "@educatr/functions",
-  "version": "0.0.0",
-  "dependencies": {
-    "@educatr/core": "*",
-    "sst": "*"
-  },
-  "devDependencies": {
-    "@types/aws-lambda": "^8.10.137"
-  }
+	"name": "@educatr/functions",
+	"version": "0.0.0",
+	"dependencies": {
+		"@educatr/core": "*",
+		"sst": "*"
+	},
+	"devDependencies": {
+		"@types/aws-lambda": "^8.10.137"
+	}
 }

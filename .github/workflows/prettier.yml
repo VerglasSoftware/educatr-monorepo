@@ -2,8 +2,23 @@ name: Prettier
 
 on:
   pull_request:
-    types:
-      - opened
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.json'
+      - '*.md'
+      - '*.yml'
+      - '*.css'
+      - '*.scss'
+      - '**/*.js'
+      - '**/*.html'
+      - '**/*.json'
+      - '**/*.md'
+      - '**/*.yml'
+      - '**/*.css'
+      - '**/*.scss'
+
+permissions: write-all
 
 jobs:
   Prettier:
@@ -19,5 +34,7 @@ jobs:
       - name: Prettify code
         uses: creyD/prettier_action@v4.3
         with:
-          prettier_options: --write
+          prettier_options: "--write {**/*,*}.{js,html,json,md,yml,css,scss}"
+          file_pattern: "."
           only_changed: True
+          github_token: ${{ secrets.GITHUB_TOKEN }}
