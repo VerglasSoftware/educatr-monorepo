@@ -3,6 +3,7 @@ import "./App.css";
 import Routes from "./Routes.tsx";
 import { useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
+import NavbarMain from "./components/Navbar.tsx";
 
 function App() {
   const [isAuthenticated, userHasAuthenticated] = useState(false);
@@ -28,11 +29,13 @@ function App() {
   return (
     !isAuthenticating && (
       <div className="App">
-        {/* navbar here */}
         <AppContext.Provider
           value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
         >
-          <Routes />
+          <NavbarMain />
+          <main>
+            <Routes />
+          </main>
         </AppContext.Provider>
       </div>
     )
