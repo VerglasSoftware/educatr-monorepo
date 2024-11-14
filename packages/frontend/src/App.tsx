@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import NavbarMain from "./components/Navbar.tsx";
 import { Box, CssBaseline, CssVarsProvider } from "@mui/joy";
+import { Helmet } from "react-helmet";
 
 function App({ sidebar }: { sidebar?: ReactNode }) {
   const [isAuthenticated, userHasAuthenticated] = useState(false);
@@ -30,6 +31,9 @@ function App({ sidebar }: { sidebar?: ReactNode }) {
   return (
     !isAuthenticating && (
       <div className="App">
+        <Helmet titleTemplate="%s - Educatr">
+            <title>My Title</title>
+        </Helmet>
         <AppContext.Provider
           value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
         >
