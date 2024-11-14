@@ -1,8 +1,8 @@
 main {
-  padding: 2%;
+	padding: 2%;
 }
 
 .content {
-  display: flex;
-  flex-direction: row;
+	display: flex;
+	flex-direction: row;
 }
