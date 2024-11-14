@@ -18,9 +18,7 @@ on:
       - '**/*.css'
       - '**/*.scss'
 
-permissions:
-  actions: write
-  contents: write
+permissions: write-all
 
 jobs:
   Prettier:
