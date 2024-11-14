@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@fontsource/inter": "^5.1.0",
+    "@mui/joy": "^5.0.0-beta.48",
     "aws-amplify": "^5.3.26",
     "bootstrap": "^5.3.3",
     "react": "^18.3.1",
