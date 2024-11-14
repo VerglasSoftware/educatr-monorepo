@@ -1,12 +1,15 @@
-import { Auth } from "aws-amplify";
-import { useEffect, useState } from "react";
-import "./App.css";
 import { AppContext, AppContextType } from "./lib/contextLib";
+import "./App.css";
 import Routes from "./Routes.tsx";
+import { ReactNode, useEffect, useState } from "react";
+import { Auth } from "aws-amplify";
+import NavbarMain from "./components/Navbar.tsx";
+import { Box, CssBaseline, CssVarsProvider } from "@mui/joy";
+import { Helmet } from "react-helmet";
 
-function App() {
-	const [isAuthenticated, userHasAuthenticated] = useState(false);
-	const [isAuthenticating, setIsAuthenticating] = useState(true);
+function App({ sidebar }: { sidebar?: ReactNode }) {
+  const [isAuthenticated, userHasAuthenticated] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
 
 	useEffect(() => {
 		onLoad();
@@ -25,16 +28,42 @@ function App() {
 		setIsAuthenticating(false);
 	}
 
-	return (
-		!isAuthenticating && (
-			<div className="App">
-				{/* navbar here */}
-				<AppContext.Provider value={{ isAuthenticated, userHasAuthenticated } as AppContextType}>
-					<Routes />
-				</AppContext.Provider>
-			</div>
-		)
-	);
+  return (
+    !isAuthenticating && (
+      <div className="App">
+        <Helmet titleTemplate="%s - Educatr">
+            <title>My Title</title>
+        </Helmet>
+        <AppContext.Provider
+          value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
+        >
+          <CssVarsProvider disableTransitionOnChange>
+            <CssBaseline />
+            <Box
+            sx={[
+              {
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: `${sidebar && 'minmax(64px, 200px)'} minmax(450px, 1fr)`,
+                  md: `${sidebar && 'minmax(160px, 300px)'} minmax(500px, 1fr)`,
+                },
+                gridTemplateRows: '64px 1fr',
+                minHeight: '100vh',
+              }
+            ]}
+          >
+              <NavbarMain />
+              { sidebar }
+              <main>
+                <Routes />
+              </main>
+            </Box>
+          </CssVarsProvider>
+        </AppContext.Provider>
+      </div>
+    )
+  );
 }
 
 export default App;
