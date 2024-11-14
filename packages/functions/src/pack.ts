@@ -52,29 +52,29 @@ export const create: Handler = Util.handler(async (event) => {
 });
 
 export const get: Handler = Util.handler(async (event) => {
-  const { id: pk } = event.pathParameters || {};
+	const { id: pk } = event.pathParameters || {};
 
-  if (!pk) {
-    throw new Error("Missing id in path parameters");
-  }
+	if (!pk) {
+		throw new Error("Missing id in path parameters");
+	}
 
-  const params = {
-    TableName: Resource.Packs.name,
-    Key: {
-      PK: pk,
-      SK: "DETAILS",
-    },
-  };
+	const params = {
+		TableName: Resource.Packs.name,
+		Key: {
+			PK: pk,
+			SK: "DETAILS",
+		},
+	};
 
-  try {
-    const result = await client.send(new GetCommand(params));
-    if (!result.Item) {
-      throw new Error("Pack not found");
-    }
-    return JSON.stringify(result.Item);
-  } catch (e) {
-    throw new Error("Could not retrieve pack");
-  }
+	try {
+		const result = await client.send(new GetCommand(params));
+		if (!result.Item) {
+			throw new Error("Pack not found");
+		}
+		return JSON.stringify(result.Item);
+	} catch (e) {
+		throw new Error("Could not retrieve pack");
+	}
 });
 
 export const del: Handler = Util.handler(async (event) => {
