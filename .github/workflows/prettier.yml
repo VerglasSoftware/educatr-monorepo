@@ -19,6 +19,7 @@ on:
       - '**/*.scss'
 
 permissions:
+  actions: write
   contents: write
 
 jobs:
