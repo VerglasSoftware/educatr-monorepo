@@ -24,12 +24,16 @@ api.route("GET /pack", {
 api.route("POST /pack", {
 	handler: "packages/functions/src/pack.create",
 });
-api.route("GET /pack/{id}", {
+api.route("GET /pack/{packId}", {
 	handler: "packages/functions/src/pack.get",
 });
-api.route("PUT /pack/{id}", {
+api.route("PUT /pack/{packId}", {
 	handler: "packages/functions/src/pack.update",
 });
-api.route("DELETE /pack/{id}", {
+api.route("DELETE /pack/{packId}", {
 	handler: "packages/functions/src/pack.del",
+});
+
+api.route("GET /pack/{packId}/task", {
+	handler: "packages/functions/src/task.list",
 });
