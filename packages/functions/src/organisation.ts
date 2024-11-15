@@ -99,7 +99,7 @@ export const del: Handler = Util.handler(async (event) => {
 
 		for (const item of itemsToDelete) {
 			const deleteParams = {
-				TableName: Resource.Packs.name,
+				TableName: Resource.Organisations.name,
 				Key: {
 					PK: item.PK,
 					SK: item.SK,
