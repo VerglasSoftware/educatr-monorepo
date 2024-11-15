@@ -40,12 +40,12 @@ api.route("GET /organisation/{orgId}/role", {
 api.route("POST /organisation/{orgId}/role", {
 	handler: "packages/functions/src/role.create",
 });
-api.route("GET /organisation/{orgId}/role/{id}", {
+api.route("GET /organisation/{orgId}/role/{roleId}", {
 	handler: "packages/functions/src/role.get",
 });
-api.route("PUT /organisation/{orgId}/role/{id}", {
+api.route("PUT /organisation/{orgId}/role/{roleId}", {
 	handler: "packages/functions/src/role.update",
 });
-api.route("DELETE /organisation/{orgId}/role/{id}", {
+api.route("DELETE /organisation/{orgId}/role/{roleId}", {
 	handler: "packages/functions/src/role.del",
 });
