@@ -8,8 +8,8 @@ import { Box, CssBaseline, CssVarsProvider } from "@mui/joy";
 import { Helmet } from "react-helmet";
 
 function App({ sidebar }: { sidebar?: ReactNode }) {
-  const [isAuthenticated, userHasAuthenticated] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
+	const [isAuthenticated, userHasAuthenticated] = useState(false);
+	const [isAuthenticating, setIsAuthenticating] = useState(true);
 
 	useEffect(() => {
 		onLoad();
@@ -28,42 +28,39 @@ function App({ sidebar }: { sidebar?: ReactNode }) {
 		setIsAuthenticating(false);
 	}
 
-  return (
-    !isAuthenticating && (
-      <div className="App">
-        <Helmet titleTemplate="%s - Educatr">
-            <title>My Title</title>
-        </Helmet>
-        <AppContext.Provider
-          value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
-        >
-          <CssVarsProvider disableTransitionOnChange>
-            <CssBaseline />
-            <Box
-            sx={[
-              {
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: `${sidebar && 'minmax(64px, 200px)'} minmax(450px, 1fr)`,
-                  md: `${sidebar && 'minmax(160px, 300px)'} minmax(500px, 1fr)`,
-                },
-                gridTemplateRows: '64px 1fr',
-                minHeight: '100vh',
-              }
-            ]}
-          >
-              <NavbarMain />
-              { sidebar }
-              <main>
-                <Routes />
-              </main>
-            </Box>
-          </CssVarsProvider>
-        </AppContext.Provider>
-      </div>
-    )
-  );
+	return (
+		!isAuthenticating && (
+			<div className="App">
+				<Helmet titleTemplate="%s - Educatr">
+					<title>My Title</title>
+				</Helmet>
+				<AppContext.Provider value={{ isAuthenticated, userHasAuthenticated } as AppContextType}>
+					<CssVarsProvider disableTransitionOnChange>
+						<CssBaseline />
+						<Box
+							sx={[
+								{
+									display: "grid",
+									gridTemplateColumns: {
+										xs: "1fr",
+										sm: `${sidebar && "minmax(64px, 200px)"} minmax(450px, 1fr)`,
+										md: `${sidebar && "minmax(160px, 300px)"} minmax(500px, 1fr)`,
+									},
+									gridTemplateRows: "64px 1fr",
+									minHeight: "100vh",
+								},
+							]}>
+							<NavbarMain />
+							{sidebar}
+							<main>
+								<Routes />
+							</main>
+						</Box>
+					</CssVarsProvider>
+				</AppContext.Provider>
+			</div>
+		)
+	);
 }
 
 export default App;

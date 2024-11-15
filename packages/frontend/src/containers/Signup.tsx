@@ -1,25 +1,21 @@
-import { Auth } from "aws-amplify";
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
 import Stack from "react-bootstrap/Stack";
 import LoaderButton from "../components/LoaderButton";
-import { useAppContext } from "../lib/contextLib";
 import { useFormFields } from "../lib/hooksLib";
-import Button from "react-bootstrap/Button";
-import "./Login.css";
+import "./Signup.css";
 
-export default function Login() {
-	const { isAuthenticated, userHasAuthenticated } = useAppContext();
-
+export default function Signup() {
 	const [fields, handleFieldChange] = useFormFields({
 		email: "",
 		password: "",
+		confirmPassword: "",
 	});
 
 	const [isLoading, setIsLoading] = useState(false);
 
 	function validateForm() {
-		return fields.email.length > 0 && fields.password.length > 0;
+		return fields.email.length > 0 && fields.password.length > 0 && fields.password === fields.confirmPassword;
 	}
 
 	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -28,8 +24,7 @@ export default function Login() {
 		setIsLoading(true);
 
 		try {
-			await Auth.signIn(fields.email, fields.password);
-			userHasAuthenticated(true);
+			setIsLoading(false);
 		} catch (error) {
 			console.error(error);
 			if (error instanceof Error) {
@@ -41,14 +36,10 @@ export default function Login() {
 		}
 	}
 
-	async function handleLogout() {
-		await Auth.signOut();
-
-		userHasAuthenticated(false);
-	}
-
 	return (
-		<div className="Login">
+		<div className="Signup">
+			<h1>Temp User Signup Form</h1>
+			<br />
 			<Form onSubmit={handleSubmit}>
 				<Stack gap={3}>
 					<Form.Group controlId="email">
@@ -59,6 +50,7 @@ export default function Login() {
 							type="email"
 							value={fields.email}
 							onChange={handleFieldChange}
+							autoComplete="email"
 						/>
 					</Form.Group>
 					<Form.Group controlId="password">
@@ -68,35 +60,30 @@ export default function Login() {
 							type="password"
 							value={fields.password}
 							onChange={handleFieldChange}
+							autoComplete="new-password"
+						/>
+					</Form.Group>
+					<Form.Group controlId="confirmPassword">
+						<Form.Label>Confirm Password</Form.Label>
+						<Form.Control
+							size="lg"
+							type="password"
+							value={fields.confirmPassword}
+							onChange={handleFieldChange}
+							autoComplete="new-password"
 						/>
 					</Form.Group>
 
-					{isAuthenticated ? (
-						<a
-							href="#"
-							onClick={handleLogout}>
-							Logout
-						</a>
-					) : (
-						<LoaderButton
-							size="lg"
-							type="submit"
-							isLoading={isLoading}
-							disabled={!validateForm()}>
-							Login
-						</LoaderButton>
-					)}
+					<LoaderButton
+						size="lg"
+						type="submit"
+						variant="success"
+						isLoading={isLoading}
+						disabled={!validateForm()}>
+						Signup
+					</LoaderButton>
 				</Stack>
 			</Form>
-
-			<br />
-			<h4>Create new user account</h4>
-			<Button
-				size="lg"
-				type="submit"
-				href="/signup">
-				Create
-			</Button>
 		</div>
 	);
 }
