@@ -40,7 +40,6 @@ export const create: Handler = Util.handler(async (event) => {
 			name: data.name,
 			logo: data.logo,
 			students: data.students,
-			ownerId: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
 			createdAt: Date.now(),
 		},
 	};
@@ -57,7 +56,7 @@ export const get: Handler = Util.handler(async (event) => {
 	const { id: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing id in path parameters");
+		throw new Error("Missing ID in path parameters");
 	}
 
 	const params = {
