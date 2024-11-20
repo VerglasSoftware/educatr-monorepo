@@ -25,6 +25,7 @@ export const create: Handler = Util.handler(async (event) => {
 	let data = {
 		name: "",
 		logo: "",
+		students: [],
 	};
 
 	if (event.body != null) {
@@ -38,6 +39,7 @@ export const create: Handler = Util.handler(async (event) => {
 			SK: "DETAILS",
 			name: data.name,
 			logo: data.logo,
+			students: data.students,
 			ownerId: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
 			createdAt: Date.now(),
 		},
@@ -124,6 +126,7 @@ export const update: Handler = Util.handler(async (event) => {
 	let data = {
 		name: "",
 		logo: "",
+		students: [],
 	};
 
 	if (event.body != null) {
@@ -138,14 +141,16 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: "DETAILS",
 		},
-		UpdateExpression: "SET #name = :name, #logo = :logo",
+		UpdateExpression: "SET #name = :name, #logo = :logo, #students = :students",
 		ExpressionAttributeNames: {
 			"#name": "name",
 			"#logo": "logo",
+			"#students": "students",
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
 			":logo": data.logo,
+			":students": data.students,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
