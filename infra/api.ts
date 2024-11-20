@@ -1,4 +1,4 @@
-import { organisationTable, packTable } from "./storage";
+import { organisationTable, packTable, userTable, competitionTable } from "./storage";
 
 export const api = new sst.aws.ApiGatewayV2("Api", {
 	domain: $app.stage === "prod" ? "api.educatr.uk" : undefined,
@@ -8,7 +8,7 @@ export const api = new sst.aws.ApiGatewayV2("Api", {
 				auth: { iam: true },
 			},
 			handler: {
-				link: [packTable, organisationTable],
+				link: [packTable, organisationTable, competitionTable],
 			},
 		},
 	},
@@ -48,4 +48,67 @@ api.route("PUT /organisation/{id}", {
 });
 api.route("DELETE /organisation/{id}", {
 	handler: "packages/functions/src/organisation.del",
+ 
+api.route("GET /pack/{packId}/task", {
+	handler: "packages/functions/src/task.list",
+});
+api.route("POST /pack/{packId}/task", {
+	handler: "packages/functions/src/task.create",
+});
+api.route("GET /pack/{packId}/task/{taskId}", {
+	handler: "packages/functions/src/task.get",
+});
+api.route("PUT /pack/{packId}/task/{taskId}", {
+	handler: "packages/functions/src/task.update",
+});
+api.route("DELETE /pack/{packId}/task/{taskId}", {
+	handler: "packages/functions/src/task.del",
+});
+
+api.route("GET /organisation/{orgId}/role", {
+	handler: "packages/functions/src/role.list",
+});
+api.route("POST /organisation/{orgId}/role", {
+	handler: "packages/functions/src/role.create",
+});
+api.route("GET /organisation/{orgId}/role/{roleId}", {
+	handler: "packages/functions/src/role.get",
+});
+api.route("PUT /organisation/{orgId}/role/{roleId}", {
+	handler: "packages/functions/src/role.update",
+});
+api.route("DELETE /organisation/{orgId}/role/{roleId}", {
+	handler: "packages/functions/src/role.del",
+});
+
+api.route("GET /organisation/{orgId}/class", {
+	handler: "packages/functions/src/role.list",
+});
+api.route("POST /organisation/{orgId}/class", {
+	handler: "packages/functions/src/role.create",
+});
+api.route("GET /organisation/{orgId}/class/{classId}", {
+	handler: "packages/functions/src/role.get",
+});
+api.route("PUT /organisation/{orgId}/class/{classId}", {
+	handler: "packages/functions/src/role.update",
+});
+api.route("DELETE /organisation/{orgId}/class/{classId}", {
+	handler: "packages/functions/src/role.del",
+});
+  
+api.route("GET /competition", {
+	handler: "packages/functions/src/competition.list",
+});
+api.route("POST /competition", {
+	handler: "packages/functions/src/competition.create",
+});
+api.route("GET /competition/{id}", {
+	handler: "packages/functions/src/competition.get",
+});
+api.route("PUT /competition/{id}", {
+	handler: "packages/functions/src/competition.update",
+});
+api.route("DELETE /competition/{id}", {
+	handler: "packages/functions/src/competition.del",
 });

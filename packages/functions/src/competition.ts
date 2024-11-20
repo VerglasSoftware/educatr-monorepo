@@ -9,7 +9,7 @@ const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 export const list: Handler = Util.handler(async (event) => {
 	const params = {
-		TableName: Resource.Packs.name,
+		TableName: Resource.Competitions.name,
 	};
 
 	try {
@@ -17,14 +17,16 @@ export const list: Handler = Util.handler(async (event) => {
 		const result = await client.send(command);
 		return JSON.stringify(result.Items);
 	} catch (e) {
-		throw new Error("Could not retrieve pack");
+		throw new Error("Could not retrieve competition");
 	}
 });
 
 export const create: Handler = Util.handler(async (event) => {
 	let data = {
 		name: "",
-		description: "",
+		status: "",
+        organisationId: "",
+        packs: []
 	};
 
 	if (event.body != null) {
@@ -32,13 +34,14 @@ export const create: Handler = Util.handler(async (event) => {
 	} else throw new Error("No body provided");
 
 	const params = {
-		TableName: Resource.Packs.name,
+		TableName: Resource.Competitions.name,
 		Item: {
 			PK: createId(),
 			SK: "DETAILS",
 			name: data.name,
-			description: data.description,
-			ownerId: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
+			status: data.status,
+			userStartedById: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
+            organisationId: data.organisationId,
 			createdAt: Date.now(),
 		},
 	};
@@ -47,19 +50,19 @@ export const create: Handler = Util.handler(async (event) => {
 		const result = await client.send(new PutCommand(params));
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
-		throw new Error("Could not create pack");
+		throw new Error("Could not create competition");
 	}
 });
 
 export const get: Handler = Util.handler(async (event) => {
-	const { packId: pk } = event.pathParameters || {};
+	const { id: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing ID in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
 	const params = {
-		TableName: Resource.Packs.name,
+		TableName: Resource.Competitions.name,
 		Key: {
 			PK: pk,
 			SK: "DETAILS",
@@ -73,19 +76,19 @@ export const get: Handler = Util.handler(async (event) => {
 		}
 		return JSON.stringify(result.Item);
 	} catch (e) {
-		throw new Error("Could not retrieve pack");
+		throw new Error("Could not retrieve competition");
 	}
 });
 
 export const del: Handler = Util.handler(async (event) => {
-	const { packId: pk } = event.pathParameters || {};
+	const { id: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing PK in path parameters");
+		throw new Error("Missing pk in path parameters");
 	}
 
 	const queryParams = {
-		TableName: Resource.Packs.name,
+		TableName: Resource.Competitions.name,
 		KeyConditionExpression: "PK = :pk",
 		ExpressionAttributeValues: {
 			":pk": pk,
@@ -99,7 +102,7 @@ export const del: Handler = Util.handler(async (event) => {
 
 		for (const item of itemsToDelete) {
 			const deleteParams = {
-				TableName: Resource.Packs.name,
+				TableName: Resource.Competitions.name,
 				Key: {
 					PK: item.PK,
 					SK: item.SK,
@@ -110,20 +113,21 @@ export const del: Handler = Util.handler(async (event) => {
 
 		return JSON.stringify({ message: "All items under the specified PK have been deleted", pk });
 	} catch (e) {
-		throw new Error("Could not delete pack");
+		throw new Error("Could not delete competition");
 	}
 });
 
 export const update: Handler = Util.handler(async (event) => {
-	const { packId: pk } = event.pathParameters || {};
+	const { id: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing PK in path parameters");
+		throw new Error("Missing pk in path parameters");
 	}
 
 	let data = {
 		name: "",
-		description: "",
+		status: "",
+        packs: []
 	};
 
 	if (event.body != null) {
@@ -133,19 +137,21 @@ export const update: Handler = Util.handler(async (event) => {
 	}
 
 	const params = {
-		TableName: Resource.Packs.name,
+		TableName: Resource.Competitions.name,
 		Key: {
 			PK: pk,
 			SK: "DETAILS",
 		},
-		UpdateExpression: "SET #name = :name, #description = :description",
+		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs",
 		ExpressionAttributeNames: {
 			"#name": "name",
-			"#description": "description",
+			"#status": "status",
+            "#packs": "packs"
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
-			":description": data.description,
+			":status": data.status,
+            ":packs": data.packs
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -154,6 +160,6 @@ export const update: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
-		throw new Error("Could not update pack details");
+		throw new Error("Could not update competition details");
 	}
 });
