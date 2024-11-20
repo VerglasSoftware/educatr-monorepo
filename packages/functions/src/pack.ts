@@ -55,7 +55,7 @@ export const get: Handler = Util.handler(async (event) => {
 	const { packId: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing id in path parameters");
+		throw new Error("Missing ID in path parameters");
 	}
 
 	const params = {
@@ -81,7 +81,7 @@ export const del: Handler = Util.handler(async (event) => {
 	const { packId: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing pk in path parameters");
+		throw new Error("Missing PK in path parameters");
 	}
 
 	const queryParams = {
@@ -118,7 +118,7 @@ export const update: Handler = Util.handler(async (event) => {
 	const { packId: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing pk in path parameters");
+		throw new Error("Missing PK in path parameters");
 	}
 
 	let data = {
