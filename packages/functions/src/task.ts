@@ -11,7 +11,7 @@ export const list: Handler = Util.handler(async (event) => {
 	const { packId: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing id in path parameters");
+		throw new Error("Missing ID in path parameters");
 	}
 
 	const params = {
@@ -45,7 +45,7 @@ export const create: Handler = Util.handler(async (event) => {
 	const { packId: pk } = event.pathParameters || {};
 
 	if (!pk) {
-		throw new Error("Missing id in path parameters");
+		throw new Error("Missing ID in path parameters");
 	}
 
 	let data = {
@@ -94,7 +94,7 @@ export const get: Handler = Util.handler(async (event) => {
 	const { packId: pk, taskId } = event.pathParameters || {};
 
 	if (!pk || !taskId) {
-		throw new Error("Missing id in path parameters");
+		throw new Error("Missing ID in path parameters");
 	}
 
 	const params = {
@@ -120,7 +120,7 @@ export const del: Handler = Util.handler(async (event) => {
 	const { packId: pk, taskId } = event.pathParameters || {};
 
 	if (!pk || !taskId) {
-		throw new Error("Missing pk in path parameters");
+		throw new Error("Missing PK in path parameters");
 	}
 
 	const deleteParams = {
@@ -148,7 +148,7 @@ export const update: Handler = Util.handler(async (event) => {
 	const { packId: pk, taskId } = event.pathParameters || {};
 
 	if (!pk || !taskId) {
-		throw new Error("Missing pk or sk in path parameters");
+		throw new Error("Missing PK or SK in path parameters");
 	}
 
 	let data = {
