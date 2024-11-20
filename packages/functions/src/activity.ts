@@ -8,7 +8,7 @@ import { Resource } from "sst";
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 export const list: Handler = Util.handler(async (event) => {
-	const { competitionId: pk } = event.pathParameters || {};
+	const { compId: pk } = event.pathParameters || {};
 
 	if (!pk) {
 		throw new Error("Missing ID in path parameters");
@@ -16,9 +16,9 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :competitionId AND begins_with(SK, :skPrefix)",
+		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
-			":competitionId": { S: pk },
+			":compId": { S: pk },
 			":skPrefix": { S: "ACTIVITY#" },
 		},
 	};
@@ -42,7 +42,7 @@ export const list: Handler = Util.handler(async (event) => {
 });
 
 export const create: Handler = Util.handler(async (event) => {
-	const { competitionId: pk } = event.pathParameters || {};
+	const { compId: pk } = event.pathParameters || {};
 
 	if (!pk) {
 		throw new Error("Missing ID in path parameters");
@@ -83,7 +83,7 @@ export const create: Handler = Util.handler(async (event) => {
 });
 
 export const get: Handler = Util.handler(async (event) => {
-	const { competitionId: pk, activityId } = event.pathParameters || {};
+	const { compId: pk, activityId } = event.pathParameters || {};
 
 	if (!pk || !activityId) {
 		throw new Error("Missing ID in path parameters");
@@ -109,7 +109,7 @@ export const get: Handler = Util.handler(async (event) => {
 });
 
 export const del: Handler = Util.handler(async (event) => {
-	const { competitionId: pk, activityId } = event.pathParameters || {};
+	const { compId: pk, activityId } = event.pathParameters || {};
 
 	if (!pk || !activityId) {
 		throw new Error("Missing PK in path parameters");
@@ -137,7 +137,7 @@ export const del: Handler = Util.handler(async (event) => {
 });
 
 export const update: Handler = Util.handler(async (event) => {
-	const { competitionId: pk, activityId } = event.pathParameters || {};
+	const { compId: pk, activityId } = event.pathParameters || {};
 
 	if (!pk || !activityId) {
 		throw new Error("Missing PK or SK in path parameters");
