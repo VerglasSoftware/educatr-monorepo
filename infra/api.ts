@@ -34,6 +34,22 @@ api.route("DELETE /pack/{id}", {
 	handler: "packages/functions/src/pack.del",
 });
 
+api.route("GET /organisation/{orgId}/role", {
+	handler: "packages/functions/src/role.list",
+});
+api.route("POST /organisation/{orgId}/role", {
+	handler: "packages/functions/src/role.create",
+});
+api.route("GET /organisation/{orgId}/role/{roleId}", {
+	handler: "packages/functions/src/role.get",
+});
+api.route("PUT /organisation/{orgId}/role/{roleId}", {
+	handler: "packages/functions/src/role.update",
+});
+api.route("DELETE /organisation/{orgId}/role/{roleId}", {
+	handler: "packages/functions/src/role.del",
+});
+
 api.route("GET /organisation/{orgId}/class", {
 	handler: "packages/functions/src/role.list",
 });
