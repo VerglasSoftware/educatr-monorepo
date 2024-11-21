@@ -67,19 +67,19 @@ api.route("DELETE /organisation/{orgId}/role/{roleId}", {
 });
 
 api.route("GET /organisation/{orgId}/class", {
-	handler: "packages/functions/src/role.list",
+	handler: "packages/functions/src/class.list",
 });
 api.route("POST /organisation/{orgId}/class", {
-	handler: "packages/functions/src/role.create",
+	handler: "packages/functions/src/class.create",
 });
 api.route("GET /organisation/{orgId}/class/{classId}", {
-	handler: "packages/functions/src/role.get",
+	handler: "packages/functions/src/class.get",
 });
 api.route("PUT /organisation/{orgId}/class/{classId}", {
-	handler: "packages/functions/src/role.update",
+	handler: "packages/functions/src/class.update",
 });
 api.route("DELETE /organisation/{orgId}/class/{classId}", {
-	handler: "packages/functions/src/role.del",
+	handler: "packages/functions/src/class.del",
 });
   
 api.route("GET /competition", {
@@ -96,4 +96,20 @@ api.route("PUT /competition/{id}", {
 });
 api.route("DELETE /competition/{id}", {
 	handler: "packages/functions/src/competition.del",
+});
+
+api.route("GET /competition/{orgId}/team", {
+	handler: "packages/functions/src/team.list",
+});
+api.route("POST /competition/{orgId}/team", {
+	handler: "packages/functions/src/team.create",
+});
+api.route("GET /competition/{orgId}/team/{teamId}", {
+	handler: "packages/functions/src/team.get",
+});
+api.route("PUT /competition/{orgId}/team/{teamId}", {
+	handler: "packages/functions/src/team.update",
+});
+api.route("DELETE /competition/{orgId}/team/{teamId}", {
+	handler: "packages/functions/src/team.del",
 });
