@@ -106,7 +106,7 @@ export const del: Handler = Util.handler(async (event) => {
 	const { orgId: pk, teamId } = event.pathParameters || {};
 
 	if (!pk || !teamId) {
-		throw new Error("Missing pk in path parameters");
+		throw new Error("Missing PK in path parameters");
 	}
 
 	const deleteParams = {
