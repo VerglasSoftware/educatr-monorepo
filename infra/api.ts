@@ -34,6 +34,21 @@ api.route("DELETE /pack/{packId}", {
 	handler: "packages/functions/src/pack.del",
 });
 
+api.route("GET /organisation", {
+	handler: "packages/functions/src/organisation.list",
+});
+api.route("POST /organisation", {
+	handler: "packages/functions/src/organisation.create",
+});
+api.route("GET /organisation/{id}", {
+	handler: "packages/functions/src/organisation.get",
+});
+api.route("PUT /organisation/{id}", {
+	handler: "packages/functions/src/organisation.update",
+});
+api.route("DELETE /organisation/{id}", {
+	handler: "packages/functions/src/organisation.del",
+ 
 api.route("GET /pack/{packId}/task", {
 	handler: "packages/functions/src/task.list",
 });
