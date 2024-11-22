@@ -1,19 +1,31 @@
 import { AppContext, AppContextType } from "./lib/contextLib";
 import "./App.css";
 import Routes from "./Routes.tsx";
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import NavbarMain from "./components/Navbar.tsx";
-import { Box, CssBaseline, CssVarsProvider } from "@mui/joy";
+import { Box, CssBaseline, CssVarsProvider, extendTheme } from "@mui/joy";
 import { Helmet } from "react-helmet";
+import { useLocation } from "react-router-dom";
+import Sidebar from "./components/Sidebar.tsx";
 
-function App({ sidebar }: { sidebar?: ReactNode }) {
+function App() {
   const [isAuthenticated, userHasAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
 
 	useEffect(() => {
 		onLoad();
 	}, []);
+
+  const location = useLocation();
+  const showSidebar = ["/dash", "/dash/packs"].includes(location.pathname);
+
+  const theme = extendTheme({
+    fontFamily: {
+      display: 'Instrument Sans',
+      body: 'Instrument Sans',
+    },
+  });
 
 	async function onLoad() {
 		try {
@@ -37,7 +49,7 @@ function App({ sidebar }: { sidebar?: ReactNode }) {
         <AppContext.Provider
           value={{ isAuthenticated, userHasAuthenticated } as AppContextType}
         >
-          <CssVarsProvider disableTransitionOnChange>
+          <CssVarsProvider disableTransitionOnChange theme={theme}>
             <CssBaseline />
             <Box
             sx={[
@@ -45,8 +57,8 @@ function App({ sidebar }: { sidebar?: ReactNode }) {
                 display: 'grid',
                 gridTemplateColumns: {
                   xs: '1fr',
-                  sm: `${sidebar && 'minmax(64px, 200px)'} minmax(450px, 1fr)`,
-                  md: `${sidebar && 'minmax(160px, 300px)'} minmax(500px, 1fr)`,
+                  sm: `${showSidebar && 'minmax(64px, 200px)'} minmax(450px, 1fr)`,
+                  md: `${showSidebar && 'minmax(160px, 300px)'} minmax(500px, 1fr)`,
                 },
                 gridTemplateRows: '64px 1fr',
                 minHeight: '100vh',
@@ -54,7 +66,7 @@ function App({ sidebar }: { sidebar?: ReactNode }) {
             ]}
           >
               <NavbarMain />
-              { sidebar }
+              { showSidebar && <Sidebar /> }
               <main>
                 <Routes />
               </main>
