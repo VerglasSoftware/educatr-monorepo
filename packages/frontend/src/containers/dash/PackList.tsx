@@ -1,11 +1,16 @@
-import { Box, Breadcrumbs, Link, Typography } from "@mui/joy";
+import { Box, Breadcrumbs, Button, Link, Typography } from "@mui/joy";
 import "./PackList.css";
 import {Helmet} from "react-helmet";
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import PackTable from "../../components/dash/packs/PackTable";
+import { FaPlus } from "react-icons/fa6";
+import { useState } from "react";
+import NewPackModal from "../../components/dash/packs/NewPackModal";
 
 export default function PackList() {
+    const [open, setOpen] = useState(false);
+
   return (
     <div className="Home">
         <Helmet>
@@ -55,9 +60,18 @@ export default function PackList() {
             <Typography level="h2" component="h1">
               Packs
             </Typography>
+            <Button
+              color="primary"
+              startDecorator={<FaPlus />}
+              size="sm"
+              onClick={() => setOpen(true)}
+            >
+              New pack
+            </Button>
           </Box>
           <PackTable />
       </div>
+      <NewPackModal open={open} setOpen={setOpen} />
     </div>
   );
 }
