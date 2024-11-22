@@ -18,7 +18,7 @@ function App() {
 	}, []);
 
   const location = useLocation();
-  const showSidebar = ["/dash", "/dash/packs"].includes(location.pathname);
+  const showSidebar = location.pathname.startsWith("/dash");
 
   const theme = extendTheme({
     fontFamily: {
