@@ -83,9 +83,9 @@ export const create: Handler = Util.handler(async (event) => {
 });
 
 export const get: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
+	const { compId: pk, actId } = event.pathParameters || {};
 
-	if (!pk || !activityId) {
+	if (!pk || !actId) {
 		throw new Error("Missing ID in path parameters");
 	}
 
@@ -93,7 +93,7 @@ export const get: Handler = Util.handler(async (event) => {
 		TableName: Resource.Competitions.name,
 		Key: {
 			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
+			SK: `ACTIVITY#${actId}`,
 		},
 	};
 
@@ -109,9 +109,9 @@ export const get: Handler = Util.handler(async (event) => {
 });
 
 export const del: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
+	const { compId: pk, actId } = event.pathParameters || {};
 
-	if (!pk || !activityId) {
+	if (!pk || !actId) {
 		throw new Error("Missing PK in path parameters");
 	}
 
@@ -119,7 +119,7 @@ export const del: Handler = Util.handler(async (event) => {
 		TableName: Resource.Competitions.name,
 		Key: {
 			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
+			SK: `ACTIVITY#${actId}`,
 		},
 	};
 
@@ -127,19 +127,19 @@ export const del: Handler = Util.handler(async (event) => {
 		await client.send(new DeleteCommand(deleteParams));
 
 		return JSON.stringify({
-			message: `Activity with SK ${activityId} under competition with PK ${pk} has been deleted`,
+			message: `Activity with SK ${actId} under competition with PK ${pk} has been deleted`,
 			pk,
-			activityId,
+			actId,
 		});
 	} catch (e) {
-		throw new Error(`Could not delete activity with SK ${activityId} from competition ${pk}`);
+		throw new Error(`Could not delete activity with SK ${actId} from competition ${pk}`);
 	}
 });
 
 export const update: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
+	const { compId: pk, actId } = event.pathParameters || {};
 
-	if (!pk || !activityId) {
+	if (!pk || !actId) {
 		throw new Error("Missing PK or SK in path parameters");
 	}
 
@@ -161,7 +161,7 @@ export const update: Handler = Util.handler(async (event) => {
 		TableName: Resource.Competitions.name,
 		Key: {
 			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
+			SK: `ACTIVITY#${actId}`,
 		},
 		UpdateExpression: "SET #userId = :userId, #taskId = :taskId, #verifierId = :verifierId, #status = :status, #correct = :correct",
 		ExpressionAttributeNames: {
@@ -185,6 +185,6 @@ export const update: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
-		throw new Error(`Could not update activity ${activityId} in competition ${pk}`);
+		throw new Error(`Could not update activity ${actId} in competition ${pk}`);
 	}
 });
