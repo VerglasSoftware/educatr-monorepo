@@ -12,13 +12,10 @@ import MenuButton from '@mui/joy/MenuButton';
 import MenuItem from '@mui/joy/MenuItem';
 import Dropdown from '@mui/joy/Dropdown';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import { Link } from '@mui/joy';
 import { API } from 'aws-amplify';
-import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
-function RowMenu({ id }: { id: string }) {
-    const nav = useNavigate();
-
+function RowMenu({ packId, taskId }: { packId: string, taskId: string }) {
   return (
     <Dropdown>
       <MenuButton
@@ -28,14 +25,10 @@ function RowMenu({ id }: { id: string }) {
         <MoreHorizRoundedIcon />
       </MenuButton>
       <Menu size="sm" sx={{ minWidth: 140 }}>
-        <MenuItem onClick={() => nav(`/dash/packs/${id}`)}>
-            Edit
-        </MenuItem>
-        <Divider />
         <MenuItem color="danger" onClick={async () => {
 
             const confirmed = window.confirm(
-                "Are you sure you want to delete this pack?"
+                "Are you sure you want to delete this task?"
             );
 
             if (!confirmed) {
@@ -43,7 +36,7 @@ function RowMenu({ id }: { id: string }) {
             }
 
             try {
-                await API.del("api", `/pack/${id}`, {});
+                await API.del("api", `/pack/${packId}/task/${taskId}`, {});
             } catch (e) {
                 console.log(e);
             }
@@ -54,15 +47,17 @@ function RowMenu({ id }: { id: string }) {
   );
 }
 
-export default function PackTable() {
+export default function TaskTable() {
   const [selected, setSelected] = React.useState<readonly string[]>([]);
-  const [packs, setPacks] = React.useState<any[]>([]);
+  const [tasks, setTasks] = React.useState<any[]>([]);
+
+  const { id } = useParams();
 
   React.useEffect(() => {
     async function onLoad() {
         try {
-            const packs = await API.get("api", "/pack", {});
-            setPacks(packs);
+            const tasks = await API.get("api", `/pack/${id}/task`, {});
+            setTasks(tasks);
         } catch (e) {
             console.log(e);
         }
@@ -99,34 +94,33 @@ export default function PackTable() {
         >
           <thead>
             <tr>
-              <th style={{ width: 48, textAlign: 'center', padding: '12px 6px' }}>
+              <th style={{ textAlign: 'center', padding: '12px 6px' }}>
                 <Checkbox
                   size="sm"
                   indeterminate={
-                    selected.length > 0 && selected.length !== packs.length
+                    selected.length > 0 && selected.length !== tasks.length
                   }
-                  checked={selected.length === packs.length}
+                  checked={selected.length === tasks.length}
                   onChange={(event) => {
                     setSelected(
-                      event.target.checked ? packs.map((row) => row.id) : [],
+                      event.target.checked ? tasks.map((row) => row.id) : [],
                     );
                   }}
                   color={
-                    selected.length > 0 || selected.length === packs.length
+                    selected.length > 0 || selected.length === tasks.length
                       ? 'primary'
                       : undefined
                   }
                   sx={{ verticalAlign: 'text-bottom' }}
                 />
               </th>
-              <th style={{ width: 140, padding: '12px 6px' }}>Name</th>
-              <th style={{ width: 140, padding: '12px 6px' }}>Description</th>
-              <th style={{ width: 240, padding: '12px 6px' }}>Owner</th>
-              <th style={{ width: 140, padding: '12px 6px' }}> </th>
+              <th style={{ padding: '12px 6px' }}>Title</th>
+              <th style={{ padding: '12px 6px' }}>Points</th>
+              <th style={{ padding: '12px 6px' }}> </th>
             </tr>
           </thead>
           <tbody>
-            {[...packs].map((row) => (
+            {[...tasks].map((row) => (
               <tr key={row.id}>
                 <td style={{ textAlign: 'center', width: 120 }}>
                   <Checkbox
@@ -145,19 +139,10 @@ export default function PackTable() {
                   />
                 </td>
                 <td>
-                  <Typography level="body-xs">{row.name.S}</Typography>
+                  <Typography level="body-xs">{row.title.S}</Typography>
                 </td>
                 <td>
-                  <Typography level="body-xs">{row.description.S}</Typography>
-                </td>
-                <td>
-                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <Avatar size="sm">{row.ownerId.S[0]}</Avatar>
-                    <div>
-                      <Typography level="body-xs">{row.ownerId.S}</Typography>
-                      <Typography level="body-xs">{row.ownerId.S}</Typography>
-                    </div>
-                  </Box>
+                  <Typography level="body-xs">{row.points.N}</Typography>
                 </td>
                 <td>
                   <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
