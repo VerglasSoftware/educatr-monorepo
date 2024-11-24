@@ -10,6 +10,10 @@ const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 export const list: Handler = Util.handler(async (event) => {
 	const params = {
 		TableName: Resource.Packs.name,
+		FilterExpression: "SK = :sk",
+		ExpressionAttributeValues: {
+			":sk": { S: "DETAILS" },
+		},
 	};
 
 	try {
