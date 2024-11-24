@@ -5,6 +5,7 @@ import Home from "./containers/Home.tsx";
 import Login from "./containers/Login.tsx";
 import PackList from "./containers/dash/PackList.tsx";
 import PackDetail from "./containers/dash/PackDetail.tsx";
+import OrganisationDetail from "./containers/organisation/OrganisationDetail.tsx";
 
 export default function Links() {
 	return (
@@ -39,6 +40,15 @@ export default function Links() {
 				element={
 					<AuthenticatedRoute>
 						<PackDetail />
+					</AuthenticatedRoute>
+				}
+			/>
+
+			<Route
+				path="/dash/:id"
+				element={
+					<AuthenticatedRoute>
+						<OrganisationDetail />
 					</AuthenticatedRoute>
 				}
 			/>
