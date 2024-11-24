@@ -48,7 +48,8 @@ api.route("PUT /organisation/{id}", {
 });
 api.route("DELETE /organisation/{id}", {
 	handler: "packages/functions/src/organisation.del",
- 
+});
+
 api.route("GET /pack/{packId}/task", {
 	handler: "packages/functions/src/task.list",
 });
@@ -119,13 +120,13 @@ api.route("GET /competition/{compId}/activity", {
 api.route("POST /competition/{compId}/activity", {
 	handler: "packages/functions/src/activity.create",
 });
-api.route("GET /competition/{compId}/activity", {
+api.route("GET /competition/{compId}/activity/{activityId}", {
 	handler: "packages/functions/src/activity.get",
 });
-api.route("PUT /competition/{compId}/activity", {
+api.route("PUT /competition/{compId}/activity/{activityId}", {
 	handler: "packages/functions/src/activity.update",
 });
-api.route("DELETE /competition/{compId}/activity", {
+api.route("DELETE /competition/{compId}/activity/{activityId}", {
 	handler: "packages/functions/src/activity.del",
 });
 
