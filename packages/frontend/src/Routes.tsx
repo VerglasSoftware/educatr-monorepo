@@ -6,6 +6,10 @@ import Login from "./containers/Login.tsx";
 import PackList from "./containers/dash/PackList.tsx";
 import PackDetail from "./containers/dash/PackDetail.tsx";
 import OrganisationDetail from "./containers/organisation/OrganisationDetail.tsx";
+import ClassList from "./containers/organisation/ClassList.tsx";
+import ClassDetail from "./containers/organisation/ClassDetail.tsx";
+import CompetitionList from "./containers/organisation/CompetitionList.tsx";
+import CompetitionDetail from "./containers/organisation/CompetitionDetail.tsx";
 
 export default function Links() {
 	return (
@@ -49,6 +53,41 @@ export default function Links() {
 				element={
 					<AuthenticatedRoute>
 						<OrganisationDetail />
+          </AuthenticatedRoute>
+				}
+			/>
+      
+      <Route
+				path="/dash/:orgId/classes"
+				element={
+					<AuthenticatedRoute>
+						<ClassList />
+          </AuthenticatedRoute>
+				}
+			/>
+            
+			<Route
+				path="/dash/:orgId/competitions"
+				element={
+					<AuthenticatedRoute>
+						<CompetitionList />
+					</AuthenticatedRoute>
+				}
+			/>
+			<Route
+				path="/dash/:orgId/classes/:classId"
+				element={
+					<AuthenticatedRoute>
+						<ClassDetail />
+</AuthenticatedRoute>
+				}
+			/>
+      
+      <Route
+				path="/dash/:orgId/competitions/:compId"
+				element={
+					<AuthenticatedRoute>
+						<CompetitionDetail />
 					</AuthenticatedRoute>
 				}
 			/>
