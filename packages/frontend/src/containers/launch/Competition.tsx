@@ -16,6 +16,7 @@ export default function LaunchCompetition() {
     const [pauseButtonLoading, setPauseButtonLoading] = useState(false);
     const [resumeButtonLoading, setResumeButtonLoading] = useState(false);
     const [endButtonLoading, setEndButtonLoading] = useState(false);
+    const [webhookStatus, setWebhookStatus] = useState<any>('Default');
 
     const { compId } = useParams();
 
@@ -36,6 +37,7 @@ export default function LaunchCompetition() {
             [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
           }[readyState];
           console.log(connectionStatus);
+          setWebhookStatus(connectionStatus);
     }, [readyState]);
 
     useEffect(() => {
@@ -154,7 +156,7 @@ export default function LaunchCompetition() {
         setEndButtonLoading(false);
     }
 
-    if (!competition || !packs) {
+    if (!competition || !packs || webhookStatus != "Open") {
         return (
             <Box sx={{
                 display: 'flex',
@@ -178,6 +180,7 @@ export default function LaunchCompetition() {
                 <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>Getting ready</Typography>
                 { !competition && <Typography level="body-sm" textColor="common.white">Downloading competition data</Typography> }
                 { !packs && <Typography level="body-sm" textColor="common.white">Downloading pack data</Typography> }
+                { webhookStatus != "Open" && <Typography level="body-sm" textColor="common.white">Connecting to stream</Typography> }
 
             </CardContent>
       </Card>

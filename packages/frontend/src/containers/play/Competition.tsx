@@ -12,6 +12,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 export default function PlayCompetition() {
     const [competition, setCompetition] = useState<any>();
     const [packs, setPacks] = useState<any[]>();
+    const [webhookStatus, setWebhookStatus] = useState<any>('Default');
 
     const { compId } = useParams();
 
@@ -43,6 +44,7 @@ export default function PlayCompetition() {
             [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
           }[readyState];
           console.log(connectionStatus);
+          setWebhookStatus(connectionStatus);
     }, [readyState]);
 
     cardio.register();
@@ -63,7 +65,7 @@ export default function PlayCompetition() {
         onLoad();
     }, []);
 
-    if (!competition || !packs) {
+    if (!competition || !packs || webhookStatus != "Open") {
         return (
             <Box sx={{
                 display: 'flex',
@@ -87,6 +89,7 @@ export default function PlayCompetition() {
                 <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>Getting ready</Typography>
                 { !competition && <Typography level="body-sm" textColor="common.white">Downloading competition data</Typography> }
                 { !packs && <Typography level="body-sm" textColor="common.white">Downloading pack data</Typography> }
+                { webhookStatus != "Open" && <Typography level="body-sm" textColor="common.white">Connecting to stream</Typography> }
 
             </CardContent>
       </Card>
