@@ -12,6 +12,7 @@ import CompetitionList from "./containers/organisation/CompetitionList.tsx";
 import CompetitionDetail from "./containers/organisation/CompetitionDetail.tsx";
 import PlayHome from "./containers/play/Home.tsx";
 import PlayCompetition from "./containers/play/Competition.tsx";
+import LaunchCompetition from "./containers/launch/Competition.tsx";
 
 export default function Links() {
 	return (
@@ -107,6 +108,15 @@ export default function Links() {
 				element={
 					<AuthenticatedRoute>
 						<PlayCompetition />
+					</AuthenticatedRoute>
+				}
+			/>
+
+			<Route
+				path="/launch/:compId"
+				element={
+					<AuthenticatedRoute>
+						<LaunchCompetition />
 					</AuthenticatedRoute>
 				}
 			/>
