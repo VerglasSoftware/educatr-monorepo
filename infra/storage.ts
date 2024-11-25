@@ -29,3 +29,10 @@ export const packTable = new sst.aws.Dynamo("Packs", {
 	},
 	primaryIndex: { hashKey: "PK", rangeKey: "SK" },
 });
+
+export const socketConnectionsTable = new sst.aws.Dynamo("SocketConnections", {
+	fields: {
+		id: "string",
+	},
+	primaryIndex: { hashKey: "id" },
+});
