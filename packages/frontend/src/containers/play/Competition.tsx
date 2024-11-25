@@ -19,7 +19,7 @@ export default function PlayCompetition() {
                 const competition = await API.get("api", `/competition/${compId}`, {});
                 setCompetition(competition);
 
-                const packs = await API.get("api", `/pack`, {});
+                const packs = await API.get("api", `/pack?include=tasks`, {});
                 setPacks(packs);
             } catch (e) {
                 console.log(e);
@@ -79,9 +79,27 @@ export default function PlayCompetition() {
             
 
             <Stack spacing={2} sx={{ width: '100%' }}>
-                {packs.map((pack) => (
+                {packs.map((pack: any) => (
                     <>
                     <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
+                    <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center' }}>
+                        {pack.tasks.map((task: any) => (
+                            <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
+                            <CardContent sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '2%'
+                            }}>
+
+                                <Typography level="title-lg" textColor="common.white">{task.title.S}</Typography>
+                                <Typography level="body-sm" textColor="common.white">{task.points.N} point{task.points.N != 1 && 's'}</Typography>
+                
+                            </CardContent>
+                      </Card>
+                        ))}
+                    </Box>
                     </>
                 ))}
             </Stack>
