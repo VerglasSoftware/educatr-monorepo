@@ -1,13 +1,13 @@
-import { Box, Card, CardContent, Stack, Typography } from "@mui/joy";
-import "./Play.css";
+import { Box, Button, ButtonGroup, Card, CardContent, Stack, Typography } from "@mui/joy";
+import "../play/Play.css";
 import {Helmet} from "react-helmet";
 import { useEffect, useState } from "react";
 import { API } from "aws-amplify";
 import { useParams } from "react-router-dom";
-import NavbarMain from "../../components/play/Navbar";
+import NavbarMain from "../../components/launch/Navbar";
 import { DotWave } from "@uiball/loaders";
 
-export default function PlayCompetition() {
+export default function LaunchCompetition() {
     const [competition, setCompetition] = useState<any>();
     const [packs, setPacks] = useState<any[]>();
 
@@ -28,6 +28,22 @@ export default function PlayCompetition() {
     
         onLoad();
     }, []);
+
+    function startCompetition() {
+        setCompetition({ ...competition, status: "IN_PROGRESS" });
+    }
+
+    function pauseCompetition() {
+        setCompetition({ ...competition, status: "PAUSED" });
+    }
+
+    function resumeCompetition() {
+        setCompetition({ ...competition, status: "IN_PROGRESS" });
+    }
+
+    function endCompetition() {
+        setCompetition({ ...competition, status: "ENDED" });
+    }
 
     if (!competition || !packs) {
         return (
@@ -71,38 +87,31 @@ export default function PlayCompetition() {
         <Box sx={{
             display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center',
+            alignItems: 'left',
             flexDirection: 'column',
             padding: '2%'
         }}>
 
-            
+            <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '50%' }}>
+                <CardContent sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'left',
+                    justifyContent: 'center',
+                    padding: '2%'
+                }}>
 
-            <Stack spacing={2} sx={{ width: '100%' }}>
-                {packs.map((pack: any) => (
-                    <>
-                    <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
-                    <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center' }}>
-                        {pack.tasks.map((task: any) => (
-                            <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
-                            <CardContent sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '2%'
-                            }}>
+                    <Typography level="h2" component="h1" textColor="common.white">{competition.name} launchpad</Typography>
 
-                                <Typography level="title-lg" textColor="common.white">{task.title.S}</Typography>
-                                <Typography level="body-sm" textColor="common.white">{task.points.N} point{task.points.N != 1 && 's'}</Typography>
-                
-                            </CardContent>
-                      </Card>
-                        ))}
-                    </Box>
-                    </>
-                ))}
-            </Stack>
+                    <ButtonGroup variant="solid">
+                        <Button color='success' disabled={competition.status != "NOT_STARTED"} onClick={startCompetition}>Start</Button>
+                        { competition.status != "PAUSED" && <Button color='warning' disabled={competition.status != "IN_PROGRESS"} onClick={pauseCompetition}>Pause</Button> }
+                        { competition.status == "PAUSED" && <Button color='success' disabled={competition.status != "PAUSED"} onClick={resumeCompetition}>Resume</Button> }
+                        <Button color='danger' disabled={competition.status != "PAUSED"} onClick={endCompetition}>End</Button>
+                    </ButtonGroup>
+    
+                </CardContent>
+            </Card>
 
         </Box>
 
