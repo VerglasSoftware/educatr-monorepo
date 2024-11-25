@@ -6,6 +6,7 @@ import { API } from "aws-amplify";
 import { useParams } from "react-router-dom";
 import NavbarMain from "../../components/launch/Navbar";
 import { DotWave } from "@uiball/loaders";
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 export default function LaunchCompetition() {
     const [competition, setCompetition] = useState<any>();
@@ -17,6 +18,25 @@ export default function LaunchCompetition() {
     const [endButtonLoading, setEndButtonLoading] = useState(false);
 
     const { compId } = useParams();
+
+    const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI);
+
+    useEffect(() => {
+        if (lastMessage !== null) {
+          console.log(lastMessage)
+        }
+      }, [lastMessage]);
+
+      useEffect(() => {
+        const connectionStatus = {
+            [ReadyState.CONNECTING]: 'Connecting',
+            [ReadyState.OPEN]: 'Open',
+            [ReadyState.CLOSING]: 'Closing',
+            [ReadyState.CLOSED]: 'Closed',
+            [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+          }[readyState];
+          console.log(connectionStatus);
+    }, [readyState])
 
     useEffect(() => {
         async function onLoad() {
@@ -40,6 +60,21 @@ export default function LaunchCompetition() {
             body: { ...competition, status: "IN_PROGRESS" }
         });
 
+        sendMessage(JSON.stringify(
+            {
+                action: "sendmessage",
+                data: JSON.stringify({
+                    filter: {
+                        competitionId: compId
+                    },
+                    type: "COMPETITION:STATUS_UPDATE",
+                    body: {
+                        status: "IN_PROGRESS"
+                    }
+                })
+            }
+        ));
+
         setCompetition(newCompetition);
         setStartButtonLoading(false);
     }
@@ -49,6 +84,21 @@ export default function LaunchCompetition() {
         const newCompetition = await API.put("api", `/competition/${compId}`, {
             body: { ...competition, status: "PAUSED" }
         });
+
+        sendMessage(JSON.stringify(
+            {
+                action: "sendmessage",
+                data: JSON.stringify({
+                    filter: {
+                        competitionId: compId
+                    },
+                    type: "COMPETITION:STATUS_UPDATE",
+                    body: {
+                        status: "PAUSED"
+                    }
+                })
+            }
+        ));
 
         setCompetition(newCompetition);
         setPauseButtonLoading(false);
@@ -60,6 +110,21 @@ export default function LaunchCompetition() {
             body: { ...competition, status: "IN_PROGRESS" }
         });
 
+        sendMessage(JSON.stringify(
+            {
+                action: "sendmessage",
+                data: JSON.stringify({
+                    filter: {
+                        competitionId: compId
+                    },
+                    type: "COMPETITION:STATUS_UPDATE",
+                    body: {
+                        status: "IN_PROGRESS"
+                    }
+                })
+            }
+        ));
+
         setCompetition(newCompetition);
         setResumeButtonLoading(false);
     }
@@ -69,6 +134,21 @@ export default function LaunchCompetition() {
         const newCompetition = await API.put("api", `/competition/${compId}`, {
             body: { ...competition, status: "ENDED" }
         });
+
+        sendMessage(JSON.stringify(
+            {
+                action: "sendmessage",
+                data: JSON.stringify({
+                    filter: {
+                        competitionId: compId
+                    },
+                    type: "COMPETITION:STATUS_UPDATE",
+                    body: {
+                        status: "ENDED"
+                    }
+                })
+            }
+        ));
 
         setCompetition(newCompetition);
         setEndButtonLoading(false);
