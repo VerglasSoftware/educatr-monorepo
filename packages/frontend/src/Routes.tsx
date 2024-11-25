@@ -5,6 +5,8 @@ import Home from "./containers/Home.tsx";
 import Login from "./containers/Login.tsx";
 import PackList from "./containers/dash/PackList.tsx";
 import PackDetail from "./containers/dash/PackDetail.tsx";
+import CompetitionList from "./containers/organisation/CompetitionList.tsx";
+import CompetitionDetail from "./containers/organisation/CompetitionDetail.tsx";
 
 export default function Links() {
 	return (
@@ -39,6 +41,23 @@ export default function Links() {
 				element={
 					<AuthenticatedRoute>
 						<PackDetail />
+					</AuthenticatedRoute>
+				}
+			/>
+
+			<Route
+				path="/dash/:orgId/competitions"
+				element={
+					<AuthenticatedRoute>
+						<CompetitionList />
+					</AuthenticatedRoute>
+				}
+			/>
+			<Route
+				path="/dash/:orgId/competitions/:compId"
+				element={
+					<AuthenticatedRoute>
+						<CompetitionDetail />
 					</AuthenticatedRoute>
 				}
 			/>
