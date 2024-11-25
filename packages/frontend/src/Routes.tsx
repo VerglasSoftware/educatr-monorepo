@@ -11,6 +11,7 @@ import ClassDetail from "./containers/organisation/ClassDetail.tsx";
 import CompetitionList from "./containers/organisation/CompetitionList.tsx";
 import CompetitionDetail from "./containers/organisation/CompetitionDetail.tsx";
 import PlayHome from "./containers/play/Home.tsx";
+import PlayCompetition from "./containers/play/Competition.tsx";
 
 export default function Links() {
 	return (
@@ -101,6 +102,15 @@ export default function Links() {
 					</AuthenticatedRoute>
 				}
 			/>
+			<Route
+				path="/play/:compId"
+				element={
+					<AuthenticatedRoute>
+						<PlayCompetition />
+					</AuthenticatedRoute>
+				}
+			/>
+
 		</Routes>
 	);
 }
