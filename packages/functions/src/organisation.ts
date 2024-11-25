@@ -21,7 +21,7 @@ export const list: Handler = Util.handler(async (event) => {
 		const result = await client.send(command);
 		return JSON.stringify(result.Items);
 	} catch (e) {
-		throw new Error("Could not retrieve organiation");
+		throw new Error("Could not retrieve organiations");
 	}
 });
 
@@ -66,7 +66,7 @@ export const get: Handler = Util.handler(async (event) => {
 	const params = {
 		TableName: Resource.Organisations.name,
 		Key: {
-			PK: pk,
+			PK: "ORG#" + pk,
 			SK: "DETAILS",
 		},
 	};
@@ -141,7 +141,7 @@ export const update: Handler = Util.handler(async (event) => {
 	const params = {
 		TableName: Resource.Organisations.name,
 		Key: {
-			PK: pk,
+			PK: "ORG#" + pk,
 			SK: "DETAILS",
 		},
 		UpdateExpression: "SET #name = :name, #logo = :logo, #students = :students",
