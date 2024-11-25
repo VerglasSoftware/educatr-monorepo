@@ -8,6 +8,8 @@ import { Util } from "@educatr/core/util";
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 export const list: Handler = Util.handler(async (event) => {
+	const includeTasks = event.queryStringParameters?.include === "tasks";
+
 	const params = {
 		TableName: Resource.Packs.name,
 		FilterExpression: "SK = :sk",
@@ -19,9 +21,37 @@ export const list: Handler = Util.handler(async (event) => {
 	try {
 		const command = new ScanCommand(params);
 		const result = await client.send(command);
-		return JSON.stringify(result.Items);
+		const packs = result.Items;
+
+		if (!includeTasks) {
+			return JSON.stringify(packs);
+		}
+
+		const packsWithTasks = await Promise.all(
+			packs!.map(async (pack) => {
+				const tasksParams = {
+					TableName: Resource.Packs.name,
+					FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					ExpressionAttributeValues: {
+						":packId": { S: pack.PK.S! },
+						":skPrefix": { S: "TASK#" },
+					},
+				};
+
+				const tasksCommand = new ScanCommand(tasksParams);
+				const tasksResult = await client.send(tasksCommand);
+
+				return {
+					...pack,
+					tasks: tasksResult.Items || [],
+				};
+			})
+		);
+
+		return JSON.stringify(packsWithTasks);
 	} catch (e) {
-		throw new Error("Could not retrieve pack");
+		console.error(e);
+		throw new Error("Could not retrieve packs");
 	}
 });
 
@@ -57,6 +87,7 @@ export const create: Handler = Util.handler(async (event) => {
 
 export const get: Handler = Util.handler(async (event) => {
 	const { packId: pk } = event.pathParameters || {};
+	const { include } = event.queryStringParameters || {};
 
 	if (!pk) {
 		throw new Error("Missing ID in path parameters");
@@ -75,6 +106,7 @@ export const get: Handler = Util.handler(async (event) => {
 		if (!result.Item) {
 			throw new Error("Pack not found");
 		}
+
 		return JSON.stringify(result.Item);
 	} catch (e) {
 		throw new Error("Could not retrieve pack");
