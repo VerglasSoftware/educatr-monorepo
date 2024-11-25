@@ -111,7 +111,6 @@ function App() {
                 <Box sx={{
                   minHeight: '100vh',
                 }}>
-                  <style>{` body {background-color: #1c1851;} `}</style>
                   {init && (
                     <Particles
                       id="particles"

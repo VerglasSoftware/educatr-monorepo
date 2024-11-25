@@ -10,6 +10,7 @@ import ClassList from "./containers/organisation/ClassList.tsx";
 import ClassDetail from "./containers/organisation/ClassDetail.tsx";
 import CompetitionList from "./containers/organisation/CompetitionList.tsx";
 import CompetitionDetail from "./containers/organisation/CompetitionDetail.tsx";
+import PlayHome from "./containers/play/Home.tsx";
 
 export default function Links() {
 	return (
@@ -53,19 +54,19 @@ export default function Links() {
 				element={
 					<AuthenticatedRoute>
 						<OrganisationDetail />
-          </AuthenticatedRoute>
+					</AuthenticatedRoute>
 				}
 			/>
-      
-      <Route
+
+			<Route
 				path="/dash/:orgId/classes"
 				element={
 					<AuthenticatedRoute>
 						<ClassList />
-          </AuthenticatedRoute>
+					</AuthenticatedRoute>
 				}
 			/>
-            
+
 			<Route
 				path="/dash/:orgId/competitions"
 				element={
@@ -79,11 +80,11 @@ export default function Links() {
 				element={
 					<AuthenticatedRoute>
 						<ClassDetail />
-</AuthenticatedRoute>
+					</AuthenticatedRoute>
 				}
 			/>
-      
-      <Route
+
+			<Route
 				path="/dash/:orgId/competitions/:compId"
 				element={
 					<AuthenticatedRoute>
@@ -92,6 +93,14 @@ export default function Links() {
 				}
 			/>
 
+			<Route
+				path="/play"
+				element={
+					<AuthenticatedRoute>
+						<PlayHome />
+					</AuthenticatedRoute>
+				}
+			/>
 		</Routes>
 	);
 }
