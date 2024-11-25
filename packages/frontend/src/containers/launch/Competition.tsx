@@ -29,20 +29,36 @@ export default function LaunchCompetition() {
         onLoad();
     }, []);
 
-    function startCompetition() {
-        setCompetition({ ...competition, status: "IN_PROGRESS" });
+    async function startCompetition() {
+        const newCompetition = await API.put("api", `/competition/${compId}`, {
+            body: { ...competition, status: "IN_PROGRESS" }
+        });
+
+        setCompetition(newCompetition);
     }
 
-    function pauseCompetition() {
-        setCompetition({ ...competition, status: "PAUSED" });
+    async function pauseCompetition() {
+        const newCompetition = await API.put("api", `/competition/${compId}`, {
+            body: { ...competition, status: "PAUSED" }
+        });
+
+        setCompetition(newCompetition);
     }
 
-    function resumeCompetition() {
-        setCompetition({ ...competition, status: "IN_PROGRESS" });
+    async function resumeCompetition() {
+        const newCompetition = await API.put("api", `/competition/${compId}`, {
+            body: { ...competition, status: "IN_PROGRESS" }
+        });
+
+        setCompetition(newCompetition);
     }
 
-    function endCompetition() {
-        setCompetition({ ...competition, status: "ENDED" });
+    async function endCompetition() {
+        const newCompetition = await API.put("api", `/competition/${compId}`, {
+            body: { ...competition, status: "ENDED" }
+        });
+
+        setCompetition(newCompetition);
     }
 
     if (!competition || !packs) {
