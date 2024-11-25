@@ -7,12 +7,43 @@ import { useParams } from "react-router-dom";
 import NavbarMain from "../../components/play/Navbar";
 import { DotWave } from "@uiball/loaders";
 import { cardio } from 'ldrs';
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
 export default function PlayCompetition() {
     const [competition, setCompetition] = useState<any>();
     const [packs, setPacks] = useState<any[]>();
 
     const { compId } = useParams();
+
+    const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI);
+
+    useEffect(() => {
+        if (lastMessage !== null) {
+            const data = JSON.parse(lastMessage.data);
+            console.log(data);
+
+            if (data.filter.competitionId && data.filter.competitionId != compId) return;
+
+            switch (data.type) {
+                case "COMPETITION:STATUS_UPDATE":
+                    setCompetition({ ...competition, status: data.body.status });
+                    break;
+                default:
+                    break;
+            }
+        }
+      }, [lastMessage]);
+
+      useEffect(() => {
+        const connectionStatus = {
+            [ReadyState.CONNECTING]: 'Connecting',
+            [ReadyState.OPEN]: 'Open',
+            [ReadyState.CLOSING]: 'Closing',
+            [ReadyState.CLOSED]: 'Closed',
+            [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+          }[readyState];
+          console.log(connectionStatus);
+    }, [readyState]);
 
     cardio.register();
 

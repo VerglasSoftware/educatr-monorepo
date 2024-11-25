@@ -36,7 +36,7 @@ export default function LaunchCompetition() {
             [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
           }[readyState];
           console.log(connectionStatus);
-    }, [readyState])
+    }, [readyState]);
 
     useEffect(() => {
         async function onLoad() {
