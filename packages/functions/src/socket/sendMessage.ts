@@ -7,6 +7,7 @@ import { Resource } from "sst";
 const dynamoDb = new DynamoDB.DocumentClient();
 
 export const main: Handler = Util.handler(async (event) => {
+    console.log("data: " + event.body);
     const messageData = JSON.parse(event.body!).data;
   const { stage, domainName } = event.requestContext;
 

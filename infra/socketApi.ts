@@ -12,7 +12,7 @@ const permissions = new sst.Linkable("MyStorage", {
 	]
   });
 
-export const api = new sst.aws.ApiGatewayWebSocket("SocketApi", {
+export const socketApi = new sst.aws.ApiGatewayWebSocket("SocketApi", {
     domain: $app.stage === "prod" ? "ws.educatr.uk" : undefined,
     transform: {
 		route: {
@@ -26,17 +26,17 @@ export const api = new sst.aws.ApiGatewayWebSocket("SocketApi", {
 	},
 });
 
-api.route("$connect", {
+socketApi.route("$connect", {
 	handler: "packages/functions/src/socket/connect.main",
-	link: [api]
+	link: [socketApi]
 });
 
-api.route("$disconnect", {
+socketApi.route("$disconnect", {
 	handler: "packages/functions/src/socket/disconnect.main",
-	link: [api]
+	link: [socketApi]
 });
 
-api.route("sendmessage", {
+socketApi.route("sendmessage", {
 	handler: "packages/functions/src/socket/sendMessage.main",
-	link: [api]
+	link: [socketApi]
 });
