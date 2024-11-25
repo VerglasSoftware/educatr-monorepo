@@ -44,6 +44,8 @@ export default function NavbarMain({
             size="sm"
             variant="plain"
             color="neutral"
+            component="a"
+            href="/play"
             sx={{ alignSelf: 'center', backgroundColor: 'rgb(255 255 255 / 0.2)', color: "white" }}
           >
             {
