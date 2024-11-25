@@ -1,4 +1,4 @@
-import { Box, Button, ButtonGroup, Card, CardContent, Stack, Typography } from "@mui/joy";
+import { Box, Button, ButtonGroup, Card, CardContent, Typography } from "@mui/joy";
 import "../play/Play.css";
 import {Helmet} from "react-helmet";
 import { useEffect, useState } from "react";
@@ -10,6 +10,11 @@ import { DotWave } from "@uiball/loaders";
 export default function LaunchCompetition() {
     const [competition, setCompetition] = useState<any>();
     const [packs, setPacks] = useState<any[]>();
+
+    const [startButtonLoading, setStartButtonLoading] = useState(false);
+    const [pauseButtonLoading, setPauseButtonLoading] = useState(false);
+    const [resumeButtonLoading, setResumeButtonLoading] = useState(false);
+    const [endButtonLoading, setEndButtonLoading] = useState(false);
 
     const { compId } = useParams();
 
@@ -30,35 +35,43 @@ export default function LaunchCompetition() {
     }, []);
 
     async function startCompetition() {
+        setStartButtonLoading(true);
         const newCompetition = await API.put("api", `/competition/${compId}`, {
             body: { ...competition, status: "IN_PROGRESS" }
         });
 
         setCompetition(newCompetition);
+        setStartButtonLoading(false);
     }
 
     async function pauseCompetition() {
+        setPauseButtonLoading(true);
         const newCompetition = await API.put("api", `/competition/${compId}`, {
             body: { ...competition, status: "PAUSED" }
         });
 
         setCompetition(newCompetition);
+        setPauseButtonLoading(false);
     }
 
     async function resumeCompetition() {
+        setResumeButtonLoading(true);
         const newCompetition = await API.put("api", `/competition/${compId}`, {
             body: { ...competition, status: "IN_PROGRESS" }
         });
 
         setCompetition(newCompetition);
+        setResumeButtonLoading(false);
     }
 
     async function endCompetition() {
+        setEndButtonLoading(true);
         const newCompetition = await API.put("api", `/competition/${compId}`, {
             body: { ...competition, status: "ENDED" }
         });
 
         setCompetition(newCompetition);
+        setEndButtonLoading(false);
     }
 
     if (!competition || !packs) {
@@ -120,10 +133,10 @@ export default function LaunchCompetition() {
                     <Typography level="h2" component="h1" textColor="common.white">{competition.name} launchpad</Typography>
 
                     <ButtonGroup variant="solid">
-                        <Button color='success' disabled={competition.status != "NOT_STARTED"} onClick={startCompetition}>Start</Button>
-                        { competition.status != "PAUSED" && <Button color='warning' disabled={competition.status != "IN_PROGRESS"} onClick={pauseCompetition}>Pause</Button> }
-                        { competition.status == "PAUSED" && <Button color='success' disabled={competition.status != "PAUSED"} onClick={resumeCompetition}>Resume</Button> }
-                        <Button color='danger' disabled={competition.status != "PAUSED"} onClick={endCompetition}>End</Button>
+                        <Button color='success' disabled={competition.status != "NOT_STARTED"} onClick={startCompetition} loading={startButtonLoading}>Start</Button>
+                        { competition.status != "PAUSED" && <Button color='warning' disabled={competition.status != "IN_PROGRESS"} onClick={pauseCompetition} loading={pauseButtonLoading}>Pause</Button> }
+                        { competition.status == "PAUSED" && <Button color='success' disabled={competition.status != "PAUSED"} onClick={resumeCompetition} loading={resumeButtonLoading}>Resume</Button> }
+                        <Button color='danger' disabled={competition.status != "PAUSED"} onClick={endCompetition} loading={endButtonLoading}>End</Button>
                     </ButtonGroup>
     
                 </CardContent>
