@@ -6,12 +6,15 @@ import { API } from "aws-amplify";
 import { useParams } from "react-router-dom";
 import NavbarMain from "../../components/play/Navbar";
 import { DotWave } from "@uiball/loaders";
+import { cardio } from 'ldrs';
 
 export default function PlayCompetition() {
     const [competition, setCompetition] = useState<any>();
     const [packs, setPacks] = useState<any[]>();
 
     const { compId } = useParams();
+
+    cardio.register();
 
     useEffect(() => {
         async function onLoad() {
@@ -53,6 +56,60 @@ export default function PlayCompetition() {
                 <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>Getting ready</Typography>
                 { !competition && <Typography level="body-sm" textColor="common.white">Downloading competition data</Typography> }
                 { !packs && <Typography level="body-sm" textColor="common.white">Downloading pack data</Typography> }
+
+            </CardContent>
+      </Card>
+        </Box>
+        )
+    }
+
+    if (competition.status != "IN_PROGRESS") {
+        return (
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '85vh',
+                flexDirection: 'column',
+                overflow: 'hidden'
+            }}>
+            <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '60%' }}>
+            <CardContent sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2%'
+            }}>
+
+
+                <l-cardio
+                    size="50"
+                    stroke="4"
+                    speed="2"
+                    color="white" 
+                ></l-cardio>
+
+                {competition.status == "NOT_STARTED" && (
+                    <>
+                    <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>{competition.name} hasn't started yet</Typography>
+                    <Typography level="body-sm" textColor="common.white">This screen will automatically refresh when we're ready to start</Typography>
+                    </>
+                )}
+
+                {competition.status == "PAUSED" && (
+                    <>
+                    <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>{competition.name} is paused</Typography>
+                    <Typography level="body-sm" textColor="common.white">This screen will automatically refresh when we're ready to go again</Typography>
+                    </>
+                )}
+
+                {competition.status == "ENDED" && (
+                    <>
+                    <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>{competition.name} hasn't ended</Typography>
+                    <Typography level="body-sm" textColor="common.white">Thanks for playing!</Typography>
+                    </>
+                )}
 
             </CardContent>
       </Card>
