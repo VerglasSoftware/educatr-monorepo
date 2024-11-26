@@ -15,12 +15,33 @@ import { csharp } from "@replit/codemirror-lang-csharp";
 import { python } from '@codemirror/lang-python';
 import { html } from '@codemirror/lang-html';
 import NewWindow from 'react-new-window';
+import { API } from "aws-amplify";
 
-export default function TaskModal({ open, setOpen, competition, task }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any }) {
+export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any, packId: string }) {
 	const nav = useNavigate();
 	const { orgId } = useParams();
 
     const [answer, setAnswer] = React.useState<string>('');
+    const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
+
+    async function submitTask() {
+        setSubmitTaskLoading(true);
+        const result = await API.post("api", `/competition/${competition.id}/check`, {
+            body: {
+                packId: packId,
+                taskId: task.SK.S.split("#")[1],
+                userId: 'not implemented yet',
+                answer: answer
+            }
+        });
+        setSubmitTaskLoading(false);
+
+        if (result.result === true) {
+            setOpen(false);
+        } else {
+            alert("Incorrect answer");
+        }
+    }
 
 	return (
 		task && (
@@ -45,7 +66,7 @@ export default function TaskModal({ open, setOpen, competition, task }: { open: 
                                             <FormLabel>Answer</FormLabel>
                                             <Input  value={answer} onChange={(e) => setAnswer(e.currentTarget.value)} />
                                         </FormControl>
-                                        <Button>Submit</Button>
+                                        <Button onClick={submitTask} loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
@@ -62,7 +83,7 @@ export default function TaskModal({ open, setOpen, competition, task }: { open: 
                                                 }
                                             </RadioGroup>
                                         </FormControl>
-                                        <Button>Submit</Button>
+                                        <Button loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
@@ -73,7 +94,7 @@ export default function TaskModal({ open, setOpen, competition, task }: { open: 
                                             <FormLabel>Answer</FormLabel>
                                             <CodeMirror height="50vh" extensions={[python()]} value={answer} onChange={(e) => setAnswer(e)} />
                                         </FormControl>
-                                        <Button>Submit</Button>
+                                        <Button loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
@@ -84,7 +105,7 @@ export default function TaskModal({ open, setOpen, competition, task }: { open: 
                                             <FormLabel>Answer</FormLabel>
                                             <CodeMirror height="50vh" extensions={[csharp()]} value={answer} onChange={(e) => setAnswer(e)} />
                                         </FormControl>
-                                        <Button>Submit</Button>
+                                        <Button loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
@@ -98,7 +119,7 @@ export default function TaskModal({ open, setOpen, competition, task }: { open: 
                                         <NewWindow>
                                             <iframe srcDoc={answer} className="bg-white w-full h-full" />
                                         </NewWindow>
-                                        <Button>Submit</Button>
+                                        <Button loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
