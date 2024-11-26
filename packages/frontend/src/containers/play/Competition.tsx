@@ -36,6 +36,10 @@ export default function PlayCompetition() {
                 case "COMPETITION:STATUS_UPDATE":
                     setCompetition({ ...competition, status: data.body.status });
                     break;
+                case "TASK:ANSWERED":
+                    const newActivity = data.body;
+                    setActivity([...activity || [], newActivity]);
+                    break;
                 default:
                     break;
             }
@@ -59,15 +63,13 @@ export default function PlayCompetition() {
     useEffect(() => {
         async function onLoad() {
             try {
-                const [competition, packs, activity] = await Promise.all([
-                    API.get("api", `/competition/${compId}`, {}),
-                    API.get("api", `/pack?include=tasks`, {}),
-                    API.get("api", `/competition/${compId}/activity`, {})
-                ]);
+                const promises = [
+                    API.get("api", `/competition/${compId}`, {}).then(setCompetition),
+                    API.get("api", `/pack?include=tasks`, {}).then(setPacks),
+                    API.get("api", `/competition/${compId}/activity`, {}).then(setActivity)
+                ];
                 
-                setCompetition(competition);
-                setPacks(packs);
-                setActivity(activity);
+                await Promise.allSettled(promises);
             } catch (e) {
                 console.log(e);
             }
@@ -185,7 +187,10 @@ export default function PlayCompetition() {
                     <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
                     <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center', gap: 2 }}>
                         {pack.tasks.map((task: any) => {
-                            const correct = activity.find( a => a.taskId.S==task.SK.S.split('#')[1] && a.correct );
+                            const correct = activity.find( a => a.taskId.S ?
+                                (a.taskId.S==task.SK.S.split('#')[1] && a.correct.BOOL === true) :
+                                (a.taskId==task.SK.S.split('#')[1] && a.correct === true)
+                             );
                             return (
                             <Link component="button" onClick={() => { setSelectedTask(task); setSelectedTaskPackId(pack.PK.S); setOpen(true); }} disabled={correct}>
                                 <Card variant="plain" sx={{ backgroundColor: correct ? 'rgb(0 255 0 / 0.4)' : 'rgb(0 0 0 / 0.3)', width: '100%' }}>
