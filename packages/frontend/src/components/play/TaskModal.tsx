@@ -9,12 +9,18 @@ import DialogTitle from "@mui/joy/DialogTitle";
 import DialogContent from "@mui/joy/DialogContent";
 import Stack from "@mui/joy/Stack";
 import { useNavigate, useParams } from "react-router-dom";
-import { API } from "aws-amplify";
-import { Divider } from "@mui/joy";
+import CodeMirror from '@uiw/react-codemirror';
+import { Divider, Radio, RadioGroup } from "@mui/joy";
+import { csharp } from "@replit/codemirror-lang-csharp";
+import { python } from '@codemirror/lang-python';
+import { html } from '@codemirror/lang-html';
+import NewWindow from 'react-new-window';
 
 export default function TaskModal({ open, setOpen, competition, task }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any }) {
 	const nav = useNavigate();
 	const { orgId } = useParams();
+
+    const [answer, setAnswer] = React.useState<string>('');
 
 	return (
 		task && (
@@ -37,8 +43,61 @@ export default function TaskModal({ open, setOpen, competition, task }: { open: 
                                     <Stack spacing={2}>
                                         <FormControl>
                                             <FormLabel>Answer</FormLabel>
-                                            <Input />
+                                            <Input  value={answer} onChange={(e) => setAnswer(e.currentTarget.value)} />
                                         </FormControl>
+                                        <Button>Submit</Button>
+                                    </Stack>
+                                )
+                            }
+                            {
+                                task.answerType.S == "MULTIPLE" && (
+                                    <Stack spacing={2}>
+                                        <FormControl>
+                                            <FormLabel>Answer</FormLabel>
+                                            <RadioGroup defaultValue="medium" name="radio-buttons-group" value={answer} onChange={(e) => setAnswer(e.currentTarget.value)}>
+                                                {
+                                                    JSON.parse(task.answer.S).map((answer: any) => (
+                                                        <Radio value={answer.text} label={answer.text} />
+                                                    ))
+                                                }
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <Button>Submit</Button>
+                                    </Stack>
+                                )
+                            }
+                            {
+                                task.answerType.S == "PYTHON" && (
+                                    <Stack spacing={2}>
+                                        <FormControl>
+                                            <FormLabel>Answer</FormLabel>
+                                            <CodeMirror height="50vh" extensions={[python()]} value={answer} onChange={(e) => setAnswer(e)} />
+                                        </FormControl>
+                                        <Button>Submit</Button>
+                                    </Stack>
+                                )
+                            }
+                            {
+                                task.answerType.S == "CSHARP" && (
+                                    <Stack spacing={2}>
+                                        <FormControl>
+                                            <FormLabel>Answer</FormLabel>
+                                            <CodeMirror height="50vh" extensions={[csharp()]} value={answer} onChange={(e) => setAnswer(e)} />
+                                        </FormControl>
+                                        <Button>Submit</Button>
+                                    </Stack>
+                                )
+                            }
+                            {
+                                task.answerType.S == "WEB" && (
+                                    <Stack spacing={2}>
+                                        <FormControl>
+                                            <FormLabel>Answer</FormLabel>
+                                            <CodeMirror height="50vh" extensions={[html()]} value={answer} onChange={(e) => setAnswer(e)} />
+                                        </FormControl>
+                                        <NewWindow>
+                                            <iframe srcDoc={answer} className="bg-white w-full h-full" />
+                                        </NewWindow>
                                         <Button>Submit</Button>
                                     </Stack>
                                 )
