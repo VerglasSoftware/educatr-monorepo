@@ -16,6 +16,7 @@ import { python } from '@codemirror/lang-python';
 import { html } from '@codemirror/lang-html';
 import NewWindow from 'react-new-window';
 import { API } from "aws-amplify";
+import { toast } from "react-toastify";
 
 export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any, packId: string }) {
 	const nav = useNavigate();
@@ -37,9 +38,10 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
         setSubmitTaskLoading(false);
 
         if (result.result === true) {
+            toast.success(`You answered ${task.title.S} correctly, and ${task.points.N} point${task.points.N != 1 && 's'} have been added to your team.`);
             setOpen(false);
         } else {
-            alert("Incorrect answer");
+            toast.error(`You answered ${task.title.S} incorrectly, but no points have been taken from your team.`);
         }
     }
 
