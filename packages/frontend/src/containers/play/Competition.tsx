@@ -16,7 +16,10 @@ export default function PlayCompetition() {
     const [webhookStatus, setWebhookStatus] = useState<any>('Default');
 
     const [selectedTask, setSelectedTask] = useState<any>();
+    const [selectedTaskPackId, setSelectedTaskPackId] = useState<string>('');
     const [open, setOpen] = useState<any>();
+
+    const [activity, setActivity] = useState<any[]>();
 
     const { compId } = useParams();
 
@@ -32,6 +35,10 @@ export default function PlayCompetition() {
             switch (data.type) {
                 case "COMPETITION:STATUS_UPDATE":
                     setCompetition({ ...competition, status: data.body.status });
+                    break;
+                case "TASK:ANSWERED":
+                    const newActivity = data.body;
+                    setActivity([...activity || [], newActivity]);
                     break;
                 default:
                     break;
@@ -56,11 +63,13 @@ export default function PlayCompetition() {
     useEffect(() => {
         async function onLoad() {
             try {
-                const competition = await API.get("api", `/competition/${compId}`, {});
-                setCompetition(competition);
-
-                const packs = await API.get("api", `/pack?include=tasks`, {});
-                setPacks(packs);
+                const promises = [
+                    API.get("api", `/competition/${compId}`, {}).then(setCompetition),
+                    API.get("api", `/pack?include=tasks`, {}).then(setPacks),
+                    API.get("api", `/competition/${compId}/activity`, {}).then(setActivity)
+                ];
+                
+                await Promise.allSettled(promises);
             } catch (e) {
                 console.log(e);
             }
@@ -69,7 +78,7 @@ export default function PlayCompetition() {
         onLoad();
     }, []);
 
-    if (!competition || !packs || webhookStatus != "Open") {
+    if (!competition || !packs || webhookStatus != "Open" || !activity) {
         return (
             <Box sx={{
                 display: 'flex',
@@ -93,6 +102,7 @@ export default function PlayCompetition() {
                 <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>Getting ready</Typography>
                 { !competition && <Typography level="body-sm" textColor="common.white">Downloading competition data</Typography> }
                 { !packs && <Typography level="body-sm" textColor="common.white">Downloading pack data</Typography> }
+                { !activity && <Typography level="body-sm" textColor="common.white">Downloading task completion data</Typography> }
                 { webhookStatus != "Open" && <Typography level="body-sm" textColor="common.white">Connecting to stream</Typography> }
 
             </CardContent>
@@ -171,16 +181,19 @@ export default function PlayCompetition() {
             padding: '2%'
         }}>
 
-            
-
             <Stack spacing={2} sx={{ width: '100%' }}>
                 {packs.map((pack: any) => (
                     <>
                     <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
                     <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center', gap: 2 }}>
-                        {pack.tasks.map((task: any) => (
-                            <Link component="button" onClick={() => { setSelectedTask(task); setOpen(true); }}>
-                                <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
+                        {pack.tasks.map((task: any) => {
+                            const correct = activity.find( a => a.taskId.S ?
+                                (a.taskId.S==task.SK.S.split('#')[1] && a.correct.BOOL === true) :
+                                (a.taskId==task.SK.S.split('#')[1] && a.correct === true)
+                             );
+                            return (
+                            <Link component="button" onClick={() => { setSelectedTask(task); setSelectedTaskPackId(pack.PK.S); setOpen(true); }} disabled={correct}>
+                                <Card variant="plain" sx={{ backgroundColor: correct ? 'rgb(0 255 0 / 0.4)' : 'rgb(0 0 0 / 0.3)', width: '100%' }}>
                                     <CardContent sx={{
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -195,7 +208,7 @@ export default function PlayCompetition() {
                                 </CardContent>
                         </Card>
                       </Link>
-                        ))}
+                        )})}
                     </Box>
                     </>
                 ))}
@@ -203,7 +216,7 @@ export default function PlayCompetition() {
 
         </Box>
 
-        <TaskModal open={open} setOpen={setOpen} competition={competition} task={selectedTask} />
+        <TaskModal open={open} setOpen={setOpen} competition={competition} task={selectedTask} packId={selectedTaskPackId} />
 
     </div>
   );
