@@ -177,7 +177,7 @@ export default function PlayCompetition() {
                 {packs.map((pack: any) => (
                     <>
                     <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
-                    <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center' }}>
+                    <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center', gap: 2 }}>
                         {pack.tasks.map((task: any) => (
                             <Link component="button" onClick={() => { setSelectedTask(task); setOpen(true); }}>
                                 <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
