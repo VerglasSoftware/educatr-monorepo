@@ -16,6 +16,7 @@ export default function PlayCompetition() {
     const [webhookStatus, setWebhookStatus] = useState<any>('Default');
 
     const [selectedTask, setSelectedTask] = useState<any>();
+    const [selectedTaskPackId, setSelectedTaskPackId] = useState<string>('');
     const [open, setOpen] = useState<any>();
 
     const { compId } = useParams();
@@ -179,7 +180,7 @@ export default function PlayCompetition() {
                     <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
                     <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center', gap: 2 }}>
                         {pack.tasks.map((task: any) => (
-                            <Link component="button" onClick={() => { setSelectedTask(task); setOpen(true); }}>
+                            <Link component="button" onClick={() => { setSelectedTask(task); setSelectedTaskPackId(pack.PK.S); setOpen(true); }}>
                                 <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
                                     <CardContent sx={{
                                         display: 'flex',
@@ -203,7 +204,7 @@ export default function PlayCompetition() {
 
         </Box>
 
-        <TaskModal open={open} setOpen={setOpen} competition={competition} task={selectedTask} />
+        <TaskModal open={open} setOpen={setOpen} competition={competition} task={selectedTask} packId={selectedTaskPackId} />
 
     </div>
   );

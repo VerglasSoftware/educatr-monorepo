@@ -163,3 +163,57 @@ export const update: Handler = Util.handler(async (event) => {
 		throw new Error("Could not update competition details");
 	}
 });
+
+export const check: Handler = Util.handler(async (event) => {
+	const { id: pk } = event.pathParameters || {};
+
+	if (!pk) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	let data = {
+		packId: "",
+		taskId: "",
+		userId: "",
+        answer: ""
+	};
+
+	if (event.body != null) {
+		data = JSON.parse(event.body);
+	} else {
+		throw new Error("No body provided");
+	}
+
+	const params = {
+		TableName: Resource.Packs.name,
+		Key: {
+			PK: data.packId,
+			SK: `TASK#${data.taskId}`,
+		},
+	};
+
+	var task;
+
+	try {
+		const result = await client.send(new GetCommand(params));
+		if (!result.Item) {
+			throw new Error("Task not found");
+		}
+		task = result.Item;
+	} catch (e) {
+		throw new Error("Could not retrieve competition");
+	}
+
+	console.log(task.verificationType);
+
+	switch(task.verificationType) {
+		case "COMPARE":
+			if (task.answer.trim() === data.answer.trim()) {
+				return JSON.stringify({ result: true });
+			} else {
+				return JSON.stringify({ result: false });
+			}
+		default:
+			throw new Error("Verification type not supported");
+	}
+});
