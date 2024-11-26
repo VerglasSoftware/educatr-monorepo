@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Stack, Typography } from "@mui/joy";
+import { Box, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
 import "./Play.css";
 import {Helmet} from "react-helmet";
 import { useEffect, useState } from "react";
@@ -8,11 +8,15 @@ import NavbarMain from "../../components/play/Navbar";
 import { DotWave } from "@uiball/loaders";
 import { cardio } from 'ldrs';
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import TaskModal from "../../components/play/TaskModal";
 
 export default function PlayCompetition() {
     const [competition, setCompetition] = useState<any>();
     const [packs, setPacks] = useState<any[]>();
     const [webhookStatus, setWebhookStatus] = useState<any>('Default');
+
+    const [selectedTask, setSelectedTask] = useState<any>();
+    const [open, setOpen] = useState<any>();
 
     const { compId } = useParams();
 
@@ -173,22 +177,24 @@ export default function PlayCompetition() {
                 {packs.map((pack: any) => (
                     <>
                     <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
-                    <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center' }}>
+                    <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center', gap: 2 }}>
                         {pack.tasks.map((task: any) => (
-                            <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
-                            <CardContent sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '2%'
-                            }}>
+                            <Link component="button" onClick={() => { setSelectedTask(task); setOpen(true); }}>
+                                <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
+                                    <CardContent sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        padding: '2%'
+                                    }}>
 
-                                <Typography level="title-lg" textColor="common.white">{task.title.S}</Typography>
-                                <Typography level="body-sm" textColor="common.white">{task.points.N} point{task.points.N != 1 && 's'}</Typography>
-                
-                            </CardContent>
-                      </Card>
+                                    <Typography level="title-lg" textColor="common.white">{task.title.S}</Typography>
+                                    <Typography level="body-sm" textColor="common.white">{task.points.N} point{task.points.N != 1 && 's'}</Typography>
+                    
+                                </CardContent>
+                        </Card>
+                      </Link>
                         ))}
                     </Box>
                     </>
@@ -196,6 +202,8 @@ export default function PlayCompetition() {
             </Stack>
 
         </Box>
+
+        <TaskModal open={open} setOpen={setOpen} competition={competition} task={selectedTask} />
 
     </div>
   );
