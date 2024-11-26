@@ -19,6 +19,8 @@ export default function PlayCompetition() {
     const [selectedTaskPackId, setSelectedTaskPackId] = useState<string>('');
     const [open, setOpen] = useState<any>();
 
+    const [activity, setActivity] = useState<any[]>();
+
     const { compId } = useParams();
 
     const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI);
@@ -57,11 +59,15 @@ export default function PlayCompetition() {
     useEffect(() => {
         async function onLoad() {
             try {
-                const competition = await API.get("api", `/competition/${compId}`, {});
+                const [competition, packs, activity] = await Promise.all([
+                    API.get("api", `/competition/${compId}`, {}),
+                    API.get("api", `/pack?include=tasks`, {}),
+                    API.get("api", `/competition/${compId}/activity`, {})
+                ]);
+                
                 setCompetition(competition);
-
-                const packs = await API.get("api", `/pack?include=tasks`, {});
                 setPacks(packs);
+                setActivity(activity);
             } catch (e) {
                 console.log(e);
             }
@@ -70,7 +76,7 @@ export default function PlayCompetition() {
         onLoad();
     }, []);
 
-    if (!competition || !packs || webhookStatus != "Open") {
+    if (!competition || !packs || webhookStatus != "Open" || !activity) {
         return (
             <Box sx={{
                 display: 'flex',
@@ -94,6 +100,7 @@ export default function PlayCompetition() {
                 <Typography level="title-lg" textColor="common.white" sx={{ mt: 2 }}>Getting ready</Typography>
                 { !competition && <Typography level="body-sm" textColor="common.white">Downloading competition data</Typography> }
                 { !packs && <Typography level="body-sm" textColor="common.white">Downloading pack data</Typography> }
+                { !activity && <Typography level="body-sm" textColor="common.white">Downloading task completion data</Typography> }
                 { webhookStatus != "Open" && <Typography level="body-sm" textColor="common.white">Connecting to stream</Typography> }
 
             </CardContent>
@@ -172,16 +179,16 @@ export default function PlayCompetition() {
             padding: '2%'
         }}>
 
-            
-
             <Stack spacing={2} sx={{ width: '100%' }}>
                 {packs.map((pack: any) => (
                     <>
                     <Typography level="h2" component="h1" textColor="common.white">{pack.name.S}</Typography>
                     <Box sx={{ display: 'grid', flexGrow: 1, gridTemplateColumns: 'repeat(5, 1fr)', justifyContent: 'center', gap: 2 }}>
-                        {pack.tasks.map((task: any) => (
-                            <Link component="button" onClick={() => { setSelectedTask(task); setSelectedTaskPackId(pack.PK.S); setOpen(true); }}>
-                                <Card variant="plain" sx={{ backgroundColor: 'rgb(0 0 0 / 0.3)', width: '100%' }}>
+                        {pack.tasks.map((task: any) => {
+                            const correct = activity.find( a => a.taskId.S==task.SK.S.split('#')[1] && a.correct );
+                            return (
+                            <Link component="button" onClick={() => { setSelectedTask(task); setSelectedTaskPackId(pack.PK.S); setOpen(true); }} disabled={correct}>
+                                <Card variant="plain" sx={{ backgroundColor: correct ? 'rgb(0 255 0 / 0.4)' : 'rgb(0 0 0 / 0.3)', width: '100%' }}>
                                     <CardContent sx={{
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -196,7 +203,7 @@ export default function PlayCompetition() {
                                 </CardContent>
                         </Card>
                       </Link>
-                        ))}
+                        )})}
                     </Box>
                     </>
                 ))}
