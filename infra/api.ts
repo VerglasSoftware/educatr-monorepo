@@ -1,4 +1,5 @@
-import { competitionTable, organisationTable, packTable } from "./storage";
+import { competitionTable, organisationTable, packTable, socketConnectionsTable } from "./storage";
+import { socketApi } from "./socketApi";
 
 export const api = new sst.aws.ApiGatewayV2("Api", {
 	domain: $app.stage === "prod" ? "api.educatr.uk" : undefined,
@@ -8,7 +9,7 @@ export const api = new sst.aws.ApiGatewayV2("Api", {
 				auth: { iam: true },
 			},
 			handler: {
-				link: [packTable, organisationTable, competitionTable],
+				link: [packTable, organisationTable, competitionTable, socketApi, socketConnectionsTable],
 			},
 		},
 	},
@@ -112,6 +113,9 @@ api.route("PUT /competition/{id}", {
 });
 api.route("DELETE /competition/{id}", {
 	handler: "packages/functions/src/competition.del",
+});
+api.route("POST /competition/{id}/check", {
+	handler: "packages/functions/src/competition.check",
 });
 
 api.route("GET /competition/{compId}/activity", {

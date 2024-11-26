@@ -11,6 +11,8 @@ import Sidebar from "./components/Sidebar.tsx";
 import { type ISourceOptions } from "@tsparticles/engine";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadFull } from "tsparticles";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [isAuthenticated, userHasAuthenticated] = useState(false);
@@ -146,6 +148,18 @@ function App() {
               )
             }
           </CssVarsProvider>
+          <ToastContainer
+            position="bottom-right"
+            autoClose={2500}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover
+            theme="dark"
+          />
         </AppContext.Provider>
       </div>
     )
