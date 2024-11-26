@@ -4,6 +4,7 @@ import { QueryCommand, DynamoDBDocumentClient, PutCommand, DeleteCommand, Update
 import { Resource } from "sst";
 import { createId } from "@paralleldrive/cuid2";
 import { Util } from "@educatr/core/util";
+import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -217,14 +218,43 @@ export const check: Handler = Util.handler(async (event) => {
 				taskId: data.taskId,
 				correct: result,
 				createdAt: Date.now(),
-			},
+			}
 		};
+
+		var putResult: any;
 	
 		try {
-			await client.send(new PutCommand(params));
+			putResult = await client.send(new PutCommand(params));
 		} catch (e) {
 			throw new Error("Could not create activity");
 		}
+
+		const connections = await client
+		.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
+
+		const apiG = new ApiGatewayManagementApi({
+			endpoint: Resource.SocketApi.managementEndpoint,
+		});
+
+		const postToConnection = async function ({ id }: any) {
+			try {
+			await apiG
+				.postToConnection({ ConnectionId: id.S, Data: JSON.stringify({
+					filter: {
+						competitionId: pk,
+					},
+					type: "TASK:ANSWERED",
+					body: params.Item
+				}) });
+			} catch (e: any) {
+			if (e.statusCode === 410) {
+				// Remove stale connections
+				await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+			}
+			}
+		};
+
+		await Promise.all(connections.Items!.map(postToConnection));
 
 		return JSON.stringify({ result });
 	}
