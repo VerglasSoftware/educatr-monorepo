@@ -206,12 +206,43 @@ export const check: Handler = Util.handler(async (event) => {
 
 	console.log(task.verificationType);
 
+	async function returnAnswer(result: boolean) {
+		const params = {
+			TableName: Resource.Competitions.name,
+			Item: {
+				PK: pk,
+				SK: "ACTIVITY#" + createId(),
+				userId: data.userId,
+				packId: data.packId,
+				taskId: data.taskId,
+				correct: result,
+				createdAt: Date.now(),
+			},
+		};
+	
+		try {
+			await client.send(new PutCommand(params));
+		} catch (e) {
+			throw new Error("Could not create activity");
+		}
+
+		return JSON.stringify({ result });
+	}
+
 	switch(task.verificationType) {
 		case "COMPARE":
 			if (task.answer.trim() === data.answer.trim()) {
-				return JSON.stringify({ result: true });
+				return await returnAnswer(true);
 			} else {
-				return JSON.stringify({ result: false });
+				return await returnAnswer(false);
+			}
+		case "MULTIPLE":
+			const possibleAnswers = JSON.parse(task.answer);
+			const correctAnswer = possibleAnswers.find((answer: any) => answer.correct === true);
+			if (correctAnswer.text == data.answer) {
+				return await returnAnswer(true);
+			} else {
+				return await returnAnswer(false);
 			}
 		default:
 			throw new Error("Verification type not supported");
