@@ -19,15 +19,13 @@ import { API } from "aws-amplify";
 import { toast } from "react-toastify";
 
 export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any, packId: string }) {
-	const nav = useNavigate();
-	const { orgId } = useParams();
-
     const [answer, setAnswer] = React.useState<string>('');
     const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
 
     async function submitTask() {
         setSubmitTaskLoading(true);
-        const result = await API.post("api", `/competition/${competition.id}/check`, {
+        try {
+        const result = await API.post("api", `/competition/${competition.PK}/check`, {
             body: {
                 packId: packId,
                 taskId: task.SK.S.split("#")[1],
@@ -42,6 +40,10 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
             setOpen(false);
         } else {
             toast.error(`You answered ${task.title.S} incorrectly, but no points have been taken from your team.`);
+        }
+        } catch (e) {
+            setSubmitTaskLoading(false);
+            toast.warn(`Something went wrong when checking your task.`);
         }
     }
 
@@ -85,7 +87,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
                                                 }
                                             </RadioGroup>
                                         </FormControl>
-                                        <Button loading={submitTaskLoading}>Submit</Button>
+                                        <Button onClick={submitTask} loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
@@ -96,7 +98,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
                                             <FormLabel>Answer</FormLabel>
                                             <CodeMirror height="50vh" extensions={[python()]} value={answer} onChange={(e) => setAnswer(e)} />
                                         </FormControl>
-                                        <Button loading={submitTaskLoading}>Submit</Button>
+                                        <Button onClick={submitTask} loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
@@ -107,7 +109,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
                                             <FormLabel>Answer</FormLabel>
                                             <CodeMirror height="50vh" extensions={[csharp()]} value={answer} onChange={(e) => setAnswer(e)} />
                                         </FormControl>
-                                        <Button loading={submitTaskLoading}>Submit</Button>
+                                        <Button onClick={submitTask} loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
@@ -121,7 +123,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
                                         <NewWindow>
                                             <iframe srcDoc={answer} className="bg-white w-full h-full" />
                                         </NewWindow>
-                                        <Button loading={submitTaskLoading}>Submit</Button>
+                                        <Button onClick={submitTask} loading={submitTaskLoading}>Submit</Button>
                                     </Stack>
                                 )
                             }
