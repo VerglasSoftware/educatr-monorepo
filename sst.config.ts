@@ -15,6 +15,8 @@ export default $config({
 		await import("./infra/web");
 		const auth = await import("./infra/auth");
 
+		await import("./infra/cluster");
+
 		return {
 			UserPool: auth.userPool.id,
 			Region: aws.getRegionOutput().name,
