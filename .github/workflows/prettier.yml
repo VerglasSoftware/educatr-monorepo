@@ -17,6 +17,7 @@ on:
       - '**/*.yml'
       - '**/*.css'
       - '**/*.scss'
+      - '**/*.tsx'
 
 permissions: write-all
 
