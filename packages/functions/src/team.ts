@@ -50,7 +50,7 @@ export const create: Handler = Util.handler(async (event) => {
 
 	let data = {
 		name: "",
-		students: []
+		students: [],
 	};
 
 	if (event.body != null) {
@@ -139,7 +139,7 @@ export const update: Handler = Util.handler(async (event) => {
 
 	let data = {
 		name: "",
-		students: []
+		students: [],
 	};
 
 	if (event.body != null) {
