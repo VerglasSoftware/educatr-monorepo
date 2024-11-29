@@ -1,25 +1,25 @@
 name: Prettier
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+    pull_request:
+        types:
+            - opened
+            - synchronize
 
 permissions: write-all
 
 jobs:
-  Prettier:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-      - name: Prettify code
-        uses: creyD/prettier_action@v4.3
-        with:
-          prettier_options: "--write {**/*,*}.{js,jsx,html,json,md,yml,css,scss,ts,tsx}"
-          file_pattern: "."
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+    Prettier:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+              with:
+                  ref: ${{ github.head_ref }}
+                  fetch-depth: 0
+            - name: Prettify code
+              uses: creyD/prettier_action@v4.3
+              with:
+                  prettier_options: "--write {**/*,*}.{js,jsx,html,json,md,yml,css,scss,ts,tsx}"
+                  file_pattern: "."
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
