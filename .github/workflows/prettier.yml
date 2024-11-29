@@ -20,6 +20,6 @@ jobs:
       - name: Prettify code
         uses: creyD/prettier_action@v4.3
         with:
-          prettier_options: "--write {**/*,*}.{js,jsx,html,json,md,yml,css,scss,ts,tsx,svg}"
+          prettier_options: "--write {**/*,*}.{js,jsx,html,json,md,yml,css,scss,ts,tsx}"
           file_pattern: "."
           github_token: ${{ secrets.GITHUB_TOKEN }}
