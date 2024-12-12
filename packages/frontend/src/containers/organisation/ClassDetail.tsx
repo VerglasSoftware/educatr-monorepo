@@ -12,7 +12,7 @@ import TaskTable from "../../components/dash/packs/TaskTable";
 export default function ClassDetail() {
 	const [clazz, setClass] = useState<any>();
 
-    const [name, setName] = useState<any>("");
+	const [name, setName] = useState<any>("");
 
 	const { orgId, classId } = useParams();
 
@@ -21,7 +21,7 @@ export default function ClassDetail() {
 			try {
 				const clazz = await API.get("api", `/organisation/${orgId}/class/${classId}`, {});
 				setClass(clazz);
-                setName(clazz.name);
+				setName(clazz.name);
 			} catch (e) {
 				console.log(e);
 			}
@@ -89,22 +89,24 @@ export default function ClassDetail() {
 						</Typography>
 					</Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
-                        <Box sx={{ gridColumn: 'span 6' }}>
-                        <Card sx={{ flexGrow: '1' }}>
+					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
+						<Box sx={{ gridColumn: "span 6" }}>
+							<Card sx={{ flexGrow: "1" }}>
 								<Stack
 									direction="row"
 									spacing={1}
 									sx={{ my: 1 }}>
-									<Stack spacing={2} sx={{ width: '100%' }}>
+									<Stack
+										spacing={2}
+										sx={{ width: "100%" }}>
 										<Stack spacing={1}>
 											<FormLabel>Name</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
 												<Input
 													size="sm"
 													placeholder="Name"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
+													value={name}
+													onChange={(e) => setName(e.target.value)}
 												/>
 											</FormControl>
 										</Stack>
@@ -115,23 +117,22 @@ export default function ClassDetail() {
 										<Button
 											size="sm"
 											variant="solid"
-                                            onClick={async () => {
-                                                const updatedClass = await API.put("api", `/organisation/${orgId}/class/${classId}`, {
-                                                    body: {
-                                                        name,
-                                                        students: clazz.students || [],
-                                                    }
-                                                });
-                                                setClass(updatedClass);
-                                            }}
-                                            >
+											onClick={async () => {
+												const updatedClass = await API.put("api", `/organisation/${orgId}/class/${classId}`, {
+													body: {
+														name,
+														students: clazz.students || [],
+													},
+												});
+												setClass(updatedClass);
+											}}>
 											Save
 										</Button>
 									</CardActions>
 								</CardOverflow>
 							</Card>
-                        </Box>
-                    </Box>
+						</Box>
+					</Box>
 				</div>
 			</div>
 		)

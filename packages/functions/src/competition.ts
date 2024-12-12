@@ -26,8 +26,8 @@ export const create: Handler = Util.handler(async (event) => {
 	let data = {
 		name: "",
 		status: "",
-        organisationId: "",
-        packs: []
+		organisationId: "",
+		packs: [],
 	};
 
 	if (event.body != null) {
@@ -42,7 +42,7 @@ export const create: Handler = Util.handler(async (event) => {
 			name: data.name,
 			status: data.status,
 			userStartedById: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
-            organisationId: data.organisationId,
+			organisationId: data.organisationId,
 			createdAt: Date.now(),
 		},
 	};
@@ -128,7 +128,7 @@ export const update: Handler = Util.handler(async (event) => {
 	let data = {
 		name: "",
 		status: "",
-        packs: []
+		packs: [],
 	};
 
 	if (event.body != null) {
@@ -147,12 +147,12 @@ export const update: Handler = Util.handler(async (event) => {
 		ExpressionAttributeNames: {
 			"#name": "name",
 			"#status": "status",
-            "#packs": "packs"
+			"#packs": "packs",
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
 			":status": data.status,
-            ":packs": data.packs
+			":packs": data.packs,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -176,7 +176,7 @@ export const check: Handler = Util.handler(async (event) => {
 		packId: "",
 		taskId: "",
 		userId: "",
-        answer: ""
+		answer: "",
 	};
 
 	if (event.body != null) {
@@ -218,19 +218,18 @@ export const check: Handler = Util.handler(async (event) => {
 				taskId: data.taskId,
 				correct: result,
 				createdAt: Date.now(),
-			}
+			},
 		};
 
 		var putResult: any;
-	
+
 		try {
 			putResult = await client.send(new PutCommand(params));
 		} catch (e) {
 			throw new Error("Could not create activity");
 		}
 
-		const connections = await client
-		.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
+		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
 
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
@@ -238,19 +237,21 @@ export const check: Handler = Util.handler(async (event) => {
 
 		const postToConnection = async function ({ id }: any) {
 			try {
-			await apiG
-				.postToConnection({ ConnectionId: id.S, Data: JSON.stringify({
-					filter: {
-						competitionId: pk,
-					},
-					type: "TASK:ANSWERED",
-					body: params.Item
-				}) });
+				await apiG.postToConnection({
+					ConnectionId: id.S,
+					Data: JSON.stringify({
+						filter: {
+							competitionId: pk,
+						},
+						type: "TASK:ANSWERED",
+						body: params.Item,
+					}),
+				});
 			} catch (e: any) {
-			if (e.statusCode === 410) {
-				// Remove stale connections
-				await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
-			}
+				if (e.statusCode === 410) {
+					// Remove stale connections
+					await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+				}
 			}
 		};
 
@@ -259,7 +260,7 @@ export const check: Handler = Util.handler(async (event) => {
 		return JSON.stringify({ result });
 	}
 
-	switch(task.verificationType) {
+	switch (task.verificationType) {
 		case "COMPARE":
 			if (task.answer.trim() === data.answer.trim()) {
 				return await returnAnswer(true);
