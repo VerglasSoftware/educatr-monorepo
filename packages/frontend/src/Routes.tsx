@@ -120,7 +120,6 @@ export default function Links() {
 					</AuthenticatedRoute>
 				}
 			/>
-
 		</Routes>
 	);
 }

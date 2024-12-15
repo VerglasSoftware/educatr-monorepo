@@ -9,20 +9,21 @@ import { useLocation } from "react-router-dom";
 export default function Sidebar({ className = "", disabled = false, isLoading = false, ...props }) {
 	const [organisations, setOrganisations] = useState<any[]>([]);
 
-  useEffect(() => {
-    async function onLoad() {
-        try {
-            const organisations = await API.get("api", "/organisation", {});
-            setOrganisations(organisations);
-        } catch (e) {
-            console.log(e);
-        }
-    }3
+	useEffect(() => {
+		async function onLoad() {
+			try {
+				const organisations = await API.get("api", "/organisation", {});
+				setOrganisations(organisations);
+			} catch (e) {
+				console.log(e);
+			}
+		}
+		3;
 
-    onLoad();
-  }, []);
+		onLoad();
+	}, []);
 
-  const location = useLocation();
+	const location = useLocation();
 
 	return (
 		<Box
@@ -50,7 +51,7 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 						<ListItem>
 							<ListItemButton
 								selected={location.pathname === `/dash/packs`}
-                component="a"
+								component="a"
 								href="/dash/packs">
 								<ListItemDecorator>
 									<FaBox fontSize="small" />
@@ -60,46 +61,46 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 						</ListItem>
 					</List>
 				</ListItem>
-        {organisations.map((org) => (
-          <ListItem nested>
-					<ListSubheader sx={{ letterSpacing: "2px", fontWeight: "800" }}>Owned by {org.name.S}</ListSubheader>
-					<List aria-labelledby="nav-list-browse">
-            <ListItem>
-							<ListItemButton
-								selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}/competitions`}
-                component="a"
-								href={`/dash/${org.PK.S.split("ORG#")[1]}/competitions`}>
-								<ListItemDecorator>
-									<FaTrophy fontSize="small" />
-								</ListItemDecorator>
-								<ListItemContent>Competitions</ListItemContent>
-							</ListItemButton>
-						</ListItem>
-            <ListItem>
-							<ListItemButton
-								selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}/classes`}
-                component="a"
-								href={`/dash/${org.PK.S.split("ORG#")[1]}/classes`}>
-								<ListItemDecorator>
-									<FaPeopleGroup fontSize="small" />
-								</ListItemDecorator>
-								<ListItemContent>Classes</ListItemContent>
-							</ListItemButton>
-						</ListItem>
-            <ListItem>
-							<ListItemButton
-								selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}`}
-                component="a"
-								href={`/dash/${org.PK.S.split("ORG#")[1]}`}>
-								<ListItemDecorator>
-									<FaGear fontSize="small" />
-								</ListItemDecorator>
-								<ListItemContent>Settings</ListItemContent>
-							</ListItemButton>
-						</ListItem>
-					</List>
-				</ListItem>
-        ))}
+				{organisations.map((org) => (
+					<ListItem nested>
+						<ListSubheader sx={{ letterSpacing: "2px", fontWeight: "800" }}>Owned by {org.name.S}</ListSubheader>
+						<List aria-labelledby="nav-list-browse">
+							<ListItem>
+								<ListItemButton
+									selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}/competitions`}
+									component="a"
+									href={`/dash/${org.PK.S.split("ORG#")[1]}/competitions`}>
+									<ListItemDecorator>
+										<FaTrophy fontSize="small" />
+									</ListItemDecorator>
+									<ListItemContent>Competitions</ListItemContent>
+								</ListItemButton>
+							</ListItem>
+							<ListItem>
+								<ListItemButton
+									selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}/classes`}
+									component="a"
+									href={`/dash/${org.PK.S.split("ORG#")[1]}/classes`}>
+									<ListItemDecorator>
+										<FaPeopleGroup fontSize="small" />
+									</ListItemDecorator>
+									<ListItemContent>Classes</ListItemContent>
+								</ListItemButton>
+							</ListItem>
+							<ListItem>
+								<ListItemButton
+									selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}`}
+									component="a"
+									href={`/dash/${org.PK.S.split("ORG#")[1]}`}>
+									<ListItemDecorator>
+										<FaGear fontSize="small" />
+									</ListItemDecorator>
+									<ListItemContent>Settings</ListItemContent>
+								</ListItemButton>
+							</ListItem>
+						</List>
+					</ListItem>
+				))}
 			</List>
 		</Box>
 	);

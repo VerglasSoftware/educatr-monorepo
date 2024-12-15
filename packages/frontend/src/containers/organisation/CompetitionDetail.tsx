@@ -12,9 +12,9 @@ import { FaPlus } from "react-icons/fa6";
 
 export default function CompetitionDetail() {
 	const [competition, setCompetition] = useState<any>();
-    const [teams, setTeams] = useState<any>([]);
+	const [teams, setTeams] = useState<any>([]);
 
-    const [name, setName] = useState<any>("");
+	const [name, setName] = useState<any>("");
 
 	const { compId } = useParams();
 
@@ -23,10 +23,10 @@ export default function CompetitionDetail() {
 			try {
 				const competition = await API.get("api", `/competition/${compId}`, {});
 				setCompetition(competition);
-                setName(competition.name);
+				setName(competition.name);
 
-                const teams = await API.get("api", `/competition/${compId}/team`, {});
-                setTeams(teams);
+				const teams = await API.get("api", `/competition/${compId}/team`, {});
+				setTeams(teams);
 			} catch (e) {
 				console.log(e);
 			}
@@ -94,22 +94,24 @@ export default function CompetitionDetail() {
 						</Typography>
 					</Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
-                        <Box sx={{ gridColumn: 'span 6' }}>
-                        <Card sx={{ flexGrow: '1' }}>
+					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
+						<Box sx={{ gridColumn: "span 6" }}>
+							<Card sx={{ flexGrow: "1" }}>
 								<Stack
 									direction="row"
 									spacing={1}
 									sx={{ my: 1 }}>
-									<Stack spacing={2} sx={{ width: '100%' }}>
+									<Stack
+										spacing={2}
+										sx={{ width: "100%" }}>
 										<Stack spacing={1}>
 											<FormLabel>Name</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
 												<Input
 													size="sm"
 													placeholder="Name"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
+													value={name}
+													onChange={(e) => setName(e.target.value)}
 												/>
 											</FormControl>
 										</Stack>
@@ -120,31 +122,30 @@ export default function CompetitionDetail() {
 										<Button
 											size="sm"
 											variant="solid"
-                                            onClick={async () => {
-                                                const updatedCompetition = await API.put("api", `/competition/${compId}`, {
-                                                    body: {
-                                                        name,
-                                                        status: competition.status || '',
-                                                        packs: competition.packs || [],
-                                                    }
-                                                });
-                                                setCompetition(updatedCompetition);
-                                            }}
-                                            >
+											onClick={async () => {
+												const updatedCompetition = await API.put("api", `/competition/${compId}`, {
+													body: {
+														name,
+														status: competition.status || "",
+														packs: competition.packs || [],
+													},
+												});
+												setCompetition(updatedCompetition);
+											}}>
 											Save
 										</Button>
 									</CardActions>
 								</CardOverflow>
 							</Card>
-                        </Box>
-                        <Box sx={{ gridColumn: 'span 6' }}>
-                            <CompetitionPackTable competition={competition} />
-                        </Box>
-                    </Box>
+						</Box>
+						<Box sx={{ gridColumn: "span 6" }}>
+							<CompetitionPackTable competition={competition} />
+						</Box>
+					</Box>
 
-                    <Divider sx={{ my: 2 }} />
+					<Divider sx={{ my: 2 }} />
 
-                    <Box
+					<Box
 						sx={{
 							display: "flex",
 							mb: 1,
@@ -153,85 +154,99 @@ export default function CompetitionDetail() {
 							alignItems: { xs: "start", sm: "center" },
 							flexWrap: "wrap",
 							justifyContent: "space-between",
-                            
 						}}>
 						<Typography
 							level="h3"
 							component="h2">
 							Teams
 						</Typography>
-                        <Button
-                            color="primary"
-                            startDecorator={<FaPlus />}
-                            size="sm"
-                            onClick={async () => {
-                                const newTeam = await API.post("api", `/competition/${compId}/team`, {
-                                    body: {
-                                        name: "New team",
-                                        students: [],
-                                    }
-                                });
+						<Button
+							color="primary"
+							startDecorator={<FaPlus />}
+							size="sm"
+							onClick={async () => {
+								const newTeam = await API.post("api", `/competition/${compId}/team`, {
+									body: {
+										name: "New team",
+										students: [],
+									},
+								});
 
-                                setTeams([...teams, newTeam]);
-                            }}
-                        >
-                            New team
-                        </Button>
+								setTeams([...teams, newTeam]);
+							}}>
+							New team
+						</Button>
 					</Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
-                            {teams.map((team: any) => (
-                                <Box sx={{ gridColumn: 'span 3' }}>
-                                <Card sx={{ flexGrow: '1' }}>
-                                <Stack
-                                    direction="row"
-                                    spacing={1}
-                                    sx={{ my: 1 }}>
-                                    <Stack spacing={2} sx={{ width: '100%' }}>
-                                        <Stack spacing={1}>
-                                            <FormLabel>Name</FormLabel>
-                                            <FormControl sx={{ gap: 2 }}>
-                                                <Input
-                                                    size="sm"
-                                                    placeholder="Name"
-                                                    defaultValue={team.name.S}
-                                                />
-                                            </FormControl>
-                                        </Stack>
-                                        <Stack spacing={1}>
-                                            <FormLabel>Members</FormLabel>
-                                            <FormControl sx={{ gap: 2 }}>
-                                                <Autocomplete placeholder="Members" size="sm" options={[]} />
-                                            </FormControl>
-                                        </Stack>
-                                    </Stack>
-                                </Stack>
-                                <CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
-                                    <CardActions buttonFlex="1">
-                                    <ButtonGroup sx={{ bgcolor: 'background.surface' }} size="sm">
-                                        <Button onClick={async () => {
-                                            await API.del("api", `/competition/${compId}/team/${team.SK.S.split('#')[1]}`, {});
-                                            setTeams(teams.filter((t: any) => t.SK.S == team.SK.S));
-                                        }}>Delete</Button>
-                                        <Button variant="solid" color="primary" onClick={async (e) => {
-                                            const name = e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement?.querySelectorAll('input')[0].value;
+					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
+						{teams.map((team: any) => (
+							<Box sx={{ gridColumn: "span 3" }}>
+								<Card sx={{ flexGrow: "1" }}>
+									<Stack
+										direction="row"
+										spacing={1}
+										sx={{ my: 1 }}>
+										<Stack
+											spacing={2}
+											sx={{ width: "100%" }}>
+											<Stack spacing={1}>
+												<FormLabel>Name</FormLabel>
+												<FormControl sx={{ gap: 2 }}>
+													<Input
+														size="sm"
+														placeholder="Name"
+														defaultValue={team.name.S}
+													/>
+												</FormControl>
+											</Stack>
+											<Stack spacing={1}>
+												<FormLabel>Members</FormLabel>
+												<FormControl sx={{ gap: 2 }}>
+													<Autocomplete
+														placeholder="Members"
+														size="sm"
+														options={[]}
+													/>
+												</FormControl>
+											</Stack>
+										</Stack>
+									</Stack>
+									<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
+										<CardActions buttonFlex="1">
+											<ButtonGroup
+												sx={{ bgcolor: "background.surface" }}
+												size="sm">
+												<Button
+													onClick={async () => {
+														await API.del("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {});
+														setTeams(teams.filter((t: any) => t.SK.S == team.SK.S));
+													}}>
+													Delete
+												</Button>
+												<Button
+													variant="solid"
+													color="primary"
+													onClick={async (e) => {
+														const name = e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement?.querySelectorAll("input")[0].value;
 
-                                            const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.S.split('#')[1]}`, {
-                                                body: {
-                                                    name,
-                                                    students: [],
-                                                }
-                                            });
+														const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {
+															body: {
+																name,
+																students: [],
+															},
+														});
 
-                                            setTeams(teams.map((t: any) => t.SK.S == team.SK.S ? updatedTeam : t));
-                                        }}>Save</Button>
-                                    </ButtonGroup>
-                                    </CardActions>
-                                </CardOverflow>
-                            </Card>
-                            </Box>
-                                ))}
-                    </Box>
+														setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? updatedTeam : t)));
+													}}>
+													Save
+												</Button>
+											</ButtonGroup>
+										</CardActions>
+									</CardOverflow>
+								</Card>
+							</Box>
+						))}
+					</Box>
 				</div>
 			</div>
 		)

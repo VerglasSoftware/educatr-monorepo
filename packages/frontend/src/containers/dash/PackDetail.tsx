@@ -1,5 +1,5 @@
 import { Box, Breadcrumbs, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Link, Stack, Textarea, Typography } from "@mui/joy";
-import Grid from '@mui/joy/Grid';
+import Grid from "@mui/joy/Grid";
 import "./PackDetail.css";
 import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
@@ -13,8 +13,8 @@ import TaskTable from "../../components/dash/packs/TaskTable";
 export default function PackDetail() {
 	const [pack, setPack] = useState<any>();
 
-    const [name, setName] = useState<any>("");
-    const [description, setDescription] = useState<any>("");
+	const [name, setName] = useState<any>("");
+	const [description, setDescription] = useState<any>("");
 
 	const { id } = useParams();
 
@@ -23,8 +23,8 @@ export default function PackDetail() {
 			try {
 				const pack = await API.get("api", `/pack/${id}`, {});
 				setPack(pack);
-                setName(pack.name);
-                setDescription(pack.description);
+				setName(pack.name);
+				setDescription(pack.description);
 			} catch (e) {
 				console.log(e);
 			}
@@ -92,22 +92,24 @@ export default function PackDetail() {
 						</Typography>
 					</Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
-                        <Box sx={{ gridColumn: 'span 6' }}>
-                        <Card sx={{ flexGrow: '1' }}>
+					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
+						<Box sx={{ gridColumn: "span 6" }}>
+							<Card sx={{ flexGrow: "1" }}>
 								<Stack
 									direction="row"
 									spacing={1}
 									sx={{ my: 1 }}>
-									<Stack spacing={2} sx={{ width: '100%' }}>
+									<Stack
+										spacing={2}
+										sx={{ width: "100%" }}>
 										<Stack spacing={1}>
 											<FormLabel>Name</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
 												<Input
 													size="sm"
 													placeholder="Name"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
+													value={name}
+													onChange={(e) => setName(e.target.value)}
 												/>
 											</FormControl>
 										</Stack>
@@ -115,11 +117,11 @@ export default function PackDetail() {
 											<FormLabel>Description</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
 												<Textarea
-                                                    minRows={2}
+													minRows={2}
 													size="sm"
 													placeholder="Description"
-                                                    value={description}
-                                                    onChange={(e) => setDescription(e.target.value)}
+													value={description}
+													onChange={(e) => setDescription(e.target.value)}
 												/>
 											</FormControl>
 										</Stack>
@@ -130,27 +132,26 @@ export default function PackDetail() {
 										<Button
 											size="sm"
 											variant="solid"
-                                            onClick={async () => {
-                                                const updatedPack = await API.put("api", `/pack/${id}`, {
-                                                    body: {
-                                                        name,
-                                                        description,
-                                                        ownerId: pack.ownerId,
-                                                    }
-                                                });
-                                                setPack(updatedPack);
-                                            }}
-                                            >
+											onClick={async () => {
+												const updatedPack = await API.put("api", `/pack/${id}`, {
+													body: {
+														name,
+														description,
+														ownerId: pack.ownerId,
+													},
+												});
+												setPack(updatedPack);
+											}}>
 											Save
 										</Button>
 									</CardActions>
 								</CardOverflow>
 							</Card>
-                        </Box>
-                        <Box sx={{ gridColumn: 'span 6' }}>
-                            <TaskTable />
-                        </Box>
-                    </Box>
+						</Box>
+						<Box sx={{ gridColumn: "span 6" }}>
+							<TaskTable />
+						</Box>
+					</Box>
 				</div>
 			</div>
 		)

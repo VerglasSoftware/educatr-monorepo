@@ -12,8 +12,8 @@ import TaskTable from "../../components/dash/packs/TaskTable";
 export default function OrganisationDetail() {
 	const [organisation, setOrganisation] = useState<any>();
 
-    const [name, setName] = useState<any>("");
-    const [logo, setLogo] = useState<any>("");
+	const [name, setName] = useState<any>("");
+	const [logo, setLogo] = useState<any>("");
 
 	const { id } = useParams();
 
@@ -22,8 +22,8 @@ export default function OrganisationDetail() {
 			try {
 				const organisation = await API.get("api", `/organisation/${id}`, {});
 				setOrganisation(organisation);
-                setName(organisation.name);
-                setLogo(organisation.logo);
+				setName(organisation.name);
+				setLogo(organisation.logo);
 			} catch (e) {
 				console.log(e);
 			}
@@ -84,22 +84,24 @@ export default function OrganisationDetail() {
 						</Typography>
 					</Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
-                        <Box sx={{ gridColumn: 'span 6' }}>
-                        <Card sx={{ flexGrow: '1' }}>
+					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
+						<Box sx={{ gridColumn: "span 6" }}>
+							<Card sx={{ flexGrow: "1" }}>
 								<Stack
 									direction="row"
 									spacing={1}
 									sx={{ my: 1 }}>
-									<Stack spacing={2} sx={{ width: '100%' }}>
+									<Stack
+										spacing={2}
+										sx={{ width: "100%" }}>
 										<Stack spacing={1}>
 											<FormLabel>Name</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
 												<Input
 													size="sm"
 													placeholder="Name"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
+													value={name}
+													onChange={(e) => setName(e.target.value)}
 												/>
 											</FormControl>
 										</Stack>
@@ -107,11 +109,11 @@ export default function OrganisationDetail() {
 											<FormLabel>Logo</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
 												<Textarea
-                                                    minRows={2}
+													minRows={2}
 													size="sm"
 													placeholder="Logo"
-                                                    value={logo}
-                                                    onChange={(e) => setLogo(e.target.value)}
+													value={logo}
+													onChange={(e) => setLogo(e.target.value)}
 												/>
 											</FormControl>
 										</Stack>
@@ -122,24 +124,23 @@ export default function OrganisationDetail() {
 										<Button
 											size="sm"
 											variant="solid"
-                                            onClick={async () => {
-                                                const updatedOrganisation = await API.put("api", `/organisation/${id}`, {
-                                                    body: {
-                                                        name,
-                                                        logo,
-                                                        students: organisation.students || [],
-                                                    }
-                                                });
-                                                setOrganisation(updatedOrganisation);
-                                            }}
-                                            >
+											onClick={async () => {
+												const updatedOrganisation = await API.put("api", `/organisation/${id}`, {
+													body: {
+														name,
+														logo,
+														students: organisation.students || [],
+													},
+												});
+												setOrganisation(updatedOrganisation);
+											}}>
 											Save
 										</Button>
 									</CardActions>
 								</CardOverflow>
 							</Card>
-                        </Box>
-                    </Box>
+						</Box>
+					</Box>
 				</div>
 			</div>
 		)
