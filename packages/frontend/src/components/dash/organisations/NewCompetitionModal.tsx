@@ -1,15 +1,15 @@
-import * as React from "react";
 import Button from "@mui/joy/Button";
+import DialogContent from "@mui/joy/DialogContent";
+import DialogTitle from "@mui/joy/DialogTitle";
 import FormControl from "@mui/joy/FormControl";
 import FormLabel from "@mui/joy/FormLabel";
 import Input from "@mui/joy/Input";
 import Modal from "@mui/joy/Modal";
 import ModalDialog from "@mui/joy/ModalDialog";
-import DialogTitle from "@mui/joy/DialogTitle";
-import DialogContent from "@mui/joy/DialogContent";
 import Stack from "@mui/joy/Stack";
-import { useNavigate, useParams } from "react-router-dom";
 import { API } from "aws-amplify";
+import * as React from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function NewCompetitionModal({ open, setOpen }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
 	const nav = useNavigate();
@@ -30,6 +30,7 @@ export default function NewCompetitionModal({ open, setOpen }: { open: boolean; 
 							const competition = await API.post("api", `/competition`, {
 								body: {
 									name: event.currentTarget.elements[0].value,
+									organisationId: orgId,
 								},
 							});
 
