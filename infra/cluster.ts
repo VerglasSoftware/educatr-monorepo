@@ -33,33 +33,33 @@
 // pistonApi.routePrivate("$default", pistonService.nodes.cloudmapService.arn);
 
 const securityGroup = new aws.ec2.SecurityGroup("web-secgrp", {
-  ingress: [
-    {
-      protocol: "tcp",
-      fromPort: 2358,
-      toPort: 2358,
-      cidrBlocks: ["0.0.0.0/0"],
-    },
-  ],
-  egress: [
-    {
-      protocol: "-1",
-      fromPort: 0,
-      toPort: 0,
-      cidrBlocks: ["0.0.0.0/0"],
-    },
-  ],
+	ingress: [
+		{
+			protocol: "tcp",
+			fromPort: 2358,
+			toPort: 2358,
+			cidrBlocks: ["0.0.0.0/0"],
+		},
+	],
+	egress: [
+		{
+			protocol: "-1",
+			fromPort: 0,
+			toPort: 0,
+			cidrBlocks: ["0.0.0.0/0"],
+		},
+	],
 });
 
 const ami = aws.ec2.getAmi({
-  filters: [
-    {
-      name: "name",
-      values: ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"],
-    },
-  ],
-  mostRecent: true,
-  owners: ["099720109477"], // Canonical
+	filters: [
+		{
+			name: "name",
+			values: ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"],
+		},
+	],
+	mostRecent: true,
+	owners: ["099720109477"], // Canonical
 });
 
 const userData = `#!/bin/bash
@@ -147,31 +147,29 @@ sleep 5s
 echo "Deployment completed successfully!!"`;
 
 export const server = new aws.ec2.Instance("ExecuteServer", {
-  instanceType: "t2.micro",
-  ami: ami.then((ami) => ami.id),
-  userData: userData,
-  vpcSecurityGroupIds: [securityGroup.id],
-  associatePublicIpAddress: true,
-  userDataReplaceOnChange: true,
-  rootBlockDevice: {
-    volumeSize: 50,
-    volumeType: "gp2",
-  },
+	instanceType: "t2.micro",
+	ami: ami.then((ami) => ami.id),
+	userData: userData,
+	vpcSecurityGroupIds: [securityGroup.id],
+	associatePublicIpAddress: true,
+	userDataReplaceOnChange: true,
+	rootBlockDevice: {
+		volumeSize: 50,
+		volumeType: "gp2",
+	},
 });
 
 export const executeApi = new sst.aws.ApiGatewayV2("ExecuteApi", {
-  domain: $app.stage === "prod" ? "exec.educatr.uk" : undefined,
-  transform: {
+	domain: $app.stage === "prod" ? "exec.educatr.uk" : undefined,
+	transform: {
 		route: {
 			args: {
 				auth: { iam: $app.stage === "prod" },
 			},
 		},
-	}
+	},
 });
 
 server.publicIp.apply((ip) => {
-  executeApi.routeUrl("$default", `http://${ip}:2358`)
-})
-
-
+	executeApi.routeUrl("$default", `http://${ip}:2358`);
+});

@@ -1,14 +1,15 @@
 import { Box, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
-import "./Play.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
 import { API } from "aws-amplify";
-import { useParams } from "react-router-dom";
-import NavbarMain from "../../components/play/Navbar";
-import { DotWave } from "@uiball/loaders";
 import { cardio } from "ldrs";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
+import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import Loading from "../../components/play/Loading";
+import NavbarMain from "../../components/play/Navbar";
+import NotInProgress from "../../components/play/NotInProgress";
 import TaskModal from "../../components/play/TaskModal";
+import "./Play.css";
 
 export default function PlayCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -76,147 +77,17 @@ export default function PlayCompetition() {
 
 	if (!competition || !packs || webhookStatus != "Open" || !activity) {
 		return (
-			<Box
-				sx={{
-					display: "flex",
-					justifyContent: "center",
-					alignItems: "center",
-					height: "85vh",
-					flexDirection: "column",
-					overflow: "hidden",
-				}}>
-				<Card
-					variant="plain"
-					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "60%" }}>
-					<CardContent
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
-							padding: "2%",
-						}}>
-						<DotWave color="#FFF" />
-
-						<Typography
-							level="title-lg"
-							textColor="common.white"
-							sx={{ mt: 2 }}>
-							Getting ready
-						</Typography>
-						{!competition && (
-							<Typography
-								level="body-sm"
-								textColor="common.white">
-								Downloading competition data
-							</Typography>
-						)}
-						{!packs && (
-							<Typography
-								level="body-sm"
-								textColor="common.white">
-								Downloading pack data
-							</Typography>
-						)}
-						{!activity && (
-							<Typography
-								level="body-sm"
-								textColor="common.white">
-								Downloading task completion data
-							</Typography>
-						)}
-						{webhookStatus != "Open" && (
-							<Typography
-								level="body-sm"
-								textColor="common.white">
-								Connecting to stream
-							</Typography>
-						)}
-					</CardContent>
-				</Card>
-			</Box>
+			<Loading
+				competition={!!competition}
+				packs={!!packs}
+				activity={!!activity}
+				webhookStatus={!!webhookStatus}
+			/>
 		);
 	}
 
 	if (competition.status != "IN_PROGRESS") {
-		return (
-			<Box
-				sx={{
-					display: "flex",
-					justifyContent: "center",
-					alignItems: "center",
-					height: "85vh",
-					flexDirection: "column",
-					overflow: "hidden",
-				}}>
-				<Card
-					variant="plain"
-					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "60%" }}>
-					<CardContent
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
-							padding: "2%",
-						}}>
-						<l-cardio
-							size="50"
-							stroke="4"
-							speed="2"
-							color="white"></l-cardio>
-
-						{competition.status == "NOT_STARTED" && (
-							<>
-								<Typography
-									level="title-lg"
-									textColor="common.white"
-									sx={{ mt: 2 }}>
-									{competition.name} hasn't started yet
-								</Typography>
-								<Typography
-									level="body-sm"
-									textColor="common.white">
-									This screen will automatically refresh when we're ready to start
-								</Typography>
-							</>
-						)}
-
-						{competition.status == "PAUSED" && (
-							<>
-								<Typography
-									level="title-lg"
-									textColor="common.white"
-									sx={{ mt: 2 }}>
-									{competition.name} is paused
-								</Typography>
-								<Typography
-									level="body-sm"
-									textColor="common.white">
-									This screen will automatically refresh when we're ready to go again
-								</Typography>
-							</>
-						)}
-
-						{competition.status == "ENDED" && (
-							<>
-								<Typography
-									level="title-lg"
-									textColor="common.white"
-									sx={{ mt: 2 }}>
-									{competition.name} hasn't ended
-								</Typography>
-								<Typography
-									level="body-sm"
-									textColor="common.white">
-									Thanks for playing!
-								</Typography>
-							</>
-						)}
-					</CardContent>
-				</Card>
-			</Box>
-		);
+		return <NotInProgress competition={competition} />;
 	}
 
 	return (
@@ -224,9 +95,7 @@ export default function PlayCompetition() {
 			<Helmet>
 				<title>{competition.name}</title>
 			</Helmet>
-
 			<NavbarMain />
-
 			<Box
 				sx={{
 					display: "flex",

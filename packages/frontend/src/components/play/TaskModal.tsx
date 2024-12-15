@@ -1,26 +1,25 @@
-import * as React from "react";
+import { html } from "@codemirror/lang-html";
+import { python } from "@codemirror/lang-python";
+import { Divider, Radio, RadioGroup } from "@mui/joy";
 import Button from "@mui/joy/Button";
+import DialogContent from "@mui/joy/DialogContent";
+import DialogTitle from "@mui/joy/DialogTitle";
 import FormControl from "@mui/joy/FormControl";
 import FormLabel from "@mui/joy/FormLabel";
 import Input from "@mui/joy/Input";
 import Modal from "@mui/joy/Modal";
 import ModalDialog from "@mui/joy/ModalDialog";
-import DialogTitle from "@mui/joy/DialogTitle";
-import DialogContent from "@mui/joy/DialogContent";
 import Stack from "@mui/joy/Stack";
-import { useNavigate, useParams } from "react-router-dom";
-import CodeMirror from "@uiw/react-codemirror";
-import { Divider, Radio, RadioGroup } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
-import { python } from "@codemirror/lang-python";
-import { html } from "@codemirror/lang-html";
-import NewWindow from "react-new-window";
+import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
+import { Fragment, useEffect, useState } from "react";
+import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
 
 export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
-	const [answer, setAnswer] = React.useState<string>("");
-	const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
+	const [answer, setAnswer] = useState<string>("");
+	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 
 	async function submitTask() {
 		setSubmitTaskLoading(true);
@@ -46,10 +45,14 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 			toast.warn(`Something went wrong when checking your task.`);
 		}
 	}
-
+	useEffect(() => {
+		if (task) {
+			setAnswer(task.placeholder.S);
+		}
+	}, [task]);
 	return (
 		task && (
-			<React.Fragment>
+			<Fragment>
 				<Modal
 					open={open}
 					onClose={() => setOpen(false)}>
@@ -166,7 +169,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 						</DialogContent>
 					</ModalDialog>
 				</Modal>
-			</React.Fragment>
+			</Fragment>
 		)
 	);
 }
