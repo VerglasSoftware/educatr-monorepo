@@ -1,4 +1,4 @@
-import { competitionTable, organisationTable, packTable, socketConnectionsTable } from "./storage";
+import { competitionTable, organisationTable, packTable, socketConnectionsTable, userTable } from "./storage";
 import { socketApi } from "./socketApi";
 
 export const api = new sst.aws.ApiGatewayV2("Api", {
@@ -9,7 +9,7 @@ export const api = new sst.aws.ApiGatewayV2("Api", {
 				auth: { iam: true },
 			},
 			handler: {
-				link: [packTable, organisationTable, competitionTable, socketApi, socketConnectionsTable],
+				link: [packTable, organisationTable, competitionTable, socketApi, socketConnectionsTable, userTable],
 			},
 		},
 	},
@@ -148,4 +148,11 @@ api.route("PUT /competition/{orgId}/team/{teamId}", {
 });
 api.route("DELETE /competition/{orgId}/team/{teamId}", {
 	handler: "packages/functions/src/team.del",
+});
+
+api.route("GET /user/me", {
+	handler: "packages/functions/src/user.getMe",
+});
+api.route("PUT /user/me", {
+	handler: "packages/functions/src/user.updateMe",
 });
