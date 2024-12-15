@@ -185,6 +185,7 @@ export const check: Handler = Util.handler(async (event) => {
 		throw new Error("No body provided");
 	}
 
+	// get the task
 	const params = {
 		TableName: Resource.Packs.name,
 		Key: {
@@ -194,7 +195,6 @@ export const check: Handler = Util.handler(async (event) => {
 	};
 
 	var task;
-
 	try {
 		const result = await client.send(new GetCommand(params));
 		if (!result.Item) {
@@ -208,6 +208,7 @@ export const check: Handler = Util.handler(async (event) => {
 	console.log(task.verificationType);
 
 	async function returnAnswer(result: boolean) {
+		// create activity
 		const params = {
 			TableName: Resource.Competitions.name,
 			Item: {
@@ -221,16 +222,14 @@ export const check: Handler = Util.handler(async (event) => {
 			},
 		};
 
-		var putResult: any;
-
 		try {
-			putResult = await client.send(new PutCommand(params));
+			const putResult = await client.send(new PutCommand(params));
 		} catch (e) {
 			throw new Error("Could not create activity");
 		}
 
+		// send to all connected clients
 		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
-
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
@@ -256,7 +255,6 @@ export const check: Handler = Util.handler(async (event) => {
 		};
 
 		await Promise.all(connections.Items!.map(postToConnection));
-
 		return JSON.stringify({ result });
 	}
 
@@ -275,6 +273,28 @@ export const check: Handler = Util.handler(async (event) => {
 			} else {
 				return await returnAnswer(false);
 			}
+		case "ALGORITHM":
+			var result;
+			if (task.answerType === "PYTHON") {
+				// result = await API.post(Resource.ExecuteApi.url, `/submissions`, {
+				// 	body: {
+				// 		source_code: data.answer,
+				// 		language_id: 71,
+				// 	},
+				// });
+				console.log(result);
+			} else if (task.answerType === "CSHARP") {
+				// result = await API.post(Resource.ExecuteApi.url, `/submissions`, {
+				// 	body: {
+				// 		source_code: data.answer,
+				// 		language_id: 51,
+				// 	},
+				// });
+				console.log(result, "yes");
+			} else {
+				throw new Error("Answer type not supported");
+			}
+			console.log(result);
 		default:
 			throw new Error("Verification type not supported");
 	}
