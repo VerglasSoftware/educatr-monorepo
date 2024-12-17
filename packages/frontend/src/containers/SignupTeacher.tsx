@@ -4,6 +4,8 @@ import Stack from "react-bootstrap/Stack";
 import LoaderButton from "../components/LoaderButton";
 import { useFormFields } from "../lib/hooksLib";
 import "./SignupTeacher.css";
+import { Auth } from "aws-amplify";
+import { useNavigate } from "react-router-dom";
 
 export default function SignupTeacher() {
 	const [fields, handleFieldChange] = useFormFields({
@@ -12,6 +14,7 @@ export default function SignupTeacher() {
 		confirmPassword: "",
 	});
 
+	const nav = useNavigate();
 	const [isLoading, setIsLoading] = useState(false);
 
 	function validateForm() {
@@ -24,8 +27,18 @@ export default function SignupTeacher() {
 		setIsLoading(true);
 
 		try {
+			let r = (Math.random() + 1).toString(36).substring(7);
+
+			await Auth.signUp({
+				username: fields.email.split("@")[0] + "-" + r,
+				password: fields.password,
+				attributes: {
+					email: fields.email
+				}
+			});
+
 			setIsLoading(false);
-			alert("Not implemented yet");
+			nav("/login");
 		} catch (error) {
 			console.error(error);
 			if (error instanceof Error) {
