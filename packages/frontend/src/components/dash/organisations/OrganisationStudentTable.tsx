@@ -18,7 +18,7 @@ import { Button, Option, Select } from "@mui/joy";
 import { FaPlus } from "react-icons/fa6";
 import NewUserModal from "./NewUserModal";
 
-function RowMenu({ student, organisation, setStudents }: { student: any, organisation: any, setStudents: any }) {
+function RowMenu({ student, organisation, setStudents }: { student: any; organisation: any; setStudents: any }) {
 	return (
 		<Dropdown>
 			<MenuButton
@@ -33,14 +33,14 @@ function RowMenu({ student, organisation, setStudents }: { student: any, organis
 				<MenuItem
 					color="danger"
 					onClick={async () => {
-						const updatedOrganisation = await API.put("api", `/organisation/${organisation.PK.split('#')[1]}`, {
+						const updatedOrganisation = await API.put("api", `/organisation/${organisation.PK.split("#")[1]}`, {
 							body: {
 								...organisation,
 								students: organisation.students.filter((studentId: string) => studentId !== student.PK),
 							},
 						});
 
-						const students = await API.get("api", `/organisation/${organisation.PK.split('#')[1]}/students`, {});
+						const students = await API.get("api", `/organisation/${organisation.PK.split("#")[1]}/students`, {});
 						setStudents(students);
 					}}>
 					Remove
@@ -151,7 +151,9 @@ export default function OrganisationStudentTable({ organisation }: { organisatio
 									/>
 								</td>
 								<td>
-									<Typography level="body-xs">{row.given_name} {row.family_name}</Typography>
+									<Typography level="body-xs">
+										{row.given_name} {row.family_name}
+									</Typography>
 								</td>
 								<td>
 									<Typography level="body-xs">{row.username}</Typography>
@@ -170,7 +172,11 @@ export default function OrganisationStudentTable({ organisation }: { organisatio
 					</tbody>
 				</Table>
 			</Sheet>
-			<NewUserModal open={open} setOpen={setOpen} organisation={organisation} />
+			<NewUserModal
+				open={open}
+				setOpen={setOpen}
+				organisation={organisation}
+			/>
 		</React.Fragment>
 	);
 }

@@ -205,7 +205,6 @@ export const listStudents: Handler = Util.handler(async (event) => {
 		}
 
 		return JSON.stringify(students);
-
 	} catch (e) {
 		console.log(e);
 		throw new Error("Could not retrieve organisation");

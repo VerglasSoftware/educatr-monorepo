@@ -10,12 +10,14 @@ export const userPool = new sst.aws.CognitoUserPool("UserPool", {
 		postConfirmation: {
 			handler: "packages/functions/src/postconfirm.handler",
 			link: [userTable, organisationTable],
-			permissions: [{
-				actions: ["dynamodb:*"],
-				resources: [userTable.arn, organisationTable.arn],
-			}]
+			permissions: [
+				{
+					actions: ["dynamodb:*"],
+					resources: [userTable.arn, organisationTable.arn],
+				},
+			],
 		},
-	}
+	},
 });
 
 export const userPoolClient = userPool.addClient("UserPoolClient");
