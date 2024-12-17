@@ -7,9 +7,9 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 const handler = async (event: PostConfirmationTriggerEvent, context: Context, callback: Callback) => {
-    console.log(event);
+	console.log(event);
 
-    const cognitoUid = `${event.region}:${event.request.userAttributes.sub}`;
+	const cognitoUid = `${event.region}:${event.request.userAttributes.sub}`;
 
 	const pk = createId();
 
@@ -19,12 +19,12 @@ const handler = async (event: PostConfirmationTriggerEvent, context: Context, ca
 			PK: pk,
 			SK: "DETAILS",
 			cognitoUid,
-            username: event.userName,
-            email: event.request.userAttributes.email || undefined,
-            nickname: event.request.userAttributes.nickname || undefined,
-            given_name: event.request.userAttributes.given_name || undefined,
-            family_name: event.request.userAttributes.family_name || undefined,
-            role: event.request.userAttributes.email ? "USER" : "STUDENT",
+			username: event.userName,
+			email: event.request.userAttributes.email || undefined,
+			nickname: event.request.userAttributes.nickname || undefined,
+			given_name: event.request.userAttributes.given_name || undefined,
+			family_name: event.request.userAttributes.family_name || undefined,
+			role: event.request.userAttributes.email ? "USER" : "STUDENT",
 		},
 	};
 
@@ -34,7 +34,7 @@ const handler = async (event: PostConfirmationTriggerEvent, context: Context, ca
 		throw new Error("Could not create user");
 	}
 
-	console.log(event.request.userAttributes)
+	console.log(event.request.userAttributes);
 
 	if (event.request.userAttributes["custom:initial"]) {
 		const orgId = event.request.userAttributes["custom:initial"];
@@ -62,8 +62,8 @@ const handler = async (event: PostConfirmationTriggerEvent, context: Context, ca
 		}
 	}
 
-    // Return to Amazon Cognito
-    return event;
+	// Return to Amazon Cognito
+	return event;
 };
 
 export { handler };

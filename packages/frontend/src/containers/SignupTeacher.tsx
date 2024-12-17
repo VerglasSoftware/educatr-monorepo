@@ -33,8 +33,8 @@ export default function SignupTeacher() {
 				username: fields.email.split("@")[0] + "-" + r,
 				password: fields.password,
 				attributes: {
-					email: fields.email
-				}
+					email: fields.email,
+				},
 			});
 
 			setIsLoading(false);

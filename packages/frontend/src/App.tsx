@@ -17,7 +17,7 @@ import "react-toastify/dist/ReactToastify.css";
 function App({ sidebar }: { sidebar?: ReactNode }) {
 	const [isAuthenticated, userHasAuthenticated] = useState(false);
 	const [isAuthenticating, setIsAuthenticating] = useState(true);
-  const [init, setInit] = useState(false);
+	const [init, setInit] = useState(false);
 
 	useEffect(() => {
 		onLoad();
@@ -139,7 +139,7 @@ function App({ sidebar }: { sidebar?: ReactNode }) {
 								]}>
 								<NavbarMain />
 								{showSidebar && <Sidebar />}
-								<main style={{ padding: '2%' }}>
+								<main style={{ padding: "2%" }}>
 									<Routes />
 								</main>
 							</Box>

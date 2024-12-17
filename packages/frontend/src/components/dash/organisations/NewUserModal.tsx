@@ -11,11 +11,11 @@ import Stack from "@mui/joy/Stack";
 import { useNavigate, useParams } from "react-router-dom";
 import { API, Auth } from "aws-amplify";
 
-export default function NewUserModal({ open, setOpen, organisation }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>, organisation: any }) {
+export default function NewUserModal({ open, setOpen, organisation }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; organisation: any }) {
 	const nav = useNavigate();
 	const { orgId } = useParams();
 
-    console.log(organisation);
+	console.log(organisation);
 
 	return (
 		<React.Fragment>
@@ -29,47 +29,47 @@ export default function NewUserModal({ open, setOpen, organisation }: { open: bo
 						onSubmit={async (event: React.FormEvent<HTMLFormElement>) => {
 							event.preventDefault();
 
-                            const user = await Auth.signUp({
-                                username: event.currentTarget.elements[2].value,
-                                password: event.currentTarget.elements[3].value,
-                                attributes: {
-                                    given_name: event.currentTarget.elements[0].value,
-                                    family_name: event.currentTarget.elements[1].value,
-                                    'custom:initial': organisation.PK.split('#')[1]
-                                },
-                            });
-                            console.log(user);
+							const user = await Auth.signUp({
+								username: event.currentTarget.elements[2].value,
+								password: event.currentTarget.elements[3].value,
+								attributes: {
+									given_name: event.currentTarget.elements[0].value,
+									family_name: event.currentTarget.elements[1].value,
+									"custom:initial": organisation.PK.split("#")[1],
+								},
+							});
+							console.log(user);
 
-                            nav(0);
+							nav(0);
 						}}>
 						<Stack spacing={2}>
-                            <FormControl>
+							<FormControl>
 								<FormLabel>Given name</FormLabel>
 								<Input
 									autoFocus
 									required
 								/>
 							</FormControl>
-                            <FormControl>
+							<FormControl>
 								<FormLabel>Family name</FormLabel>
 								<Input
 									autoFocus
 									required
 								/>
 							</FormControl>
-                            <FormControl>
+							<FormControl>
 								<FormLabel>Username</FormLabel>
 								<Input
 									autoFocus
 									required
 								/>
 							</FormControl>
-                            <FormControl>
+							<FormControl>
 								<FormLabel>Password</FormLabel>
 								<Input
 									autoFocus
 									required
-                                    type="password"
+									type="password"
 								/>
 							</FormControl>
 							<Button type="submit">Create</Button>
