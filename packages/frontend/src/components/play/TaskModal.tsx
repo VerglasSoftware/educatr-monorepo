@@ -1,0 +1,171 @@
+import * as React from "react";
+import Button from "@mui/joy/Button";
+import FormControl from "@mui/joy/FormControl";
+import FormLabel from "@mui/joy/FormLabel";
+import Input from "@mui/joy/Input";
+import Modal from "@mui/joy/Modal";
+import ModalDialog from "@mui/joy/ModalDialog";
+import DialogTitle from "@mui/joy/DialogTitle";
+import DialogContent from "@mui/joy/DialogContent";
+import Stack from "@mui/joy/Stack";
+import { useNavigate, useParams } from "react-router-dom";
+import CodeMirror from "@uiw/react-codemirror";
+import { Divider, Radio, RadioGroup } from "@mui/joy";
+import { csharp } from "@replit/codemirror-lang-csharp";
+import { python } from "@codemirror/lang-python";
+import { html } from "@codemirror/lang-html";
+import NewWindow from "react-new-window";
+import { API } from "aws-amplify";
+import { toast } from "react-toastify";
+
+export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
+	const [answer, setAnswer] = React.useState<string>("");
+	const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
+
+	async function submitTask() {
+		setSubmitTaskLoading(true);
+		try {
+			const result = await API.post("api", `/competition/${competition.PK}/check`, {
+				body: {
+					packId: packId,
+					taskId: task.SK.S.split("#")[1],
+					answer: answer,
+				},
+			});
+			setSubmitTaskLoading(false);
+
+			if (result.result === true) {
+				toast.success(`You answered ${task.title.S} correctly, and ${task.points.N} point${task.points.N != 1 && "s"} have been added to your team.`);
+				setOpen(false);
+			} else {
+				toast.error(`You answered ${task.title.S} incorrectly, but no points have been taken from your team.`);
+			}
+		} catch (e) {
+			setSubmitTaskLoading(false);
+			toast.warn(`Something went wrong when checking your task.`);
+		}
+	}
+
+	return (
+		task && (
+			<React.Fragment>
+				<Modal
+					open={open}
+					onClose={() => setOpen(false)}>
+					<ModalDialog minWidth="50%">
+						<DialogTitle>{task.title.S}</DialogTitle>
+						<DialogContent>
+							{task.subtitle.S}
+							{task.points.N} point{task.points.N != 1 && "s"}
+						</DialogContent>
+						<Divider />
+						<DialogContent>{task.content.S}</DialogContent>
+						<Divider />
+						<DialogContent>
+							{task.answerType.S == "TEXT" && (
+								<Stack spacing={2}>
+									<FormControl>
+										<FormLabel>Answer</FormLabel>
+										<Input
+											value={answer}
+											onChange={(e) => setAnswer(e.currentTarget.value)}
+										/>
+									</FormControl>
+									<Button
+										onClick={submitTask}
+										loading={submitTaskLoading}>
+										Submit
+									</Button>
+								</Stack>
+							)}
+							{task.answerType.S == "MULTIPLE" && (
+								<Stack spacing={2}>
+									<FormControl>
+										<FormLabel>Answer</FormLabel>
+										<RadioGroup
+											defaultValue="medium"
+											name="radio-buttons-group"
+											value={answer}
+											onChange={(e) => setAnswer(e.currentTarget.value)}>
+											{JSON.parse(task.answer.S).map((answer: any) => (
+												<Radio
+													value={answer.text}
+													label={answer.text}
+												/>
+											))}
+										</RadioGroup>
+									</FormControl>
+									<Button
+										onClick={submitTask}
+										loading={submitTaskLoading}>
+										Submit
+									</Button>
+								</Stack>
+							)}
+							{task.answerType.S == "PYTHON" && (
+								<Stack spacing={2}>
+									<FormControl>
+										<FormLabel>Answer</FormLabel>
+										<CodeMirror
+											height="50vh"
+											extensions={[python()]}
+											value={answer}
+											onChange={(e) => setAnswer(e)}
+										/>
+									</FormControl>
+									<Button
+										onClick={submitTask}
+										loading={submitTaskLoading}>
+										Submit
+									</Button>
+								</Stack>
+							)}
+							{task.answerType.S == "CSHARP" && (
+								<Stack spacing={2}>
+									<FormControl>
+										<FormLabel>Answer</FormLabel>
+										<CodeMirror
+											height="50vh"
+											extensions={[csharp()]}
+											value={answer}
+											onChange={(e) => setAnswer(e)}
+										/>
+									</FormControl>
+									<Button
+										onClick={submitTask}
+										loading={submitTaskLoading}>
+										Submit
+									</Button>
+								</Stack>
+							)}
+							{task.answerType.S == "WEB" && (
+								<Stack spacing={2}>
+									<FormControl>
+										<FormLabel>Answer</FormLabel>
+										<CodeMirror
+											height="50vh"
+											extensions={[html()]}
+											value={answer}
+											onChange={(e) => setAnswer(e)}
+										/>
+									</FormControl>
+									<NewWindow>
+										<iframe
+											srcDoc={answer}
+											className="bg-white w-full h-full"
+										/>
+									</NewWindow>
+									<Button
+										onClick={submitTask}
+										loading={submitTaskLoading}>
+										Submit
+									</Button>
+								</Stack>
+							)}
+						</DialogContent>
+					</ModalDialog>
+				</Modal>
+			</React.Fragment>
+		)
+	);
+}
