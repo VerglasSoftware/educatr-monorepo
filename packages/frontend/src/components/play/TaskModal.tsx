@@ -29,7 +29,6 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 				body: {
 					packId: packId,
 					taskId: task.SK.S.split("#")[1],
-					userId: "not implemented yet",
 					answer: answer,
 				},
 			});
