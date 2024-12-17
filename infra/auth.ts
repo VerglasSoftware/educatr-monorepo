@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { userTable } from "./storage";
 
 const region = aws.getRegionOutput().name;
 
@@ -6,7 +7,15 @@ export const userPool = new sst.aws.CognitoUserPool("UserPool", {
 	aliases: ["email"],
 	triggers: {
 		preSignUp: "packages/functions/src/signup.handler",
-	},
+		postConfirmation: {
+			handler: "packages/functions/src/postconfirm.handler",
+			link: [userTable],
+			permissions: [{
+				actions: ["dynamodb:*"],
+				resources: [userTable.arn]
+			}]
+		},
+	}
 });
 
 export const userPoolClient = userPool.addClient("UserPoolClient");

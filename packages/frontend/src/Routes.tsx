@@ -41,6 +41,8 @@ export default function Links() {
 					<UnauthenticatedRoute>
 						<Signup />
 					</UnauthenticatedRoute>
+				}
+			/>
 
 			<Route
 				path="/dash/packs"
