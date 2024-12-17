@@ -8,6 +8,7 @@ import { useParams } from "react-router-dom";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import TaskTable from "../../components/dash/packs/TaskTable";
+import OrganisationStudentTable from "../../components/dash/organisations/OrganisationStudentTable";
 
 export default function OrganisationDetail() {
 	const [organisation, setOrganisation] = useState<any>();
@@ -139,6 +140,9 @@ export default function OrganisationDetail() {
 									</CardActions>
 								</CardOverflow>
 							</Card>
+						</Box>
+						<Box sx={{ gridColumn: "span 6" }}>
+							<OrganisationStudentTable organisation={organisation} />
 						</Box>
 					</Box>
 				</div>
