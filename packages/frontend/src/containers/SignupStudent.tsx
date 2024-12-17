@@ -1,35 +1,38 @@
-import { Auth } from "aws-amplify";
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
 import Stack from "react-bootstrap/Stack";
 import LoaderButton from "../components/LoaderButton";
-import { useAppContext } from "../lib/contextLib";
 import { useFormFields } from "../lib/hooksLib";
-import Button from "react-bootstrap/Button";
-import "./Login.css";
+import "./SignupStudent.css";
+import { Auth } from "aws-amplify";
+import { useNavigate } from "react-router-dom";
 
-export default function Login({ useEmail = false }) {
-	const { isAuthenticated, userHasAuthenticated } = useAppContext();
-
+export default function SignupStudent() {
 	const [fields, handleFieldChange] = useFormFields({
 		username: "",
 		password: "",
+		confirmPassword: "",
 	});
 
+	const nav = useNavigate();
 	const [isLoading, setIsLoading] = useState(false);
 
 	function validateForm() {
-		return fields.username.length > 0 && fields.password.length > 0;
+		return fields.username.length > 0 && fields.password.length > 0 && fields.password === fields.confirmPassword;
 	}
 
 	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-
 		setIsLoading(true);
 
 		try {
-			await Auth.signIn(fields.username, fields.password);
-			userHasAuthenticated(true);
+			await Auth.signUp({
+				username: fields.username,
+				password: fields.password,
+			});
+
+			setIsLoading(false);
+			nav("/login");
 		} catch (error) {
 			console.error(error);
 			if (error instanceof Error) {
@@ -41,24 +44,19 @@ export default function Login({ useEmail = false }) {
 		}
 	}
 
-	async function handleLogout() {
-		await Auth.signOut();
-
-		userHasAuthenticated(false);
-	}
-
 	return (
-		<div className="Login">
+		<div className="SignupStudent">
 			<Form onSubmit={handleSubmit}>
 				<Stack gap={3}>
 					<Form.Group controlId="username">
-						<Form.Label>{useEmail ? "Email" : "Username"}</Form.Label>
+						<Form.Label>Username</Form.Label>
 						<Form.Control
 							autoFocus
 							size="lg"
-							type={useEmail ? "email" : "username"}
+							type="username"
 							value={fields.username}
 							onChange={handleFieldChange}
+							autoComplete="username"
 						/>
 					</Form.Group>
 					<Form.Group controlId="password">
@@ -68,35 +66,30 @@ export default function Login({ useEmail = false }) {
 							type="password"
 							value={fields.password}
 							onChange={handleFieldChange}
+							autoComplete="new-password"
+						/>
+					</Form.Group>
+					<Form.Group controlId="confirmPassword">
+						<Form.Label>Confirm Password</Form.Label>
+						<Form.Control
+							size="lg"
+							type="password"
+							value={fields.confirmPassword}
+							onChange={handleFieldChange}
+							autoComplete="new-password"
 						/>
 					</Form.Group>
 
-					{isAuthenticated ? (
-						<a
-							href="#"
-							onClick={handleLogout}>
-							Logout
-						</a>
-					) : (
-						<LoaderButton
-							size="lg"
-							type="submit"
-							isLoading={isLoading}
-							disabled={!validateForm()}>
-							Login
-						</LoaderButton>
-					)}
+					<LoaderButton
+						size="lg"
+						type="submit"
+						variant="success"
+						isLoading={isLoading}
+						disabled={!validateForm()}>
+						Create Student
+					</LoaderButton>
 				</Stack>
 			</Form>
-
-			<br />
-			<h4>Create new user account</h4>
-			<Button
-				size="lg"
-				type="submit"
-				href="/signup">
-				Create
-			</Button>
 		</div>
 	);
 }

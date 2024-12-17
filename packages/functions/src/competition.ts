@@ -11,6 +11,10 @@ const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 export const list: Handler = Util.handler(async (event) => {
 	const params = {
 		TableName: Resource.Competitions.name,
+		FilterExpression: "SK = :sk",
+		ExpressionAttributeValues: {
+			":sk": { S: "DETAILS" },
+		},
 	};
 
 	try {
@@ -175,7 +179,6 @@ export const check: Handler = Util.handler(async (event) => {
 	let data = {
 		packId: "",
 		taskId: "",
-		userId: "",
 		answer: "",
 	};
 
@@ -213,7 +216,7 @@ export const check: Handler = Util.handler(async (event) => {
 			Item: {
 				PK: pk,
 				SK: "ACTIVITY#" + createId(),
-				userId: data.userId,
+				userId: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
 				packId: data.packId,
 				taskId: data.taskId,
 				correct: result,
