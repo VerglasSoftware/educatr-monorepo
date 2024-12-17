@@ -175,7 +175,6 @@ export const check: Handler = Util.handler(async (event) => {
 	let data = {
 		packId: "",
 		taskId: "",
-		userId: "",
 		answer: "",
 	};
 
@@ -213,7 +212,7 @@ export const check: Handler = Util.handler(async (event) => {
 			Item: {
 				PK: pk,
 				SK: "ACTIVITY#" + createId(),
-				userId: data.userId,
+				userId: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
 				packId: data.packId,
 				taskId: data.taskId,
 				correct: result,
