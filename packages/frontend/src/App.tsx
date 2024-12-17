@@ -139,7 +139,7 @@ function App() {
 								]}>
 								<NavbarMain />
 								{showSidebar && <Sidebar />}
-								<main>
+								<main style={{ padding: '2%' }}>
 									<Routes />
 								</main>
 							</Box>
