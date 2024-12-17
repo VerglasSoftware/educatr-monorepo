@@ -14,10 +14,10 @@ import { loadFull } from "tsparticles";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-function App() {
+function App({ sidebar }: { sidebar?: ReactNode }) {
 	const [isAuthenticated, userHasAuthenticated] = useState(false);
 	const [isAuthenticating, setIsAuthenticating] = useState(true);
-	const [init, setInit] = useState(false);
+  const [init, setInit] = useState(false);
 
 	useEffect(() => {
 		onLoad();

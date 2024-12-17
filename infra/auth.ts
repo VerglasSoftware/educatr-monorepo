@@ -3,7 +3,10 @@ import { api } from "./api";
 const region = aws.getRegionOutput().name;
 
 export const userPool = new sst.aws.CognitoUserPool("UserPool", {
-	usernames: ["email"],
+	aliases: ["email"],
+	triggers: {
+		preSignUp: "packages/functions/src/signup.handler",
+	},
 });
 
 export const userPoolClient = userPool.addClient("UserPoolClient");
