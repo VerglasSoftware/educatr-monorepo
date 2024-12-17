@@ -16,8 +16,9 @@ import { API } from "aws-amplify";
 import { useParams } from "react-router-dom";
 import { Button, Option, Select } from "@mui/joy";
 import { FaPlus } from "react-icons/fa6";
+import NewUserModal from "./NewUserModal";
 
-function RowMenu({ compId, packId, competition, packs, setPacks }: { compId: string; packId: string; competition: any; packs: any; setPacks: any }) {
+function RowMenu({ student, organisation, setStudents }: { student: any, organisation: any, setStudents: any }) {
 	return (
 		<Dropdown>
 			<MenuButton
@@ -32,15 +33,15 @@ function RowMenu({ compId, packId, competition, packs, setPacks }: { compId: str
 				<MenuItem
 					color="danger"
 					onClick={async () => {
-						const updatedCompetition = await API.put("api", `/competition/${compId}`, {
+						const updatedOrganisation = await API.put("api", `/organisation/${organisation.PK.split('#')[1]}`, {
 							body: {
-								name: competition.name,
-								status: competition.status || "",
-								packs: packs.filter((p: any) => p !== packId),
+								...organisation,
+								students: organisation.students.filter((studentId: string) => studentId !== student.PK),
 							},
 						});
 
-						setPacks(updatedCompetition.packs);
+						const students = await API.get("api", `/organisation/${organisation.PK.split('#')[1]}/students`, {});
+						setStudents(students);
 					}}>
 					Remove
 				</MenuItem>
@@ -53,12 +54,15 @@ export default function OrganisationStudentTable({ organisation }: { organisatio
 	const [selected, setSelected] = React.useState<readonly string[]>([]);
 	const [students, setStudents] = React.useState<any[]>([]);
 
-	const { compId } = useParams();
+	const [open, setOpen] = React.useState(false);
+
+	const { id } = useParams();
 
 	React.useEffect(() => {
 		async function onLoad() {
 			try {
-				setStudents(organisation.students);
+				const students = await API.get("api", `/organisation/${id}/students`, {});
+				setStudents(students);
 			} catch (e) {
 				console.log(e);
 			}
@@ -84,7 +88,7 @@ export default function OrganisationStudentTable({ organisation }: { organisatio
 					startDecorator={<FaPlus />}
 					size="sm"
 					onClick={async () => {
-
+						setOpen(true);
 					}}>
 					Add
 				</Button>
@@ -133,34 +137,32 @@ export default function OrganisationStudentTable({ organisation }: { organisatio
 					</thead>
 					<tbody>
 						{[...students].map((row) => (
-							<tr key={row}>
+							<tr key={row.PK}>
 								<td style={{ textAlign: "center", width: 120 }}>
 									<Checkbox
 										size="sm"
-										checked={selected.includes(row)}
-										color={selected.includes(row) ? "primary" : undefined}
+										checked={selected.includes(row.PK)}
+										color={selected.includes(row.PK) ? "primary" : undefined}
 										onChange={(event) => {
-											setSelected((ids) => (event.target.checked ? ids.concat(row) : ids.filter((itemId) => itemId !== row)));
+											setSelected((ids) => (event.target.checked ? ids.concat(row.PK) : ids.filter((itemId) => itemId !== row.PK)));
 										}}
 										slotProps={{ checkbox: { sx: { textAlign: "left" } } }}
 										sx={{ verticalAlign: "text-bottom" }}
 									/>
 								</td>
 								<td>
-									<Typography level="body-xs">{row}</Typography>
+									<Typography level="body-xs">{row.given_name} {row.family_name}</Typography>
 								</td>
 								<td>
-									<Typography level="body-xs">{row}</Typography>
+									<Typography level="body-xs">{row.username}</Typography>
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										{/* <RowMenu
-											packId={row}
-											compId={compId!}
-											competition={competition}
-											packs={packs}
-											setPacks={setPacks}
-										/> */}
+										<RowMenu
+											student={row}
+											organisation={organisation}
+											setStudents={setStudents}
+										/>
 									</Box>
 								</td>
 							</tr>
@@ -168,6 +170,7 @@ export default function OrganisationStudentTable({ organisation }: { organisatio
 					</tbody>
 				</Table>
 			</Sheet>
+			<NewUserModal open={open} setOpen={setOpen} organisation={organisation} />
 		</React.Fragment>
 	);
 }

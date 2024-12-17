@@ -9,9 +9,12 @@ import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import TaskTable from "../../components/dash/packs/TaskTable";
 import OrganisationStudentTable from "../../components/dash/organisations/OrganisationStudentTable";
+import NewUserModal from "../../components/dash/organisations/NewUserModal";
 
 export default function OrganisationDetail() {
 	const [organisation, setOrganisation] = useState<any>();
+
+	const [open, setOpen] = useState(false);
 
 	const [name, setName] = useState<any>("");
 	const [logo, setLogo] = useState<any>("");
