@@ -165,3 +165,48 @@ export const update: Handler = Util.handler(async (event) => {
 		throw new Error("Could not update organisation details");
 	}
 });
+
+export const listStudents: Handler = Util.handler(async (event) => {
+	const { id: pk } = event.pathParameters || {};
+
+	if (!pk) {
+		throw new Error("Missing ID in path parameters");
+	}
+
+	const params = {
+		TableName: Resource.Organisations.name,
+		Key: {
+			PK: "ORG#" + pk,
+			SK: "DETAILS",
+		},
+	};
+
+	try {
+		const result = await client.send(new GetCommand(params));
+		if (!result.Item) {
+			throw new Error("Organisation not found");
+		}
+
+		const students: any[] = [];
+
+		for (const student of result.Item.students) {
+			console.log(student);
+			const userParams = {
+				TableName: Resource.Users.name,
+				Key: {
+					PK: student,
+					SK: "DETAILS",
+				},
+			};
+
+			const sR = await client.send(new GetCommand(userParams));
+			console.log(sR);
+			students.push(sR.Item);
+		}
+
+		return JSON.stringify(students);
+	} catch (e) {
+		console.log(e);
+		throw new Error("Could not retrieve organisation");
+	}
+});

@@ -78,3 +78,28 @@ export const updateMe: Handler = Util.handler(async (event) => {
 		throw new Error("Could not update user details");
 	}
 });
+
+export const getCognito: Handler = Util.handler(async (event) => {
+	const { cognitoUid } = event.pathParameters || {};
+
+	const params = {
+		TableName: Resource.Users.name,
+		FilterExpression: "cognitoUid = :cognitoUid",
+		ExpressionAttributeValues: {
+			":cognitoUid": { S: cognitoUid as string },
+		},
+	};
+
+	try {
+		const result = await client.send(new ScanCommand(params));
+		console.log("result" + result);
+		console.log(result.Items);
+		if (!result.Items![0]) {
+			throw new Error("User not found");
+		}
+		return JSON.stringify(result.Items![0]);
+	} catch (e) {
+		console.log(e);
+		throw new Error("Could not retrieve user");
+	}
+});
