@@ -3,6 +3,8 @@ import AuthenticatedRoute from "./components/AuthenticatedRoute.tsx";
 import UnauthenticatedRoute from "./components/UnauthenticatedRoute.tsx";
 import Home from "./containers/Home.tsx";
 import Login from "./containers/Login.tsx";
+
+import Signup from "./containers/Signup.tsx";
 import PackList from "./containers/dash/PackList.tsx";
 import PackDetail from "./containers/dash/PackDetail.tsx";
 import OrganisationDetail from "./containers/organisation/OrganisationDetail.tsx";
@@ -30,6 +32,14 @@ export default function Links() {
 				element={
 					<UnauthenticatedRoute>
 						<Login />
+					</UnauthenticatedRoute>
+				}
+			/>
+			<Route
+				path="/signup"
+				element={
+					<UnauthenticatedRoute>
+						<Signup />
 					</UnauthenticatedRoute>
 				}
 			/>

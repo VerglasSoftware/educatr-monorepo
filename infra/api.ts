@@ -52,6 +52,10 @@ api.route("DELETE /organisation/{id}", {
 	handler: "packages/functions/src/organisation.del",
 });
 
+api.route("GET /organisation/{id}/students", {
+	handler: "packages/functions/src/organisation.listStudents",
+});
+
 api.route("GET /pack/{packId}/task", {
 	handler: "packages/functions/src/task.list",
 });
@@ -156,4 +160,8 @@ api.route("GET /user/me", {
 });
 api.route("PUT /user/me", {
 	handler: "packages/functions/src/user.updateMe",
+});
+
+api.route("GET /user/cognito/:cognitoUid", {
+	handler: "packages/functions/src/user.getCognito",
 });
