@@ -4,6 +4,7 @@ import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCom
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
+import axios from "axios";
 import { Resource } from "sst";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -274,27 +275,43 @@ export const check: Handler = Util.handler(async (event) => {
 				return await returnAnswer(false);
 			}
 		case "ALGORITHM":
-			var result;
-			if (task.answerType === "PYTHON") {
-				// result = await API.post(Resource.ExecuteApi.url, `/submissions`, {
-				// 	body: {
-				// 		source_code: data.answer,
-				// 		language_id: 71,
-				// 	},
-				// });
-				console.log(result);
-			} else if (task.answerType === "CSHARP") {
-				// result = await API.post(Resource.ExecuteApi.url, `/submissions`, {
-				// 	body: {
-				// 		source_code: data.answer,
-				// 		language_id: 51,
-				// 	},
-				// });
-				console.log(result, "yes");
-			} else {
+			const languageMap = {
+				PYTHON: 71,
+				CSHARP: 51,
+			};
+
+			const languageId = languageMap[task.answerType];
+			if (!languageId) {
 				throw new Error("Answer type not supported");
 			}
-			console.log(result);
+			var result;
+			try {
+				result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
+					source_code: data.answer.trim(),
+					language_id: languageId,
+				});
+			} catch (e) {
+				console.log(e.response.data);
+				return await returnAnswer(false);
+			}
+			if (result.status == 201) {
+				const submissionId = result.data.token;
+				var status;
+				do {
+					status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+				} while (status.data.status.id < 3);
+				if (status.data.status.id == 3) {
+					if (status.data.stdout.trim() === task.answer.trim()) {
+						return await returnAnswer(true);
+					} else {
+						return await returnAnswer(false);
+					}
+				} else {
+					return await returnAnswer(false);
+				}
+			}
+			break;
 		default:
 			throw new Error("Verification type not supported");
 	}
