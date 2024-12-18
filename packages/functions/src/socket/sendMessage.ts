@@ -1,7 +1,7 @@
-import { DynamoDB } from "aws-sdk";
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { APIGatewayProxyHandler, Handler } from "aws-lambda";
 import { Util } from "@educatr/core/util";
+import { Handler } from "aws-lambda";
+import { DynamoDB } from "aws-sdk";
 import { Resource } from "sst";
 
 const dynamoDb = new DynamoDB.DocumentClient();

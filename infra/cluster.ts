@@ -124,6 +124,9 @@ POSTGRES_PASSWORD=$(curl -s https://randomuser.me/api/ | jq -r '.results[0].logi
 echo "Updating judge0.conf with Redis and PostgreSQL passwords..."
 sudo sed -i "s/^REDIS_PASSWORD=.*/REDIS_PASSWORD=\${REDIS_PASSWORD}/" judge0-v1.13.1/judge0.conf
 sudo sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}/" judge0-v1.13.1/judge0.conf
+# Update the AUTHZ_TOKEN with your own secret token
+echo "Updating judge0.conf with AUTHZ_TOKEN..."
+sudo sed -i "s/^AUTHZ_TOKEN=.*/AUTHZ_TOKEN=mySecretToken/" judge0-v1.13.1/judge0.conf
 
 # Navigate to the Judge0 directory
 cd judge0-v1.13.1
@@ -171,5 +174,6 @@ export const executeApi = new sst.aws.ApiGatewayV2("ExecuteApi", {
 });
 
 server.publicIp.apply((ip) => {
+	console.log(`http://${ip}:2358`);
 	executeApi.routeUrl("$default", `http://${ip}:2358`);
 });

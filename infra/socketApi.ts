@@ -1,4 +1,3 @@
-import { Resource } from "sst";
 import { socketConnectionsTable } from "./storage";
 
 const permissions = new sst.Linkable("MyStorage", {
