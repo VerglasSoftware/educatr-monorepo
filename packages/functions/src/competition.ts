@@ -209,8 +209,6 @@ export const check: Handler = Util.handler(async (event) => {
 		throw new Error("Could not retrieve competition");
 	}
 
-	console.log(task.verificationType);
-
 	async function returnAnswer(result: boolean) {
 		// create activity
 		const params = {
@@ -290,6 +288,7 @@ export const check: Handler = Util.handler(async (event) => {
 			var result;
 			try {
 				result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
+					// check doesnt do anything with stdin atm
 					source_code: data.answer.trim(),
 					language_id: languageId,
 				});
@@ -317,5 +316,59 @@ export const check: Handler = Util.handler(async (event) => {
 			break;
 		default:
 			throw new Error("Verification type not supported");
+	}
+});
+
+export const run: Handler = Util.handler(async (event) => {
+	const { id: pk } = event.pathParameters || {};
+
+	if (!pk) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	let data = {
+		language: "",
+		code: "",
+		stdin: "",
+	};
+
+	if (event.body != null) {
+		data = JSON.parse(event.body);
+	} else {
+		throw new Error("No body provided");
+	}
+
+	const languageMap = {
+		PYTHON: 71,
+		CSHARP: 51,
+	};
+
+	const languageId = languageMap[data.language];
+	if (!languageId) {
+		throw new Error("Answer type not supported");
+	}
+	var result;
+	try {
+		result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
+			source_code: data.code.trim(),
+			language_id: languageId,
+			stdin: data.stdin,
+		});
+	} catch (e) {
+		console.log(e.response.data);
+		throw new Error("Could not run submission");
+	}
+	if (result.status == 201) {
+		const submissionId = result.data.token;
+		var status;
+		do {
+			status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+		} while (status.data.status.id < 3);
+		if (status.data.status.id == 3) {
+			return JSON.stringify({ stdout: status.data.stdout, stderr: status.data.stderr });
+		} else {
+			throw new Error("Submission failed");
+		}
 	}
 });

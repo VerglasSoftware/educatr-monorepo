@@ -122,6 +122,9 @@ api.route("DELETE /competition/{id}", {
 api.route("POST /competition/{id}/check", {
 	handler: "packages/functions/src/competition.check",
 });
+api.route("POST /competition/{id}/run", {
+	handler: "packages/functions/src/competition.run",
+});
 
 api.route("GET /competition/{compId}/activity", {
 	handler: "packages/functions/src/activity.list",
