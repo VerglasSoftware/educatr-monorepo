@@ -19,6 +19,8 @@ import { toast } from "react-toastify";
 
 export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
 	const [answer, setAnswer] = useState<string>("");
+	const [stdin, setStdin] = useState<string>("");
+	const [stdout, setStdout] = useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 
 	async function submitTask() {
@@ -115,7 +117,30 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											value={answer}
 											onChange={(e) => setAnswer(e)}
 										/>
+										<Input
+											value={stdin}
+											onChange={(e) => setStdin(e.currentTarget.value)}
+											placeholder="stdin"
+										/>
+										<Input
+											readOnly
+											value={stdout}
+											placeholder="stdout"
+										/>
 									</FormControl>
+									<Button
+										onClick={async () => {
+											const result = await API.post("api", `/competition/${competition.PK}/run`, {
+												body: {
+													language: "PYTHON",
+													code: answer,
+													stdin: stdin,
+												},
+											});
+											setStdout(result.stdout || result.stderr);
+										}}>
+										Run
+									</Button>
 									<Button
 										onClick={submitTask}
 										loading={submitTaskLoading}>
@@ -133,11 +158,35 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											value={answer}
 											onChange={(e) => setAnswer(e)}
 										/>
+										<Input
+											value={stdin}
+											onChange={(e) => setStdin(e.currentTarget.value)}
+											placeholder="stdin"
+										/>
+										<Input
+											readOnly
+											value={stdout}
+											placeholder="stdout"
+											textArea
+										/>
 									</FormControl>
 									<Button
 										onClick={submitTask}
 										loading={submitTaskLoading}>
 										Submit
+									</Button>
+									<Button
+										onClick={async () => {
+											const result = await API.post("api", `/competition/${competition.PK}/run`, {
+												body: {
+													language: "CSHARP",
+													code: answer,
+													stdin: stdin,
+												},
+											});
+											setStdout(result.stdout || result.stderr);
+										}}>
+										Run
 									</Button>
 								</Stack>
 							)}
