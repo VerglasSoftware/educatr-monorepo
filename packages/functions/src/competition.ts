@@ -1,10 +1,10 @@
-import { Handler } from "aws-lambda";
-import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { QueryCommand, DynamoDBDocumentClient, PutCommand, DeleteCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { Resource } from "sst";
-import { createId } from "@paralleldrive/cuid2";
-import { Util } from "@educatr/core/util";
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
+import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { Util } from "@educatr/core/util";
+import { createId } from "@paralleldrive/cuid2";
+import { Handler } from "aws-lambda";
+import { Resource } from "sst";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -44,7 +44,7 @@ export const create: Handler = Util.handler(async (event) => {
 			PK: createId(),
 			SK: "DETAILS",
 			name: data.name,
-			status: data.status,
+			status: data.status || "NOT_STARTED",
 			userStartedById: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
 			organisationId: data.organisationId,
 			createdAt: Date.now(),
