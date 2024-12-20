@@ -1,10 +1,10 @@
-import "./LoaderButton.css";
 import { Box, List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, ListSubheader } from "@mui/joy";
 import { API } from "aws-amplify";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FaBox } from "react-icons/fa";
 import { FaGear, FaPeopleGroup, FaTrophy } from "react-icons/fa6";
 import { useLocation } from "react-router-dom";
+import "./LoaderButton.css";
 
 export default function Sidebar({ className = "", disabled = false, isLoading = false, ...props }) {
 	const [organisations, setOrganisations] = useState<any[]>([]);
@@ -18,7 +18,6 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 				console.log(e);
 			}
 		}
-		3;
 
 		onLoad();
 	}, []);
@@ -67,9 +66,9 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 						<List aria-labelledby="nav-list-browse">
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}/competitions`}
+									selected={location.pathname === `/dash/${org.PK.S}/competitions`}
 									component="a"
-									href={`/dash/${org.PK.S.split("ORG#")[1]}/competitions`}>
+									href={`/dash/${org.PK.S}/competitions`}>
 									<ListItemDecorator>
 										<FaTrophy fontSize="small" />
 									</ListItemDecorator>
@@ -78,9 +77,9 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 							</ListItem>
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}/classes`}
+									selected={location.pathname === `/dash/${org.PK.S}/classes`}
 									component="a"
-									href={`/dash/${org.PK.S.split("ORG#")[1]}/classes`}>
+									href={`/dash/${org.PK.S}/classes`}>
 									<ListItemDecorator>
 										<FaPeopleGroup fontSize="small" />
 									</ListItemDecorator>
@@ -89,9 +88,9 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 							</ListItem>
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S.split("ORG#")[1]}`}
+									selected={location.pathname === `/dash/${org.PK.S}`}
 									component="a"
-									href={`/dash/${org.PK.S.split("ORG#")[1]}`}>
+									href={`/dash/${org.PK.S}`}>
 									<ListItemDecorator>
 										<FaGear fontSize="small" />
 									</ListItemDecorator>
