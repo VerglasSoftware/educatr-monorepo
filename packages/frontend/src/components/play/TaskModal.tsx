@@ -22,6 +22,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 	const [stdin, setStdin] = useState<string>("");
 	const [stdout, setStdout] = useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
+	const [runLoading, setRunLoading] = useState<boolean>(false);
 
 	async function submitTask() {
 		setSubmitTaskLoading(true);
@@ -58,7 +59,9 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 					open={open}
 					onClose={() => setOpen(false)}>
 					<ModalDialog minWidth="50%">
-						<DialogTitle>{task.title.S}</DialogTitle>
+						<DialogTitle>
+							{task.title.S}
+						</DialogTitle>
 						<DialogContent>
 							{task.subtitle.S}
 							{task.points.N} point{task.points.N != 1 && "s"}
@@ -76,11 +79,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											onChange={(e) => setAnswer(e.currentTarget.value)}
 										/>
 									</FormControl>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
+
 								</Stack>
 							)}
 							{task.answerType.S == "MULTIPLE" && (
@@ -100,94 +99,55 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											))}
 										</RadioGroup>
 									</FormControl>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
+
 								</Stack>
 							)}
-							{task.answerType.S == "PYTHON" && (
+							{task.answerType.S == "CSHARP" || task.answerType.S == "PYTHON" && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
 										<CodeMirror
-											height="50vh"
-											extensions={[python()]}
+											height="40vh"
+											extensions={task.answerType.S == "CSHARP" ? [csharp()] : [python()]}
 											value={answer}
 											onChange={(e) => setAnswer(e)}
+											className="mb-4"
 										/>
 										<Input
 											value={stdin}
 											onChange={(e) => setStdin(e.currentTarget.value)}
 											placeholder="stdin"
 										/>
-										<Input
-											readOnly
-											value={stdout}
-											placeholder="stdout"
-										/>
-									</FormControl>
-									<Button
+										<Button
+										disabled={answer.length == 0}
 										onClick={async () => {
-											const result = await API.post("api", `/competition/${competition.PK}/run`, {
-												body: {
-													language: "PYTHON",
-													code: answer,
-													stdin: stdin,
-												},
-											});
-											setStdout(result.stdout || result.stderr);
-										}}>
+											setRunLoading(true);
+											try {
+												const result = await API.post("api", `/competition/${competition.PK}/run`, {
+													body: {
+														language: task.answerType.S,
+														code: answer,
+														stdin: stdin,
+													},
+												});
+												setRunLoading(false);
+												setStdout(result.stdout || result.stderr);
+											} catch (e) {
+												setRunLoading(false);
+												setStdout("An error occurred when running your code.");
+											}
+										}}
+										loading={runLoading}
+										className="my-2">
 										Run
 									</Button>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
-								</Stack>
-							)}
-							{task.answerType.S == "CSHARP" && (
-								<Stack spacing={2}>
-									<FormControl>
-										<FormLabel>Answer</FormLabel>
-										<CodeMirror
-											height="50vh"
-											extensions={[csharp()]}
-											value={answer}
-											onChange={(e) => setAnswer(e)}
-										/>
-										<Input
-											value={stdin}
-											onChange={(e) => setStdin(e.currentTarget.value)}
-											placeholder="stdin"
-										/>
-										<Input
-											readOnly
-											value={stdout}
-											placeholder="stdout"
-											textArea
-										/>
+									<Input
+										readOnly
+										value={stdout}
+										placeholder="stdout"
+										textArea
+									/>
 									</FormControl>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
-									<Button
-										onClick={async () => {
-											const result = await API.post("api", `/competition/${competition.PK}/run`, {
-												body: {
-													language: "CSHARP",
-													code: answer,
-													stdin: stdin,
-												},
-											});
-											setStdout(result.stdout || result.stderr);
-										}}>
-										Run
-									</Button>
 								</Stack>
 							)}
 							{task.answerType.S == "WEB" && (
@@ -207,13 +167,17 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											className="bg-white w-full h-full"
 										/>
 									</NewWindow>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
+
 								</Stack>
 							)}
+						</DialogContent>
+						<Divider />
+						<DialogContent>
+							<Button
+								onClick={submitTask}
+								loading={submitTaskLoading}>
+								Submit
+							</Button>
 						</DialogContent>
 					</ModalDialog>
 				</Modal>
