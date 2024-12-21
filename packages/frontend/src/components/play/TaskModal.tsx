@@ -98,8 +98,8 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 									</FormControl>
 								</Stack>
 							)}
-							{task.answerType.S == "CSHARP" ||
-								(task.answerType.S == "PYTHON" && (
+							{(task.answerType.S == "CSHARP" ||
+								task.answerType.S == "PYTHON") && (
 									<Stack spacing={2}>
 										<FormControl>
 											<FormLabel>Answer</FormLabel>
@@ -146,7 +146,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											/>
 										</FormControl>
 									</Stack>
-								))}
+								)}
 							{task.answerType.S == "WEB" && (
 								<Stack spacing={2}>
 									<FormControl>
