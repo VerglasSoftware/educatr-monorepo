@@ -59,9 +59,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 					open={open}
 					onClose={() => setOpen(false)}>
 					<ModalDialog minWidth="50%">
-						<DialogTitle>
-							{task.title.S}
-						</DialogTitle>
+						<DialogTitle>{task.title.S}</DialogTitle>
 						<DialogContent>
 							{task.subtitle.S}
 							{task.points.N} point{task.points.N != 1 && "s"}
@@ -79,7 +77,6 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											onChange={(e) => setAnswer(e.currentTarget.value)}
 										/>
 									</FormControl>
-
 								</Stack>
 							)}
 							{task.answerType.S == "MULTIPLE" && (
@@ -99,57 +96,57 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											))}
 										</RadioGroup>
 									</FormControl>
-
 								</Stack>
 							)}
-							{task.answerType.S == "CSHARP" || task.answerType.S == "PYTHON" && (
-								<Stack spacing={2}>
-									<FormControl>
-										<FormLabel>Answer</FormLabel>
-										<CodeMirror
-											height="40vh"
-											extensions={task.answerType.S == "CSHARP" ? [csharp()] : [python()]}
-											value={answer}
-											onChange={(e) => setAnswer(e)}
-											className="mb-4"
-										/>
-										<Input
-											value={stdin}
-											onChange={(e) => setStdin(e.currentTarget.value)}
-											placeholder="stdin"
-										/>
-										<Button
-										disabled={answer.length == 0}
-										onClick={async () => {
-											setRunLoading(true);
-											try {
-												const result = await API.post("api", `/competition/${competition.PK}/run`, {
-													body: {
-														language: task.answerType.S,
-														code: answer,
-														stdin: stdin,
-													},
-												});
-												setRunLoading(false);
-												setStdout(result.stdout || result.stderr);
-											} catch (e) {
-												setRunLoading(false);
-												setStdout("An error occurred when running your code.");
-											}
-										}}
-										loading={runLoading}
-										className="my-2">
-										Run
-									</Button>
-									<Input
-										readOnly
-										value={stdout}
-										placeholder="stdout"
-										textArea
-									/>
-									</FormControl>
-								</Stack>
-							)}
+							{task.answerType.S == "CSHARP" ||
+								(task.answerType.S == "PYTHON" && (
+									<Stack spacing={2}>
+										<FormControl>
+											<FormLabel>Answer</FormLabel>
+											<CodeMirror
+												height="40vh"
+												extensions={task.answerType.S == "CSHARP" ? [csharp()] : [python()]}
+												value={answer}
+												onChange={(e) => setAnswer(e)}
+												className="mb-4"
+											/>
+											<Input
+												value={stdin}
+												onChange={(e) => setStdin(e.currentTarget.value)}
+												placeholder="stdin"
+											/>
+											<Button
+												disabled={answer.length == 0}
+												onClick={async () => {
+													setRunLoading(true);
+													try {
+														const result = await API.post("api", `/competition/${competition.PK}/run`, {
+															body: {
+																language: task.answerType.S,
+																code: answer,
+																stdin: stdin,
+															},
+														});
+														setRunLoading(false);
+														setStdout(result.stdout || result.stderr);
+													} catch (e) {
+														setRunLoading(false);
+														setStdout("An error occurred when running your code.");
+													}
+												}}
+												loading={runLoading}
+												className="my-2">
+												Run
+											</Button>
+											<Input
+												readOnly
+												value={stdout}
+												placeholder="stdout"
+												textArea
+											/>
+										</FormControl>
+									</Stack>
+								))}
 							{task.answerType.S == "WEB" && (
 								<Stack spacing={2}>
 									<FormControl>
@@ -167,7 +164,6 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											className="bg-white w-full h-full"
 										/>
 									</NewWindow>
-
 								</Stack>
 							)}
 						</DialogContent>
