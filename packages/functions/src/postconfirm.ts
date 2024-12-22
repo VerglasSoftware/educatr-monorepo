@@ -25,6 +25,7 @@ const handler = async (event: PostConfirmationTriggerEvent, context: Context, ca
 			given_name: event.request.userAttributes.given_name || undefined,
 			family_name: event.request.userAttributes.family_name || undefined,
 			role: event.request.userAttributes.email ? "USER" : "STUDENT",
+			picture: event.request.userAttributes.picture || undefined,
 		},
 	};
 
