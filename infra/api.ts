@@ -137,6 +137,12 @@ api.route("PUT /competition/{compId}/activity/{activityId}", {
 api.route("DELETE /competition/{compId}/activity/{activityId}", {
 	handler: "packages/functions/src/activity.del",
 });
+api.route("POST /competition/{compId}/activity/{activityId}/approve", {
+	handler: "packages/functions/src/activity.approve",
+});
+api.route("POST /competition/{compId}/activity/{activityId}/reject", {
+	handler: "packages/functions/src/activity.reject",
+});
 
 api.route("GET /competition/{orgId}/team", {
 	handler: "packages/functions/src/team.list",

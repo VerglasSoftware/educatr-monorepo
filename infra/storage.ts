@@ -36,3 +36,6 @@ export const socketConnectionsTable = new sst.aws.Dynamo("SocketConnections", {
 	},
 	primaryIndex: { hashKey: "id" },
 });
+
+export const entraClientId = new sst.Secret("ENTRA_CLIENT_ID");
+export const entraClientSecret = new sst.Secret("ENTRA_CLIENT_SECRET");

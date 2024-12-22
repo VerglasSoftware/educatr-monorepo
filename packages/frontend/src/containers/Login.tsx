@@ -7,6 +7,7 @@ import { useAppContext } from "../lib/contextLib";
 import { useFormFields } from "../lib/hooksLib";
 import Button from "react-bootstrap/Button";
 import "./Login.css";
+import { signInWithRedirect } from "aws-amplify/auth"
 
 export default function Login({ useEmail = false }) {
 	const { isAuthenticated, userHasAuthenticated } = useAppContext();
@@ -95,6 +96,15 @@ export default function Login({ useEmail = false }) {
 				size="lg"
 				type="submit"
 				href="/signup">
+				Create
+			</Button>
+
+			<br />
+			<h4>Sign in with Entra ID</h4>
+			<Button
+				size="lg"
+				type="button"
+				onClick={() => Auth.federatedSignIn({ customProvider: "EntraID" })}>
 				Create
 			</Button>
 		</div>
