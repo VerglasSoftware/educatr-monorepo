@@ -1,3 +1,4 @@
+import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
 import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
@@ -186,5 +187,133 @@ export const update: Handler = Util.handler(async (event) => {
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
 		throw new Error(`Could not update activity ${activityId} in competition ${pk}`);
+	}
+});
+
+export const approve: Handler = Util.handler(async (event) => {
+	const { compId: pk, activityId } = event.pathParameters || {};
+
+	if (!pk || !activityId) {
+		throw new Error("Missing PK or SK in path parameters");
+	}
+
+	const params = {
+		TableName: Resource.Competitions.name,
+		Key: {
+			PK: pk,
+			SK: `ACTIVITY#${activityId}`,
+		},
+		UpdateExpression: "SET #verifierId = :verifierId, #status = :status, #correct = :correct",
+		ExpressionAttributeNames: {
+			"#verifierId": "verifierId",
+			"#status": "status",
+			"#correct": "correct",
+		},
+		ExpressionAttributeValues: {
+			":verifierId": event.requestContext.authorizer!.iam.cognitoIdentity.identityId,
+			":status": "FINISHED_VERIFICATION",
+			":correct": true,
+		},
+		ReturnValues: ReturnValue.ALL_NEW,
+	};
+
+	try {
+		const result = await client.send(new UpdateCommand(params));
+
+		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
+		
+				const apiG = new ApiGatewayManagementApi({
+					endpoint: Resource.SocketApi.managementEndpoint,
+				});
+		
+				const postToConnection = async function ({ id }: any) {
+					try {
+						await apiG.postToConnection({
+							ConnectionId: id.S,
+							Data: JSON.stringify({
+								filter: {
+									competitionId: pk,
+								},
+								type: "TASK:ANSWERED",
+								body: result.Attributes,
+							}),
+						});
+					} catch (e: any) {
+						if (e.statusCode === 410) {
+							// Remove stale connections
+							await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+						}
+					}
+				};
+		
+				await Promise.all(connections.Items!.map(postToConnection));
+
+		return JSON.stringify(result.Attributes);
+	} catch (e) {
+		throw new Error(`Could not approve activity ${activityId} in competition ${pk}`);
+	}
+});
+
+export const reject: Handler = Util.handler(async (event) => {
+	const { compId: pk, activityId } = event.pathParameters || {};
+
+	if (!pk || !activityId) {
+		throw new Error("Missing PK or SK in path parameters");
+	}
+
+	const params = {
+		TableName: Resource.Competitions.name,
+		Key: {
+			PK: pk,
+			SK: `ACTIVITY#${activityId}`,
+		},
+		UpdateExpression: "SET #verifierId = :verifierId, #status = :status, #correct = :correct",
+		ExpressionAttributeNames: {
+			"#verifierId": "verifierId",
+			"#status": "status",
+			"#correct": "correct",
+		},
+		ExpressionAttributeValues: {
+			":verifierId": event.requestContext.authorizer!.iam.cognitoIdentity.identityId,
+			":status": "FINISHED_VERIFICATION",
+			":correct": false,
+		},
+		ReturnValues: ReturnValue.ALL_NEW,
+	};
+
+	try {
+		const result = await client.send(new UpdateCommand(params));
+
+		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
+		
+				const apiG = new ApiGatewayManagementApi({
+					endpoint: Resource.SocketApi.managementEndpoint,
+				});
+		
+				const postToConnection = async function ({ id }: any) {
+					try {
+						await apiG.postToConnection({
+							ConnectionId: id.S,
+							Data: JSON.stringify({
+								filter: {
+									competitionId: pk,
+								},
+								type: "TASK:ANSWERED",
+								body: result.Attributes,
+							}),
+						});
+					} catch (e: any) {
+						if (e.statusCode === 410) {
+							// Remove stale connections
+							await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+						}
+					}
+				};
+		
+				await Promise.all(connections.Items!.map(postToConnection));
+
+		return JSON.stringify(result.Attributes);
+	} catch (e) {
+		throw new Error(`Could not reject activity ${activityId} in competition ${pk}`);
 	}
 });

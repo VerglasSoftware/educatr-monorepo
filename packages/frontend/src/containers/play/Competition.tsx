@@ -41,7 +41,9 @@ export default function PlayCompetition() {
 					break;
 				case "TASK:ANSWERED":
 					const newActivity = data.body;
-					setActivity([...(activity || []), newActivity]);
+					setActivity([...(activity?.filter(a => a.taskId.S != newActivity.taskId) || []), newActivity]);
+					console.log(waitingTask);
+					if (newActivity.taskId == waitingTask.SK.S.split("#")[1]) setWaitingTask(null);
 					break;
 				default:
 					break;
@@ -239,7 +241,7 @@ export default function PlayCompetition() {
 	}
 
 	if (waitingTask) {
-		return (
+		return waitingTask && (
 			<Box
 				sx={{
 					display: "flex",
@@ -284,7 +286,7 @@ export default function PlayCompetition() {
 
 								<br />
 
-								<PDF417 value={waitingTask.activity.SK.S.split("#")[1]} />
+								<PDF417 value={waitingTask.activity && waitingTask.activity.SK.S.split("#")[1]} />
 
 					</CardContent>
 				</Card>

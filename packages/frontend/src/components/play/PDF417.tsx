@@ -9,5 +9,5 @@ export function PDF417({ ...props }) {
         PDF417u.draw(props.value, canvas);
     }, []);
 
-    return <canvas ref={canvasRef} className="w-60 bg-white" />;
+    return <canvas ref={canvasRef} style={{ backgroundColor: 'white', width: '16rem' }} />;
 }
