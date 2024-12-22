@@ -18,7 +18,7 @@ import NewWindow from "react-new-window";
 import { API } from "aws-amplify";
 import { toast } from "react-toastify";
 
-export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { refreshManual: any, open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
+export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { refreshManual: any; open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
 	const [answer, setAnswer] = React.useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
 
