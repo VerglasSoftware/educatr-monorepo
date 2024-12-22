@@ -15,7 +15,6 @@ import CompetitionDetail from "./containers/organisation/CompetitionDetail.tsx";
 import PlayHome from "./containers/play/Home.tsx";
 import PlayCompetition from "./containers/play/Competition.tsx";
 import LaunchCompetition from "./containers/launch/Competition.tsx";
-import Callback from "./containers/Callback.tsx";
 
 export default function Links() {
 	return (
