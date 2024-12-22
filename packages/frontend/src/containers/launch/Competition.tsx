@@ -1,12 +1,13 @@
-import { Box, Button, ButtonGroup, Card, CardContent, Typography } from "@mui/joy";
+import { Box, Button, ButtonGroup, Card, CardContent, Divider, Typography } from "@mui/joy";
 import "../play/Play.css";
 import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { API } from "aws-amplify";
 import { useParams } from "react-router-dom";
 import NavbarMain from "../../components/launch/Navbar";
 import { DotWave } from "@uiball/loaders";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from "@zxing/library";
 
 export default function LaunchCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -17,6 +18,13 @@ export default function LaunchCompetition() {
 	const [resumeButtonLoading, setResumeButtonLoading] = useState(false);
 	const [endButtonLoading, setEndButtonLoading] = useState(false);
 	const [webhookStatus, setWebhookStatus] = useState<any>("Default");
+
+	const videoRef = useRef<HTMLVideoElement | null>(null);
+	const [scanButtonLoading, setScanButtonLoading] = useState(false);
+	const [approveButtonLoading, setApproveButtonLoading] = useState(false);
+	const [rejectButtonLoading, setRejectButtonLoading] = useState(false);
+
+	const [selectedTask, setSelectedTask] = useState<any>();
 
 	const { compId } = useParams();
 
@@ -55,6 +63,62 @@ export default function LaunchCompetition() {
 
 		onLoad();
 	}, []);
+
+	async function approveTask() {
+		setApproveButtonLoading(true);
+		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split('#')[1]}/approve`, {});
+		setApproveButtonLoading(false);
+		setSelectedTask(null);
+	}
+
+	async function rejectTask() {
+		setRejectButtonLoading(true);
+		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split('#')[1]}/reject`, {});
+		setRejectButtonLoading(false);
+		setSelectedTask(null);
+	}
+
+	async function startScan() {
+		setScanButtonLoading(true);
+		videoRef.current!.hidden = false;
+		try {
+			const hints = new Map();
+      		hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.PDF_417]);
+
+			const codeReader = new BrowserMultiFormatReader(hints);
+	  
+			// Get user media
+			const videoInputDevices = await codeReader.listVideoInputDevices();
+			if (videoInputDevices.length === 0) {
+			  console.error("No video input devices found");
+			  return;
+			}
+	  
+			const firstDeviceId = videoInputDevices[0].deviceId;
+	  
+			// Decode from the camera
+			const result = await codeReader.decodeOnceFromVideoDevice(firstDeviceId, videoRef.current!);
+	  
+			setScanButtonLoading(false);
+			videoRef.current!.hidden = true;
+			console.log("Decoded text:", result.getText());
+
+			const activity = await API.get("api", `/competition/${compId}/activity/${result.getText()}`, {});
+			console.log(packs)
+			const pack = { tasks: undefined, ...packs!.find((p) => p.tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId)) };
+			console.log(pack);
+			setSelectedTask({
+				task: packs!.find((p) => p.tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId)).tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId),
+				pack,
+				...activity
+			});
+
+		  } catch (error) {
+			setScanButtonLoading(false);
+			videoRef.current!.hidden = true;
+			console.error("Error during scanning:", error);
+		  }
+	}
 
 	async function startCompetition() {
 		setStartButtonLoading(true);
@@ -228,6 +292,7 @@ export default function LaunchCompetition() {
 					alignItems: "left",
 					flexDirection: "column",
 					padding: "2%",
+					gap: 2,
 				}}>
 				<Card
 					variant="plain"
@@ -247,7 +312,7 @@ export default function LaunchCompetition() {
 							{competition.name} launchpad
 						</Typography>
 
-						<ButtonGroup variant="solid">
+						<ButtonGroup variant="solid" buttonFlex={1}>
 							<Button
 								color="success"
 								disabled={competition.status != "NOT_STARTED"}
@@ -281,6 +346,78 @@ export default function LaunchCompetition() {
 								End
 							</Button>
 						</ButtonGroup>
+					</CardContent>
+				</Card>
+
+				<Card
+					variant="plain"
+					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "50%" }}>
+					<CardContent
+						sx={{
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "left",
+							justifyContent: "center",
+							padding: "2%",
+						}}>
+						<Typography
+							level="h3"
+							component="h2"
+							textColor="common.white">
+							Manual verification
+						</Typography>
+
+						<Button
+							color="primary"
+							disabled={competition.status != "IN_PROGRESS"}
+							onClick={startScan}
+							loading={scanButtonLoading}>
+							Scan
+						</Button>
+
+						<video
+							ref={videoRef}
+							style={{ width: "100%", border: "1px solid black" }}
+							autoPlay
+							hidden={true}
+						></video>
+
+						<Divider orientation="horizontal" />
+
+						{ selectedTask && (
+							<>
+
+						<Typography
+							level="h4"
+							component="h3"
+							textColor="common.white">
+							{selectedTask.pack.name && selectedTask.pack.name.S} | {selectedTask.task.title && selectedTask.task.title.S}
+						</Typography>
+
+						<Typography
+							level="body-md"
+							textColor="common.white">
+							{selectedTask.task.content && selectedTask.task.content.S}
+						</Typography>
+
+						<ButtonGroup variant="solid" buttonFlex={1}>
+							<Button
+								color="success"
+								onClick={approveTask}
+								loading={approveButtonLoading}>
+								Grant
+							</Button>
+							<Button
+								color="danger"
+								onClick={rejectTask}
+								loading={rejectButtonLoading}>
+								Reject
+							</Button>
+						</ButtonGroup>
+
+							</>
+						)}
+						
 					</CardContent>
 				</Card>
 			</Box>
