@@ -18,7 +18,7 @@ import NewWindow from "react-new-window";
 import { API } from "aws-amplify";
 import { toast } from "react-toastify";
 
-export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
+export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { refreshManual: any, open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
 	const [answer, setAnswer] = React.useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
 
@@ -33,6 +33,11 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 				},
 			});
 			setSubmitTaskLoading(false);
+
+			if (result.manual === true) {
+				refreshManual();
+				return toast.info(`${task.title.S} has been submitted for manual verification.`);
+			}
 
 			if (result.result === true) {
 				toast.success(`You answered ${task.title.S} correctly, and ${task.points.N} point${task.points.N != 1 && "s"} have been added to your team.`);

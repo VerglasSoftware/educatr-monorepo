@@ -278,6 +278,28 @@ export const check: Handler = Util.handler(async (event) => {
 			} else {
 				return await returnAnswer(false);
 			}
+		case "MANUAL":
+			const params = {
+				TableName: Resource.Competitions.name,
+				Item: {
+					PK: pk,
+					SK: "ACTIVITY#" + createId(),
+					status: "WAITING",
+					userId: event.requestContext.authorizer?.iam.cognitoIdentity.identityId,
+					packId: data.packId,
+					taskId: data.taskId,
+					createdAt: Date.now(),
+				},
+			};
+	
+			var putResult: any;
+	
+			try {
+				putResult = await client.send(new PutCommand(params));
+			} catch (e) {
+				throw new Error("Could not create activity");
+			}
+			return JSON.stringify({ manual: true });
 		default:
 			throw new Error("Verification type not supported");
 	}
