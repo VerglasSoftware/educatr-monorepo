@@ -1,3 +1,4 @@
+import { Resource } from "sst";
 import { api } from "./api";
 import { organisationTable, userTable } from "./storage";
 
@@ -20,7 +21,30 @@ export const userPool = new sst.aws.CognitoUserPool("UserPool", {
 	},
 });
 
-export const userPoolClient = userPool.addClient("UserPoolClient");
+const entraProvider = userPool.addIdentityProvider("EntraID", {
+    type: "oidc",
+    details: {
+        authorize_scopes: "openid profile email",
+        client_id: Resource.ENTRA_CLIENT_ID.value,
+        client_secret: Resource.ENTRA_CLIENT_SECRET.value,
+        oidc_issuer: "https://login.microsoftonline.com/f50bde61-7c14-4884-94b2-ca2440bb017d/v2.0",
+		authorize_url: "https://login.microsoftonline.com/f50bde61-7c14-4884-94b2-ca2440bb017d/oauth2/v2.0/authorize",
+		attributes_url: "https://graph.microsoft.com/oidc/userinfo",
+		jwks_uri: "https://login.microsoftonline.com/f50bde61-7c14-4884-94b2-ca2440bb017d/discovery/v2.0/keys",
+		token_url: "https://login.microsoftonline.com/f50bde61-7c14-4884-94b2-ca2440bb017d/oauth2/v2.0/token",
+		attributes_request_method: "GET"
+    },
+    attributes: {
+        email: "email",
+        username: "sub",
+		family_name: "family_name",
+		given_name: "given_name",
+    },
+});
+
+export const userPoolClient = userPool.addClient("UserPoolClient", {
+	providers: [entraProvider.providerName]
+});
 
 export const identityPool = new sst.aws.CognitoIdentityPool("IdentityPool", {
 	userPools: [
