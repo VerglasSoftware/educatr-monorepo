@@ -19,10 +19,9 @@ import { toast } from "react-toastify";
 
 export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
 	const [answer, setAnswer] = useState<string>("");
-	const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
+	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 	const [stdin, setStdin] = useState<string>("");
 	const [stdout, setStdout] = useState<string>("");
-	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 	const [runLoading, setRunLoading] = useState<boolean>(false);
 
 	async function submitTask() {
@@ -133,7 +132,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 														},
 													});
 													setRunLoading(false);
-													setStdout(result.stdout || result.stderr);
+													setStdout(result.output);
 												} catch (e) {
 													setRunLoading(false);
 													setStdout("An error occurred when running your code.");

@@ -388,9 +388,13 @@ export const run: Handler = Util.handler(async (event) => {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 		} while (status.data.status.id < 3);
 		if (status.data.status.id == 3) {
-			return JSON.stringify({ stdout: status.data.stdout, stderr: status.data.stderr });
+			return JSON.stringify({ output: status.data.stdout });
 		} else {
-			throw new Error("Submission failed");
+			if (status.data.status.id == 6) {
+				return JSON.stringify({ output: status.data.compile_output });
+			} else {
+				return JSON.stringify({ output: status.data.stderr });
+			}
 		}
 	}
 });
