@@ -1,13 +1,11 @@
-import { Box, Breadcrumbs, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Link, Stack, Textarea, Typography } from "@mui/joy";
-import "./ClassDetail.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
+import { Box, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
+import "./ClassDetail.css";
 
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import TaskTable from "../../components/dash/packs/TaskTable";
+import Breadcrumb from "../../components/dash/breadcrumb";
 
 export default function ClassDetail() {
 	const [clazz, setClass] = useState<any>();
@@ -38,38 +36,13 @@ export default function ClassDetail() {
 				</Helmet>
 				<div>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumbs
-							size="sm"
-							aria-label="breadcrumbs"
-							separator={<ChevronRightRoundedIcon fontSize="small" />}
-							sx={{ pl: 0 }}>
-							<Link
-								underline="none"
-								color="neutral"
-								href="/"
-								aria-label="Home">
-								<HomeRoundedIcon />
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Dashboard
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Classes
-							</Link>
-							<Typography
-								color="primary"
-								sx={{ fontWeight: 500, fontSize: 12 }}>
-								{clazz.name}
-							</Typography>
-						</Breadcrumbs>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dash" },
+								{ label: "Classes", href: "/dash/classes" },
+								{ label: clazz.name, href: `/dash/classes/${classId}` },
+							]}
+						/>
 					</Box>
 
 					<Box

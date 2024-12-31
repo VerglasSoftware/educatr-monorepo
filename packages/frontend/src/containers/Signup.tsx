@@ -1,6 +1,6 @@
-import "./Signup.css";
 import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
+import "./Signup.css";
 import SignupStudent from "./SignupStudent";
 import SignupTeacher from "./SignupTeacher";
 

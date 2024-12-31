@@ -1,21 +1,24 @@
-import * as React from "react";
-import Avatar from "@mui/joy/Avatar";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import Box from "@mui/joy/Box";
-import Divider from "@mui/joy/Divider";
-import Table from "@mui/joy/Table";
-import Sheet from "@mui/joy/Sheet";
 import Checkbox from "@mui/joy/Checkbox";
+import Dropdown from "@mui/joy/Dropdown";
 import IconButton from "@mui/joy/IconButton";
-import Typography from "@mui/joy/Typography";
 import Menu from "@mui/joy/Menu";
 import MenuButton from "@mui/joy/MenuButton";
 import MenuItem from "@mui/joy/MenuItem";
-import Dropdown from "@mui/joy/Dropdown";
-import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import Sheet from "@mui/joy/Sheet";
+import Table from "@mui/joy/Table";
+import Typography from "@mui/joy/Typography";
 import { API } from "aws-amplify";
+import { Fragment, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-function RowMenu({ packId, taskId }: { packId: string; taskId: string }) {
+interface RowMenuProps {
+	packId: string;
+	taskId: string;
+}
+
+function RowMenu({ packId, taskId }: RowMenuProps) {
 	return (
 		<Dropdown>
 			<MenuButton
@@ -30,11 +33,7 @@ function RowMenu({ packId, taskId }: { packId: string; taskId: string }) {
 					color="danger"
 					onClick={async () => {
 						const confirmed = window.confirm("Are you sure you want to delete this task?");
-
-						if (!confirmed) {
-							return;
-						}
-
+						if (!confirmed) return;
 						try {
 							await API.del("api", `/pack/${packId}/task/${taskId}`, {});
 						} catch (e) {
@@ -49,12 +48,12 @@ function RowMenu({ packId, taskId }: { packId: string; taskId: string }) {
 }
 
 export default function TaskTable() {
-	const [selected, setSelected] = React.useState<readonly string[]>([]);
-	const [tasks, setTasks] = React.useState<any[]>([]);
+	const [selected, setSelected] = useState<readonly string[]>([]);
+	const [tasks, setTasks] = useState<any[]>([]);
 
 	const { id } = useParams();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		async function onLoad() {
 			try {
 				const tasks = await API.get("api", `/pack/${id}/task`, {});
@@ -63,12 +62,11 @@ export default function TaskTable() {
 				console.log(e);
 			}
 		}
-
 		onLoad();
-	}, []);
+	}, [id]);
 
 	return (
-		<React.Fragment>
+		<Fragment>
 			<Sheet
 				className="OrderTableContainer"
 				variant="plain"
@@ -133,7 +131,10 @@ export default function TaskTable() {
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										<RowMenu id={row.PK.S} />
+										<RowMenu
+											packId={id!}
+											taskId={row.id}
+										/>
 									</Box>
 								</td>
 							</tr>
@@ -141,6 +142,6 @@ export default function TaskTable() {
 					</tbody>
 				</Table>
 			</Sheet>
-		</React.Fragment>
+		</Fragment>
 	);
 }

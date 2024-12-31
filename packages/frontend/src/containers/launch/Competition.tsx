@@ -1,13 +1,13 @@
 import { Box, Button, ButtonGroup, Card, CardContent, Divider, Typography } from "@mui/joy";
-import "../play/Play.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useRef, useState } from "react";
-import { API } from "aws-amplify";
-import { useParams } from "react-router-dom";
-import NavbarMain from "../../components/launch/Navbar";
 import { DotWave } from "@uiball/loaders";
+import { BarcodeFormat, BrowserMultiFormatReader, DecodeHintType } from "@zxing/library";
+import { API } from "aws-amplify";
+import { useEffect, useRef, useState } from "react";
+import { Helmet } from "react-helmet";
+import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from "@zxing/library";
+import NavbarMain from "../../components/launch/Navbar";
+import "../play/Play.css";
 
 export default function LaunchCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -66,14 +66,14 @@ export default function LaunchCompetition() {
 
 	async function approveTask() {
 		setApproveButtonLoading(true);
-		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split('#')[1]}/approve`, {});
+		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split("#")[1]}/approve`, {});
 		setApproveButtonLoading(false);
 		setSelectedTask(null);
 	}
 
 	async function rejectTask() {
 		setRejectButtonLoading(true);
-		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split('#')[1]}/reject`, {});
+		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split("#")[1]}/reject`, {});
 		setRejectButtonLoading(false);
 		setSelectedTask(null);
 	}
@@ -83,41 +83,40 @@ export default function LaunchCompetition() {
 		videoRef.current!.hidden = false;
 		try {
 			const hints = new Map();
-      		hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.PDF_417]);
+			hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.PDF_417]);
 
 			const codeReader = new BrowserMultiFormatReader(hints);
-	  
+
 			// Get user media
 			const videoInputDevices = await codeReader.listVideoInputDevices();
 			if (videoInputDevices.length === 0) {
-			  console.error("No video input devices found");
-			  return;
+				console.error("No video input devices found");
+				return;
 			}
-	  
+
 			const firstDeviceId = videoInputDevices[0].deviceId;
-	  
+
 			// Decode from the camera
 			const result = await codeReader.decodeOnceFromVideoDevice(firstDeviceId, videoRef.current!);
-	  
+
 			setScanButtonLoading(false);
 			videoRef.current!.hidden = true;
 			console.log("Decoded text:", result.getText());
 
 			const activity = await API.get("api", `/competition/${compId}/activity/${result.getText()}`, {});
-			console.log(packs)
+			console.log(packs);
 			const pack = { tasks: undefined, ...packs!.find((p) => p.tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId)) };
 			console.log(pack);
 			setSelectedTask({
 				task: packs!.find((p) => p.tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId)).tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId),
 				pack,
-				...activity
+				...activity,
 			});
-
-		  } catch (error) {
+		} catch (error) {
 			setScanButtonLoading(false);
 			videoRef.current!.hidden = true;
 			console.error("Error during scanning:", error);
-		  }
+		}
 	}
 
 	async function startCompetition() {
@@ -312,7 +311,9 @@ export default function LaunchCompetition() {
 							{competition.name} launchpad
 						</Typography>
 
-						<ButtonGroup variant="solid" buttonFlex={1}>
+						<ButtonGroup
+							variant="solid"
+							buttonFlex={1}>
 							<Button
 								color="success"
 								disabled={competition.status != "NOT_STARTED"}
@@ -379,45 +380,43 @@ export default function LaunchCompetition() {
 							ref={videoRef}
 							style={{ width: "100%", border: "1px solid black" }}
 							autoPlay
-							hidden={true}
-						></video>
+							hidden={true}></video>
 
 						<Divider orientation="horizontal" />
 
-						{ selectedTask && (
+						{selectedTask && (
 							<>
+								<Typography
+									level="h4"
+									component="h3"
+									textColor="common.white">
+									{selectedTask.pack.name && selectedTask.pack.name.S} | {selectedTask.task.title && selectedTask.task.title.S}
+								</Typography>
 
-						<Typography
-							level="h4"
-							component="h3"
-							textColor="common.white">
-							{selectedTask.pack.name && selectedTask.pack.name.S} | {selectedTask.task.title && selectedTask.task.title.S}
-						</Typography>
+								<Typography
+									level="body-md"
+									textColor="common.white">
+									{selectedTask.task.content && selectedTask.task.content.S}
+								</Typography>
 
-						<Typography
-							level="body-md"
-							textColor="common.white">
-							{selectedTask.task.content && selectedTask.task.content.S}
-						</Typography>
-
-						<ButtonGroup variant="solid" buttonFlex={1}>
-							<Button
-								color="success"
-								onClick={approveTask}
-								loading={approveButtonLoading}>
-								Grant
-							</Button>
-							<Button
-								color="danger"
-								onClick={rejectTask}
-								loading={rejectButtonLoading}>
-								Reject
-							</Button>
-						</ButtonGroup>
-
+								<ButtonGroup
+									variant="solid"
+									buttonFlex={1}>
+									<Button
+										color="success"
+										onClick={approveTask}
+										loading={approveButtonLoading}>
+										Grant
+									</Button>
+									<Button
+										color="danger"
+										onClick={rejectTask}
+										loading={rejectButtonLoading}>
+										Reject
+									</Button>
+								</ButtonGroup>
 							</>
 						)}
-						
 					</CardContent>
 				</Card>
 			</Box>

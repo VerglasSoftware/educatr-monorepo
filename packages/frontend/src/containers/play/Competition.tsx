@@ -1,15 +1,15 @@
 import { Box, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
-import "./Play.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
-import { API } from "aws-amplify";
-import { useParams } from "react-router-dom";
-import NavbarMain from "../../components/play/Navbar";
 import { DotWave } from "@uiball/loaders";
+import { API } from "aws-amplify";
 import { cardio, pulsar } from "ldrs";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
+import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import TaskModal from "../../components/play/TaskModal";
+import NavbarMain from "../../components/play/Navbar";
 import { PDF417 } from "../../components/play/PDF417";
+import TaskModal from "../../components/play/TaskModal";
+import "./Play.css";
 
 export default function PlayCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -41,7 +41,7 @@ export default function PlayCompetition() {
 					break;
 				case "TASK:ANSWERED":
 					const newActivity = data.body;
-					setActivity([...(activity?.filter(a => a.taskId.S != newActivity.taskId) || []), newActivity]);
+					setActivity([...(activity?.filter((a) => a.taskId.S != newActivity.taskId) || []), newActivity]);
 					console.log(waitingTask);
 					if (newActivity.taskId == waitingTask.SK.S.split("#")[1]) setWaitingTask(null);
 					break;
@@ -81,18 +81,21 @@ export default function PlayCompetition() {
 	}, []);
 
 	useEffect(() => {
-		if (activity != null) if (packs != null) for (const t in activity) {
-			const task = activity[t];
-			if (task.status) if (task.status.S == "WAITING") {
-				const pack: any = packs.find((p) => p.PK.S == task.packId.S);
-				const task2: any = pack.tasks.find((t: any) => t.SK.S.split("#")[1] == task.taskId.S);
-				setWaitingTask({
-					pack: { tasks: undefined, ...pack },
-					activity: activity[t],
-					...task2
-				});
-			}
-		}
+		if (activity != null)
+			if (packs != null)
+				for (const t in activity) {
+					const task = activity[t];
+					if (task.status)
+						if (task.status.S == "WAITING") {
+							const pack: any = packs.find((p) => p.PK.S == task.packId.S);
+							const task2: any = pack.tasks.find((t: any) => t.SK.S.split("#")[1] == task.taskId.S);
+							setWaitingTask({
+								pack: { tasks: undefined, ...pack },
+								activity: activity[t],
+								...task2,
+							});
+						}
+				}
 	}, [activity, packs]);
 
 	if (!competition || !packs || webhookStatus != "Open" || !activity) {
@@ -241,56 +244,57 @@ export default function PlayCompetition() {
 	}
 
 	if (waitingTask) {
-		return waitingTask && (
-			<Box
-				sx={{
-					display: "flex",
-					justifyContent: "center",
-					alignItems: "center",
-					height: "85vh",
-					flexDirection: "column",
-					overflow: "hidden",
-				}}>
-				<Card
-					variant="plain"
-					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "60%" }}>
-					<CardContent
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
-							padding: "2%",
-						}}>
-						<l-pulsar
-							size="50"
-							speed="2"
-							color="white"></l-pulsar>
+		return (
+			waitingTask && (
+				<Box
+					sx={{
+						display: "flex",
+						justifyContent: "center",
+						alignItems: "center",
+						height: "85vh",
+						flexDirection: "column",
+						overflow: "hidden",
+					}}>
+					<Card
+						variant="plain"
+						sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "60%" }}>
+						<CardContent
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								justifyContent: "center",
+								padding: "2%",
+							}}>
+							<l-pulsar
+								size="50"
+								speed="2"
+								color="white"></l-pulsar>
 
-								<Typography
-									level="h1"
-									textColor="common.white"
-									sx={{ mt: 2 }}>
-									{waitingTask.pack.name.S.toUpperCase()} | {waitingTask.title.S.toUpperCase()}
-								</Typography>
-								<Typography
-									level="body-sm"
-									textColor="common.white">
-									The last task you submitted needs to be manually reviewed.
-								</Typography>
-								<Typography
-									level="body-sm"
-									textColor="common.white">
-									A member of our team will be with you as soon as possible.
-								</Typography>
+							<Typography
+								level="h1"
+								textColor="common.white"
+								sx={{ mt: 2 }}>
+								{waitingTask.pack.name.S.toUpperCase()} | {waitingTask.title.S.toUpperCase()}
+							</Typography>
+							<Typography
+								level="body-sm"
+								textColor="common.white">
+								The last task you submitted needs to be manually reviewed.
+							</Typography>
+							<Typography
+								level="body-sm"
+								textColor="common.white">
+								A member of our team will be with you as soon as possible.
+							</Typography>
 
-								<br />
+							<br />
 
-								<PDF417 value={waitingTask.activity && waitingTask.activity.SK.S.split("#")[1]} />
-
-					</CardContent>
-				</Card>
-			</Box>
+							<PDF417 value={waitingTask.activity && waitingTask.activity.SK.S.split("#")[1]} />
+						</CardContent>
+					</Card>
+				</Box>
+			)
 		);
 	}
 

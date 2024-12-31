@@ -1,11 +1,11 @@
+import { Auth } from "aws-amplify";
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
 import Stack from "react-bootstrap/Stack";
+import { useNavigate } from "react-router-dom";
 import LoaderButton from "../components/LoaderButton";
 import { useFormFields } from "../lib/hooksLib";
 import "./SignupStudent.css";
-import { Auth } from "aws-amplify";
-import { useNavigate } from "react-router-dom";
 
 export default function SignupStudent() {
 	const [fields, handleFieldChange] = useFormFields({

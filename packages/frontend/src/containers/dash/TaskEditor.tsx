@@ -1,19 +1,16 @@
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { Box, Button, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
-import "./PackDetail.css";
-
 import Breadcrumb from "../../components/dash/breadcrumb";
-import PackCard from "../../components/dash/packs/PackCard";
-import TaskTable from "../../components/dash/packs/TaskTable";
+import "./TaskEditor.css";
 
-export default function PackDetail() {
+export default function TaskEditor() {
 	const [pack, setPack] = useState<any>();
-
-	const [name, setName] = useState<string>("");
-	const [description, setDescription] = useState<string>("");
+	const [tasks, setTasks] = useState<any[]>([]);
 
 	const { id } = useParams();
 
@@ -21,9 +18,9 @@ export default function PackDetail() {
 		async function onLoad() {
 			try {
 				const pack = await API.get("api", `/pack/${id}`, {});
+				const tasks = await API.get("api", `/pack/${id}/task`, {});
 				setPack(pack);
-				setName(pack.name);
-				setDescription(pack.description);
+				setTasks(tasks);
 			} catch (e) {
 				console.log(e);
 			}
@@ -32,10 +29,11 @@ export default function PackDetail() {
 	}, [id]);
 
 	return (
-		pack && (
+		pack &&
+		tasks && (
 			<div className="Home">
 				<Helmet>
-					<title>{pack.name} - Packs</title>
+					<title>{pack.name} - Task Editor</title>
 				</Helmet>
 				<div>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
@@ -44,6 +42,7 @@ export default function PackDetail() {
 								{ label: "Dashboard", href: "/dash" },
 								{ label: "Packs", href: "/dash/packs" },
 								{ label: pack.name, href: `/dash/packs/${id}` },
+								{ label: "Editor", href: `/dash/packs/${id}/edit` },
 							]}
 						/>
 					</Box>
@@ -63,28 +62,25 @@ export default function PackDetail() {
 							{pack.name}
 						</Typography>
 					</Box>
-
-					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
-						<Box sx={{ gridColumn: "span 6" }}>
-							<PackCard
-								name={name}
-								description={description}
-								id={id!}
-								pack={pack}
-								setPack={setPack}
-								setName={setName}
-								setDescription={setDescription}
-							/>
-						</Box>
-						<Box sx={{ gridColumn: "span 6" }}>
-							<TaskTable />
-							<Button
-								href={`/dash/packs/${id}/edit`}
-								className="mt-2">
-								Edit
-							</Button>
-						</Box>
+					<Box sx={{ display: "flex", justifyContent: "center" }}>
+						<Button
+							variant="plain"
+							onClick={() => console.log("back")}>
+							<ArrowBackIcon />
+						</Button>
+						<Typography
+							level="h3"
+							component="h2"
+							sx={{ my: 0 }}>
+							{tasks[0].title.S}
+						</Typography>
+						<Button
+							variant="plain"
+							onClick={() => console.log("forward")}>
+							<ArrowForwardIcon />
+						</Button>
 					</Box>
+					<Box></Box>
 				</div>
 			</div>
 		)

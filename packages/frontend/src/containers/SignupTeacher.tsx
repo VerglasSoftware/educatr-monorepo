@@ -1,11 +1,11 @@
+import { Auth } from "aws-amplify";
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
 import Stack from "react-bootstrap/Stack";
+import { useNavigate } from "react-router-dom";
 import LoaderButton from "../components/LoaderButton";
 import { useFormFields } from "../lib/hooksLib";
 import "./SignupTeacher.css";
-import { Auth } from "aws-amplify";
-import { useNavigate } from "react-router-dom";
 
 export default function SignupTeacher() {
 	const [fields, handleFieldChange] = useFormFields({
@@ -27,7 +27,7 @@ export default function SignupTeacher() {
 		setIsLoading(true);
 
 		try {
-			let r = (Math.random() + 1).toString(36).substring(7);
+			const r = (Math.random() + 1).toString(36).substring(7);
 
 			await Auth.signUp({
 				username: fields.email.split("@")[0] + "-" + r,

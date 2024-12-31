@@ -6,7 +6,8 @@
 	],
 	"scripts": {
 		"aws:login": "aws-azure-login",
-		"start:dev": "npm run aws:login && npx sst dev"
+		"start:dev": "npm run aws:login && npx sst dev",
+		"start:dev:nologin": "npx sst dev"
 	},
 	"devDependencies": {
 		"@tsconfig/node20": "^20.1.4",

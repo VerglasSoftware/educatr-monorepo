@@ -1,15 +1,12 @@
-import { Box, Breadcrumbs, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Link, Stack, Textarea, Typography } from "@mui/joy";
-import "./OrganisationDetail.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
+import { Box, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Stack, Textarea, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
+import "./OrganisationDetail.css";
 
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import TaskTable from "../../components/dash/packs/TaskTable";
+import Breadcrumb from "../../components/dash/breadcrumb";
 import OrganisationStudentTable from "../../components/dash/organisations/OrganisationStudentTable";
-import NewUserModal from "../../components/dash/organisations/NewUserModal";
 
 export default function OrganisationDetail() {
 	const [organisation, setOrganisation] = useState<any>();
@@ -44,31 +41,12 @@ export default function OrganisationDetail() {
 				</Helmet>
 				<div>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumbs
-							size="sm"
-							aria-label="breadcrumbs"
-							separator={<ChevronRightRoundedIcon fontSize="small" />}
-							sx={{ pl: 0 }}>
-							<Link
-								underline="none"
-								color="neutral"
-								href="/"
-								aria-label="Home">
-								<HomeRoundedIcon />
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Dashboard
-							</Link>
-							<Typography
-								color="primary"
-								sx={{ fontWeight: 500, fontSize: 12 }}>
-								{organisation.name}
-							</Typography>
-						</Breadcrumbs>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dash" },
+								{ label: organisation.name, href: `/dash/organisations/${id}` },
+							]}
+						/>
 					</Box>
 
 					<Box
