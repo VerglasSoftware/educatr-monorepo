@@ -1,9 +1,9 @@
-import { Handler } from "aws-lambda";
 import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { QueryCommand, DynamoDBDocumentClient, PutCommand, DeleteCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { Resource } from "sst";
-import { createId } from "@paralleldrive/cuid2";
+import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
+import { createId } from "@paralleldrive/cuid2";
+import { Handler } from "aws-lambda";
+import { Resource } from "sst";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -57,7 +57,6 @@ export const create: Handler = Util.handler(async (event) => {
 		verificationType: "",
 		answerType: "",
 		placeholder: "",
-		prerequisites: [],
 	};
 
 	if (event.body != null) {
@@ -77,7 +76,6 @@ export const create: Handler = Util.handler(async (event) => {
 			verificationType: data.verificationType,
 			answerType: data.answerType,
 			placeholder: data.placeholder,
-			prerequisites: data.prerequisites,
 			createdAt: Date.now(),
 		},
 	};
@@ -160,7 +158,6 @@ export const update: Handler = Util.handler(async (event) => {
 		verificationType: "",
 		answerType: "",
 		placeholder: "",
-		prerequisites: [],
 	};
 
 	if (event.body != null) {
@@ -175,7 +172,7 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: `TASK#${taskId}`,
 		},
-		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites",
+		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder",
 		ExpressionAttributeNames: {
 			"#title": "title",
 			"#subtitle": "subtitle",
@@ -185,7 +182,6 @@ export const update: Handler = Util.handler(async (event) => {
 			"#verificationType": "verificationType",
 			"#answerType": "answerType",
 			"#placeholder": "placeholder",
-			"#prerequisites": "prerequisites",
 		},
 		ExpressionAttributeValues: {
 			":title": data.title,
@@ -196,7 +192,6 @@ export const update: Handler = Util.handler(async (event) => {
 			":verificationType": data.verificationType,
 			":answerType": data.answerType,
 			":placeholder": data.placeholder,
-			":prerequisites": data.prerequisites,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
