@@ -1,11 +1,16 @@
+import { html } from "@codemirror/lang-html";
+import { python } from "@codemirror/lang-python";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import CheckIcon from "@mui/icons-material/Check";
+import CodeIcon from "@mui/icons-material/Code";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import EditIcon from "@mui/icons-material/Edit";
 import HelpIcon from "@mui/icons-material/Help";
-import { Box, Button, FormControl, FormLabel, Input, Option, Select, Textarea, Typography } from "@mui/joy";
+import { Box, Button, Checkbox, FormControl, FormLabel, Input, Option, Select, Textarea, Typography } from "@mui/joy";
+import { csharp } from "@replit/codemirror-lang-csharp";
+import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
@@ -13,6 +18,12 @@ import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import Breadcrumb from "../../components/dash/breadcrumb";
 import "./TaskEditor.css";
+
+interface AnswerChoice {
+	id: string;
+	name: string;
+	correct?: boolean;
+}
 
 export default function TaskEditor() {
 	const [pack, setPack] = useState<any>();
@@ -25,6 +36,9 @@ export default function TaskEditor() {
 			title: "",
 			subtitle: "",
 			content: "",
+			placeholder: "",
+			answer: "",
+			answerChoices: [] as AnswerChoice[],
 			answerType: "",
 			verificationType: "",
 			points: 0,
@@ -55,6 +69,13 @@ export default function TaskEditor() {
 				title: task.title.S,
 				subtitle: task.subtitle.S,
 				content: task.content.S,
+				placeholder: task.placeholder.S,
+				answer: task.answer.S,
+				answerChoices: task.answerChoices.L.map((item) => ({
+					id: item.M.id.S,
+					name: item.M.name.S,
+					correct: item.M.correct.BOOL,
+				})),
 				answerType: task.answerType.S,
 				verificationType: task.verificationType.S,
 				points: task.points.N,
@@ -99,10 +120,25 @@ export default function TaskEditor() {
 					<Box sx={{ display: "flex", justifyContent: "center" }}>
 						<Button
 							variant="plain"
-							disabled={tasks[0].id.S == task.id.S}
+							disabled={tasks[0].id == task.id}
 							onClick={() => {
-								const index = tasks.findIndex((t) => t.id.S == task.id.S);
+								const index = tasks.findIndex((t) => t.id == task.id);
 								setTask(tasks[index - 1]);
+								formik.setValues({
+									title: tasks[index - 1].title.S,
+									subtitle: tasks[index - 1].subtitle.S,
+									content: tasks[index - 1].content.S,
+									placeholder: tasks[index - 1].placeholder.S,
+									answer: tasks[index - 1].answer.S,
+									answerChoices: tasks[index - 1].answerChoices.L.map((item) => ({
+										id: item.M.id.S,
+										name: item.M.name.S,
+										correct: item.M.correct.BOOL,
+									})),
+									answerType: tasks[index - 1].answerType.S,
+									verificationType: tasks[index - 1].verificationType.S,
+									points: tasks[index - 1].points.N,
+								});
 							}}>
 							<ArrowBackIcon />
 						</Button>
@@ -114,10 +150,25 @@ export default function TaskEditor() {
 						</Typography>
 						<Button
 							variant="plain"
-							disabled={tasks[tasks.length - 1].id.S == task.id.S}
+							disabled={tasks[tasks.length - 1].id == task.id}
 							onClick={() => {
-								const index = tasks.findIndex((t) => t.id.S == task.id.S);
+								const index = tasks.findIndex((t) => t.id == task.id);
 								setTask(tasks[index + 1]);
+								formik.setValues({
+									title: tasks[index + 1].title.S,
+									subtitle: tasks[index + 1].subtitle.S,
+									content: tasks[index + 1].content.S,
+									placeholder: tasks[index + 1].placeholder.S,
+									answer: tasks[index + 1].answer.S,
+									answerChoices: tasks[index + 1].answerChoices.L.map((item) => ({
+										id: item.M.id.S,
+										name: item.M.name.S,
+										correct: item.M.correct.BOOL,
+									})),
+									answerType: tasks[index + 1].answerType.S,
+									verificationType: tasks[index + 1].verificationType.S,
+									points: tasks[index + 1].points.N,
+								});
 							}}>
 							<ArrowForwardIcon />
 						</Button>
@@ -127,79 +178,267 @@ export default function TaskEditor() {
 						<Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
 							{/* 3 columns */}
 							<Box sx={{ gridColumn: "span 3" }}>
-								<FormLabel className="flex items-center">
-									<AssignmentTurnedInIcon className="mr-1" />
-									Title
-								</FormLabel>
-								<FormControl sx={{ gap: 2 }}>
-									<Input
-										id="title"
-										name="title"
-										type="text"
-										onChange={formik.handleChange}
-										value={formik.values.title}
-									/>
-								</FormControl>
-								<FormLabel className="flex items-center">
-									<HelpIcon className="mr-1" />
-									Description
-								</FormLabel>
-								<FormControl sx={{ gap: 2 }}>
-									<Textarea
-										id="subtitle"
-										name="subtitle"
-										minRows={2}
-										onChange={formik.handleChange}
-										value={formik.values.subtitle}
-									/>
-								</FormControl>
-								<FormLabel className="flex items-center">
-									<EditIcon className="mr-1" />
-									Content
-								</FormLabel>
-								<FormControl sx={{ gap: 2 }}>
-									<Textarea
-										id="content"
-										name="content"
-										minRows={2}
-										onChange={formik.handleChange}
-										value={formik.values.content}
-									/>
-								</FormControl>
-								{task.verificationType.S == "MULTIPLE" && task.answerType.S == "MULTIPLE" && (
-									// TODO: Add multiple choice editor with correct answers
-									<></>
-								)}
-								{task.verificationType.S == "MANUAL" && task.answerType.S == "MULTIPLE" && (
-									// TODO: Add multiple choice editor without correct answers
-									<></>
-								)}
-								{task.verificationType.S == "COMPARE" && task.answerType.S == "TEXT" && (
-									// TODO: Add answer field
-									<></>
-								)}
-								{task.verificationType.S == "ALGORITHM" && task.answerType.S == "PYTHON" && (
-									// TODO: add python placeholder field
-									// TODO: output answer field
-									<></>
-								)}
-								{task.verificationType.S == "MANUAL" && task.answerType.S == "PYTHON" && (
-									// TODO: Add python placeholder field
-									<></>
-								)}
-								{task.verificationType.S == "ALGORITHM" && task.answerType.S == "CSHARP" && (
-									// TODO: add csharp placeholder field
-									// TODO: output answer field
-									<></>
-								)}
-								{task.verificationType.S == "MANUAL" && task.answerType.S == "CSHARP" && (
-									// TODO: Add csharp placeholder field
-									<></>
-								)}
-								{task.verificationType.S == "MANUAL" && task.answerType.S == "WEB" && (
-									// TODO: Add web placeholder field
-									<></>
-								)}
+								{/* scroll */}
+								<Box sx={{ display: "flex", flexDirection: "column", gap: 2, overflow: "auto", height: "calc(100vh - 14rem)" }}>
+									<FormLabel className="flex items-center">
+										<AssignmentTurnedInIcon className="mr-1" />
+										Title
+									</FormLabel>
+									<FormControl sx={{ gap: 2 }}>
+										<Input
+											id="title"
+											name="title"
+											type="text"
+											onChange={formik.handleChange}
+											value={formik.values.title}
+										/>
+									</FormControl>
+									<FormLabel className="flex items-center">
+										<HelpIcon className="mr-1" />
+										Description
+									</FormLabel>
+									<FormControl sx={{ gap: 2 }}>
+										<Textarea
+											id="subtitle"
+											name="subtitle"
+											minRows={2}
+											onChange={formik.handleChange}
+											value={formik.values.subtitle}
+										/>
+									</FormControl>
+									<FormLabel className="flex items-center">
+										<EditIcon className="mr-1" />
+										Content
+									</FormLabel>
+									<FormControl sx={{ gap: 2 }}>
+										<Textarea
+											id="content"
+											name="content"
+											minRows={2}
+											onChange={formik.handleChange}
+											value={formik.values.content}
+										/>
+									</FormControl>
+									{task.verificationType.S == "MULTIPLE" && task.answerType.S == "MULTIPLE" && (
+										<>
+											<FormLabel className="flex items-center">
+												<AssignmentTurnedInIcon className="mr-1" />
+												Answer choices
+											</FormLabel>
+											{formik.values.answerChoices.map((item, index) => (
+												<div
+													className="mt-2 flex w-full space-x-4"
+													key={item.id}>
+													<FormControl sx={{ flex: 1 }}>
+														<FormLabel>Option {index + 1}</FormLabel>
+														<Input
+															id={`answerChoices.${index}.name`}
+															name={`answerChoices.${index}.name`}
+															type="text"
+															onChange={formik.handleChange}
+															value={item.name}
+														/>
+													</FormControl>
+													<FormControl>
+														<FormLabel>Correct</FormLabel>
+														<Checkbox
+															id={`answerChoices.${index}.correct`}
+															name={`answerChoices.${index}.correct`}
+															onChange={formik.handleChange}
+															checked={item.correct}
+														/>
+													</FormControl>
+													<Button
+														type="button"
+														variant="plain"
+														onClick={() => {
+															const newAnswerChoices = formik.values.answerChoices.filter((_, i) => i !== index);
+															formik.setFieldValue("answerChoices", newAnswerChoices);
+														}}>
+														Remove
+													</Button>
+												</div>
+											))}
+											<Button
+												type="button"
+												onClick={() => {
+													const newAnswerChoices = [...formik.values.answerChoices, { id: crypto.randomUUID(), name: "", correct: false }];
+													formik.setFieldValue("answerChoices", newAnswerChoices);
+												}}>
+												Add
+											</Button>
+										</>
+									)}
+									{task.verificationType.S == "MANUAL" && task.answerType.S == "MULTIPLE" && (
+										<>
+											<FormLabel className="flex items-center">
+												<AssignmentTurnedInIcon className="mr-1" />
+												Answer choices
+											</FormLabel>
+											{formik.values.answerChoices.map((item, index) => (
+												<div
+													className="mt-2 flex w-full space-x-4"
+													key={item.id}>
+													<FormControl sx={{ flex: 1 }}>
+														<FormLabel>Option {index + 1}</FormLabel>
+														<Input
+															id={`answerChoices.${index}.name`}
+															name={`answerChoices.${index}.name`}
+															type="text"
+															onChange={formik.handleChange}
+															value={item.name}
+														/>
+													</FormControl>
+													<Button
+														type="button"
+														variant="plain"
+														onClick={() => {
+															const newAnswerChoices = formik.values.answerChoices.filter((_, i) => i !== index);
+															formik.setFieldValue("answerChoices", newAnswerChoices);
+														}}>
+														Remove
+													</Button>
+												</div>
+											))}
+											<Button
+												type="button"
+												onClick={() => {
+													const newAnswerChoices = [...formik.values.answerChoices, { id: crypto.randomUUID(), name: "" }];
+													formik.setFieldValue("answerChoices", newAnswerChoices);
+												}}>
+												Add
+											</Button>
+										</>
+									)}
+									{task.verificationType.S == "COMPARE" && task.answerType.S == "TEXT" && (
+										<>
+											<FormLabel className="flex items-center">
+												<CheckIcon className="mr-1" />
+												Answer
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<Input
+													id="answer"
+													name="answer"
+													type="text"
+													onChange={formik.handleChange}
+													value={formik.values.answer}
+												/>
+											</FormControl>
+										</>
+									)}
+									{task.verificationType.S == "ALGORITHM" && task.answerType.S == "PYTHON" && (
+										<>
+											<FormLabel className="flex items-center">
+												<CodeIcon className="mr-1" />
+												Placeholder
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<CodeMirror
+													id="placeholder"
+													height="50vh"
+													extensions={[python()]}
+													value={formik.values.placeholder}
+													onChange={formik.handleChange}
+												/>
+											</FormControl>
+											<FormLabel className="flex items-center">
+												<CheckIcon className="mr-1" />
+												Stdout value
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<Input
+													id="answer"
+													name="answer"
+													type="text"
+													onChange={formik.handleChange}
+													value={formik.values.answer}
+												/>
+											</FormControl>
+										</>
+									)}
+									{task.verificationType.S == "MANUAL" && task.answerType.S == "PYTHON" && (
+										<>
+											<FormLabel className="flex items-center">
+												<CodeIcon className="mr-1" />
+												Placeholder
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<CodeMirror
+													id="placeholder"
+													height="50vh"
+													extensions={[python()]}
+													value={formik.values.placeholder}
+													onChange={formik.handleChange}
+												/>
+											</FormControl>
+										</>
+									)}
+									{task.verificationType.S == "ALGORITHM" && task.answerType.S == "CSHARP" && (
+										<>
+											<FormLabel className="flex items-center">
+												<CodeIcon className="mr-1" />
+												Placeholder
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<CodeMirror
+													id="placeholder"
+													height="50vh"
+													extensions={[csharp()]}
+													value={formik.values.placeholder}
+													onChange={formik.handleChange}
+												/>
+											</FormControl>
+											<FormLabel className="flex items-center">
+												<CheckIcon className="mr-1" />
+												Stdout value
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<Input
+													id="answer"
+													name="answer"
+													type="text"
+													onChange={formik.handleChange}
+													value={formik.values.answer}
+												/>
+											</FormControl>
+										</>
+									)}
+									{task.verificationType.S == "MANUAL" && task.answerType.S == "CSHARP" && (
+										<>
+											<FormLabel className="flex items-center">
+												<CodeIcon className="mr-1" />
+												Placeholder
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<CodeMirror
+													id="placeholder"
+													height="50vh"
+													extensions={[csharp()]}
+													value={formik.values.placeholder}
+													onChange={formik.handleChange}
+												/>
+											</FormControl>
+										</>
+									)}
+									{task.verificationType.S == "MANUAL" && task.answerType.S == "WEB" && (
+										<>
+											<FormLabel className="flex items-center">
+												<CodeIcon className="mr-1" />
+												Placeholder
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<CodeMirror
+													id="placeholder"
+													height="50vh"
+													extensions={[html()]}
+													value={formik.values.placeholder}
+													onChange={formik.handleChange}
+												/>
+											</FormControl>
+										</>
+									)}
+								</Box>
 							</Box>
 							{/* one column */}
 							<Box sx={{ gridColumn: "span 1" }}>
