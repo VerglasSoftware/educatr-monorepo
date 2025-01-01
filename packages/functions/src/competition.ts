@@ -291,9 +291,9 @@ export const check: Handler = Util.handler(async (event) => {
 					createdAt: Date.now(),
 				},
 			};
-	
+
 			var putResult: any;
-	
+
 			try {
 				putResult = await client.send(new PutCommand(params));
 			} catch (e) {
