@@ -148,6 +148,7 @@ export const update: Handler = Util.handler(async (event) => {
 	} else {
 		throw new Error("No body provided");
 	}
+	console.log(data);
 
 	const params = {
 		TableName: Resource.Packs.name,
@@ -155,13 +156,14 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: `TASK#${taskId}`,
 		},
-		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites",
+		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #answerChoices = :answerChoices, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites",
 		ExpressionAttributeNames: {
 			"#title": "title",
 			"#subtitle": "subtitle",
 			"#points": "points",
 			"#content": "content",
 			"#answer": "answer",
+			"#answerChoices": "answerChoices",
 			"#verificationType": "verificationType",
 			"#answerType": "answerType",
 			"#placeholder": "placeholder",
@@ -173,6 +175,7 @@ export const update: Handler = Util.handler(async (event) => {
 			":points": data.points,
 			":content": data.content,
 			":answer": data.answer,
+			":answerChoices": data.answerChoices,
 			":verificationType": data.verificationType,
 			":answerType": data.answerType,
 			":placeholder": data.placeholder,

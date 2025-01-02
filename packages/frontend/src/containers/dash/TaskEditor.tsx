@@ -50,6 +50,7 @@ export default function TaskEditor() {
 			points: 0,
 		},
 		onSubmit: async (values) => {
+			console.log(values);
 			const newTask = await API.put("api", `/pack/${id}/task/${task.id}`, {
 				body: {
 					title: values.title,
