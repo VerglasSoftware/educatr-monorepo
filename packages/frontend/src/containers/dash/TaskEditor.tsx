@@ -46,11 +46,11 @@ export default function TaskEditor() {
 			answerChoices: [] as AnswerChoice[],
 			answerType: "",
 			verificationType: "",
+			prerequisites: [] as string[],
 			points: 0,
 		},
-		onSubmit: (values) => {
-			alert(JSON.stringify(values, null, 2));
-			API.put("api", `/pack/${id}/task/${task.id}`, {
+		onSubmit: async (values) => {
+			const newTask = await API.put("api", `/pack/${id}/task/${task.id}`, {
 				body: {
 					title: values.title,
 					subtitle: values.subtitle,
@@ -60,9 +60,32 @@ export default function TaskEditor() {
 					answerChoices: values.answerChoices,
 					answerType: values.answerType,
 					verificationType: values.verificationType,
+					prerequisites: values.prerequisites,
 					points: values.points,
 				},
 			});
+			// doing this becuase the repsonse of the put request doesnt have the S's and N's dynamodb types.
+			const updatedTasks = tasks.map((t) => {
+				if (t.id == newTask.SK.split("#")[1]) {
+					return {
+						...t,
+						title: { S: newTask.title },
+						subtitle: { S: newTask.subtitle },
+						content: { S: newTask.content },
+						placeholder: { S: newTask.placeholder },
+						answer: { S: newTask.answer },
+						answerChoices: { L: newTask.answerChoices.map((item) => ({ M: { id: { S: item.id }, name: { S: item.name }, correct: { BOOL: item.correct } } })) },
+						answerType: { S: newTask.answerType },
+						verificationType: { S: newTask.verificationType },
+						prerequisites: { L: newTask.prerequisites.map((item) => ({ S: item })) },
+						points: { N: newTask.points.toString() },
+					};
+				}
+				return t;
+			});
+			setTasks(updatedTasks);
+			setTask(updatedTasks.find((t) => t.id === task.id));
+			formik.resetForm({ values });
 		},
 	});
 
@@ -117,7 +140,8 @@ export default function TaskEditor() {
 				})),
 				answerType: task.answerType.S,
 				verificationType: task.verificationType.S,
-				points: task.points.N,
+				prerequisites: task.prerequisites.L.map((item) => item.S),
+				points: parseInt(task.points.N),
 			});
 		}
 	}, [tasks]);
@@ -193,7 +217,8 @@ export default function TaskEditor() {
 									})),
 									answerType: tasks[index - 1].answerType.S,
 									verificationType: tasks[index - 1].verificationType.S,
-									points: tasks[index - 1].points.N,
+									prerequisites: tasks[index - 1].prerequisites.L.map((item) => item.S),
+									points: parseInt(tasks[index - 1].points.N),
 								});
 							}}>
 							<ArrowBackIcon />
@@ -202,7 +227,7 @@ export default function TaskEditor() {
 							level="h3"
 							component="h2"
 							sx={{ my: 0 }}>
-							{tasks[0].title.S}
+							{task.title.S}
 						</Typography>
 						<Button
 							variant="plain"
@@ -240,7 +265,8 @@ export default function TaskEditor() {
 									})),
 									answerType: tasks[index + 1].answerType.S,
 									verificationType: tasks[index + 1].verificationType.S,
-									points: tasks[index + 1].points.N,
+									prerequisites: tasks[index + 1].prerequisites.L.map((item) => item.S),
+									points: parseInt(tasks[index + 1].points.N),
 								});
 							}}>
 							<ArrowForwardIcon />
@@ -592,9 +618,41 @@ export default function TaskEditor() {
 											id="points"
 											name="points"
 											type="number"
-											onChange={formik.handleChange}
+											onChange={(event) => {
+												formik.setFieldValue("points", parseInt(event.target.value));
+											}}
 											value={formik.values.points}
 										/>
+									</FormControl>
+									<FormLabel className="flex items-center">
+										<AssignmentTurnedInIcon className="mr-1" />
+										Prerequisites
+									</FormLabel>
+									<FormControl sx={{ gap: 2 }}>
+										<Select
+											id="prerequisites"
+											name="prerequisites"
+											onChange={(event, newValue) => {
+												const isRecursive = newValue.some((id) => {
+													return tasks
+														.find((t) => t.id === id)
+														.prerequisites.L.map((item) => item.S)
+														.includes(task.id);
+												});
+												if (!isRecursive) {
+													formik.setFieldValue("prerequisites", newValue);
+												} else {
+													alert("Cannot add recursive prerequisites.");
+												}
+											}}
+											value={formik.values.prerequisites}
+											multiple>
+											{tasks
+												.filter((item) => item.id != task.id)
+												.map((item) => (
+													<Option value={item.id}>{item.title.S}</Option>
+												))}
+										</Select>
 									</FormControl>
 									<Button
 										className="mt-2"

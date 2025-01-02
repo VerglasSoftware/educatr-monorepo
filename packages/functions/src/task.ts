@@ -48,16 +48,7 @@ export const create: Handler = Util.handler(async (event) => {
 		throw new Error("Missing ID in path parameters");
 	}
 
-	let data = {
-		title: "",
-		subtitle: "",
-		points: 0,
-		content: "",
-		answer: null,
-		verificationType: "",
-		answerType: "",
-		placeholder: "",
-	};
+	let data;
 
 	if (event.body != null) {
 		data = JSON.parse(event.body);
@@ -76,6 +67,7 @@ export const create: Handler = Util.handler(async (event) => {
 			verificationType: data.verificationType,
 			answerType: data.answerType,
 			placeholder: data.placeholder,
+			prerequisites: data.prerequisites,
 			createdAt: Date.now(),
 		},
 	};
@@ -149,16 +141,7 @@ export const update: Handler = Util.handler(async (event) => {
 		throw new Error("Missing PK or SK in path parameters");
 	}
 
-	let data = {
-		title: "",
-		subtitle: "",
-		points: 0,
-		content: "",
-		answer: null,
-		verificationType: "",
-		answerType: "",
-		placeholder: "",
-	};
+	let data;
 
 	if (event.body != null) {
 		data = JSON.parse(event.body);
@@ -172,7 +155,7 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: `TASK#${taskId}`,
 		},
-		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder",
+		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites",
 		ExpressionAttributeNames: {
 			"#title": "title",
 			"#subtitle": "subtitle",
@@ -182,6 +165,7 @@ export const update: Handler = Util.handler(async (event) => {
 			"#verificationType": "verificationType",
 			"#answerType": "answerType",
 			"#placeholder": "placeholder",
+			"#prerequisites": "prerequisites",
 		},
 		ExpressionAttributeValues: {
 			":title": data.title,
@@ -192,6 +176,7 @@ export const update: Handler = Util.handler(async (event) => {
 			":verificationType": data.verificationType,
 			":answerType": data.answerType,
 			":placeholder": data.placeholder,
+			":prerequisites": data.prerequisites,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -200,6 +185,7 @@ export const update: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
+		console.log(e);
 		throw new Error(`Could not update task ${taskId} in pack ${pk}`);
 	}
 });
