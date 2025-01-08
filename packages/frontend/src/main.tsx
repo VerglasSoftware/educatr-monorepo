@@ -20,7 +20,7 @@ Amplify.configure({
 			redirectSignIn: "http://localhost:5173",
 			redirectSignOut: "http://localhost:5173",
 			responseType: "token",
-		}
+		},
 	},
 	API: {
 		endpoints: [
