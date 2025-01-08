@@ -4,6 +4,7 @@ import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCom
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
+import axios from "axios";
 import { Resource } from "sst";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -180,6 +181,7 @@ export const check: Handler = Util.handler(async (event) => {
 		packId: "",
 		taskId: "",
 		answer: "",
+		stdin: "",
 	};
 
 	if (event.body != null) {
@@ -188,6 +190,7 @@ export const check: Handler = Util.handler(async (event) => {
 		throw new Error("No body provided");
 	}
 
+	// get the task
 	const params = {
 		TableName: Resource.Packs.name,
 		Key: {
@@ -197,7 +200,6 @@ export const check: Handler = Util.handler(async (event) => {
 	};
 
 	var task;
-
 	try {
 		const result = await client.send(new GetCommand(params));
 		if (!result.Item) {
@@ -208,9 +210,8 @@ export const check: Handler = Util.handler(async (event) => {
 		throw new Error("Could not retrieve competition");
 	}
 
-	console.log(task.verificationType);
-
 	async function returnAnswer(result: boolean) {
+		// create activity
 		const params = {
 			TableName: Resource.Competitions.name,
 			Item: {
@@ -224,16 +225,14 @@ export const check: Handler = Util.handler(async (event) => {
 			},
 		};
 
-		var putResult: any;
-
 		try {
-			putResult = await client.send(new PutCommand(params));
+			const putResult = await client.send(new PutCommand(params));
 		} catch (e) {
 			throw new Error("Could not create activity");
 		}
 
+		// send to all connected clients
 		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
-
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
@@ -259,7 +258,6 @@ export const check: Handler = Util.handler(async (event) => {
 		};
 
 		await Promise.all(connections.Items!.map(postToConnection));
-
 		return JSON.stringify({ result });
 	}
 
@@ -278,6 +276,45 @@ export const check: Handler = Util.handler(async (event) => {
 			} else {
 				return await returnAnswer(false);
 			}
+		case "ALGORITHM":
+			const languageMap = {
+				PYTHON: 71,
+				CSHARP: 51,
+			};
+
+			const languageId = languageMap[task.answerType];
+			if (!languageId) {
+				throw new Error("Answer type not supported");
+			}
+			var result;
+			try {
+				result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
+					stdin: data.stdin,
+					source_code: data.answer.trim(),
+					language_id: languageId,
+				});
+			} catch (e) {
+				console.log(e.response.data);
+				return await returnAnswer(false);
+			}
+			if (result.status == 201) {
+				const submissionId = result.data.token;
+				var status;
+				do {
+					status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+				} while (status.data.status.id < 3);
+				if (status.data.status.id == 3) {
+					if (status.data.stdout.trim() === task.answer.trim()) {
+						return await returnAnswer(true);
+					} else {
+						return await returnAnswer(false);
+					}
+				} else {
+					return await returnAnswer(false);
+				}
+			}
+			break;
 		case "MANUAL":
 			const params = {
 				TableName: Resource.Competitions.name,
@@ -291,9 +328,9 @@ export const check: Handler = Util.handler(async (event) => {
 					createdAt: Date.now(),
 				},
 			};
-	
+
 			var putResult: any;
-	
+
 			try {
 				putResult = await client.send(new PutCommand(params));
 			} catch (e) {
@@ -302,5 +339,64 @@ export const check: Handler = Util.handler(async (event) => {
 			return JSON.stringify({ manual: true });
 		default:
 			throw new Error("Verification type not supported");
+	}
+});
+
+export const run: Handler = Util.handler(async (event) => {
+	const { id: pk } = event.pathParameters || {};
+
+	if (!pk) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	let data = {
+		language: "",
+		code: "",
+		stdin: "",
+	};
+
+	if (event.body != null) {
+		data = JSON.parse(event.body);
+	} else {
+		throw new Error("No body provided");
+	}
+
+	const languageMap = {
+		PYTHON: 71,
+		CSHARP: 51,
+	};
+
+	const languageId = languageMap[data.language];
+	if (!languageId) {
+		throw new Error("Answer type not supported");
+	}
+	var result;
+	try {
+		result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
+			source_code: data.code.trim(),
+			language_id: languageId,
+			stdin: data.stdin,
+		});
+		console.log(result);
+	} catch (e) {
+		console.log(e.response.data);
+		throw new Error("Could not run submission");
+	}
+	if (result.status == 201) {
+		const submissionId = result.data.token;
+		var status;
+		do {
+			status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+		} while (status.data.status.id < 3);
+		if (status.data.status.id == 3) {
+			return JSON.stringify({ output: status.data.stdout });
+		} else {
+			if (status.data.status.id == 6) {
+				return JSON.stringify({ output: status.data.compile_output });
+			} else {
+				return JSON.stringify({ output: status.data.stderr });
+			}
+		}
 	}
 });

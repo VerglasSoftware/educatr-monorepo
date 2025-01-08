@@ -1,26 +1,28 @@
-import * as React from "react";
+import { html } from "@codemirror/lang-html";
+import { python } from "@codemirror/lang-python";
+import { Divider, Radio, RadioGroup, Textarea } from "@mui/joy";
 import Button from "@mui/joy/Button";
+import DialogContent from "@mui/joy/DialogContent";
+import DialogTitle from "@mui/joy/DialogTitle";
 import FormControl from "@mui/joy/FormControl";
 import FormLabel from "@mui/joy/FormLabel";
 import Input from "@mui/joy/Input";
 import Modal from "@mui/joy/Modal";
 import ModalDialog from "@mui/joy/ModalDialog";
-import DialogTitle from "@mui/joy/DialogTitle";
-import DialogContent from "@mui/joy/DialogContent";
 import Stack from "@mui/joy/Stack";
-import { useNavigate, useParams } from "react-router-dom";
-import CodeMirror from "@uiw/react-codemirror";
-import { Divider, Radio, RadioGroup } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
-import { python } from "@codemirror/lang-python";
-import { html } from "@codemirror/lang-html";
-import NewWindow from "react-new-window";
+import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
+import { Fragment, useEffect, useState } from "react";
+import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
 
-export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { refreshManual: any, open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
-	const [answer, setAnswer] = React.useState<string>("");
-	const [submitTaskLoading, setSubmitTaskLoading] = React.useState<boolean>(false);
+export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
+	const [answer, setAnswer] = useState<string>("");
+	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
+	const [stdin, setStdin] = useState<string>("");
+	const [stdout, setStdout] = useState<string>("");
+	const [runLoading, setRunLoading] = useState<boolean>(false);
 
 	async function submitTask() {
 		setSubmitTaskLoading(true);
@@ -30,6 +32,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 					packId: packId,
 					taskId: task.SK.S.split("#")[1],
 					answer: answer,
+					stdin,
 				},
 			});
 			setSubmitTaskLoading(false);
@@ -50,10 +53,14 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 			toast.warn(`Something went wrong when checking your task.`);
 		}
 	}
-
+	useEffect(() => {
+		if (task) {
+			setAnswer(task.placeholder.S);
+		}
+	}, [task]);
 	return (
 		task && (
-			<React.Fragment>
+			<Fragment>
 				<Modal
 					open={open}
 					onClose={() => setOpen(false)}>
@@ -76,11 +83,6 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											onChange={(e) => setAnswer(e.currentTarget.value)}
 										/>
 									</FormControl>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
 								</Stack>
 							)}
 							{task.answerType.S == "MULTIPLE" && (
@@ -100,47 +102,54 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											))}
 										</RadioGroup>
 									</FormControl>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
 								</Stack>
 							)}
-							{task.answerType.S == "PYTHON" && (
+							{(task.answerType.S == "CSHARP" || task.answerType.S == "PYTHON") && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
 										<CodeMirror
-											height="50vh"
-											extensions={[python()]}
+											height="40vh"
+											extensions={task.answerType.S == "CSHARP" ? [csharp()] : [python()]}
 											value={answer}
 											onChange={(e) => setAnswer(e)}
+											className="mb-4"
+										/>
+										<Textarea
+											value={stdin}
+											onChange={(e) => setStdin(e.currentTarget.value)}
+											placeholder="stdin"
+										/>
+										<Button
+											disabled={answer.length == 0}
+											onClick={async () => {
+												setRunLoading(true);
+												try {
+													const result = await API.post("api", `/competition/${competition.PK}/run`, {
+														body: {
+															language: task.answerType.S,
+															code: answer,
+															stdin: stdin,
+														},
+													});
+													setRunLoading(false);
+													setStdout(result.output);
+												} catch (e) {
+													setRunLoading(false);
+													setStdout("An error occurred when running your code.");
+												}
+											}}
+											loading={runLoading}
+											className="my-2">
+											Run
+										</Button>
+										<Textarea
+											readOnly
+											value={stdout}
+											placeholder="stdout"
+											textArea
 										/>
 									</FormControl>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
-								</Stack>
-							)}
-							{task.answerType.S == "CSHARP" && (
-								<Stack spacing={2}>
-									<FormControl>
-										<FormLabel>Answer</FormLabel>
-										<CodeMirror
-											height="50vh"
-											extensions={[csharp()]}
-											value={answer}
-											onChange={(e) => setAnswer(e)}
-										/>
-									</FormControl>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
 								</Stack>
 							)}
 							{task.answerType.S == "WEB" && (
@@ -160,17 +169,20 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											className="bg-white w-full h-full"
 										/>
 									</NewWindow>
-									<Button
-										onClick={submitTask}
-										loading={submitTaskLoading}>
-										Submit
-									</Button>
 								</Stack>
 							)}
 						</DialogContent>
+						<Divider />
+						<DialogContent>
+							<Button
+								onClick={submitTask}
+								loading={submitTaskLoading}>
+								Submit
+							</Button>
+						</DialogContent>
 					</ModalDialog>
 				</Modal>
-			</React.Fragment>
+			</Fragment>
 		)
 	);
 }

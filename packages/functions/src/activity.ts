@@ -221,32 +221,32 @@ export const approve: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 
 		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
-		
-				const apiG = new ApiGatewayManagementApi({
-					endpoint: Resource.SocketApi.managementEndpoint,
+
+		const apiG = new ApiGatewayManagementApi({
+			endpoint: Resource.SocketApi.managementEndpoint,
+		});
+
+		const postToConnection = async function ({ id }: any) {
+			try {
+				await apiG.postToConnection({
+					ConnectionId: id.S,
+					Data: JSON.stringify({
+						filter: {
+							competitionId: pk,
+						},
+						type: "TASK:ANSWERED",
+						body: result.Attributes,
+					}),
 				});
-		
-				const postToConnection = async function ({ id }: any) {
-					try {
-						await apiG.postToConnection({
-							ConnectionId: id.S,
-							Data: JSON.stringify({
-								filter: {
-									competitionId: pk,
-								},
-								type: "TASK:ANSWERED",
-								body: result.Attributes,
-							}),
-						});
-					} catch (e: any) {
-						if (e.statusCode === 410) {
-							// Remove stale connections
-							await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
-						}
-					}
-				};
-		
-				await Promise.all(connections.Items!.map(postToConnection));
+			} catch (e: any) {
+				if (e.statusCode === 410) {
+					// Remove stale connections
+					await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+				}
+			}
+		};
+
+		await Promise.all(connections.Items!.map(postToConnection));
 
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
@@ -285,32 +285,32 @@ export const reject: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 
 		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
-		
-				const apiG = new ApiGatewayManagementApi({
-					endpoint: Resource.SocketApi.managementEndpoint,
+
+		const apiG = new ApiGatewayManagementApi({
+			endpoint: Resource.SocketApi.managementEndpoint,
+		});
+
+		const postToConnection = async function ({ id }: any) {
+			try {
+				await apiG.postToConnection({
+					ConnectionId: id.S,
+					Data: JSON.stringify({
+						filter: {
+							competitionId: pk,
+						},
+						type: "TASK:ANSWERED",
+						body: result.Attributes,
+					}),
 				});
-		
-				const postToConnection = async function ({ id }: any) {
-					try {
-						await apiG.postToConnection({
-							ConnectionId: id.S,
-							Data: JSON.stringify({
-								filter: {
-									competitionId: pk,
-								},
-								type: "TASK:ANSWERED",
-								body: result.Attributes,
-							}),
-						});
-					} catch (e: any) {
-						if (e.statusCode === 410) {
-							// Remove stale connections
-							await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
-						}
-					}
-				};
-		
-				await Promise.all(connections.Items!.map(postToConnection));
+			} catch (e: any) {
+				if (e.statusCode === 410) {
+					// Remove stale connections
+					await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+				}
+			}
+		};
+
+		await Promise.all(connections.Items!.map(postToConnection));
 
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
