@@ -1,6 +1,6 @@
 import { html } from "@codemirror/lang-html";
 import { python } from "@codemirror/lang-python";
-import { Divider, Radio, RadioGroup } from "@mui/joy";
+import { Divider, Radio, RadioGroup, Textarea } from "@mui/joy";
 import Button from "@mui/joy/Button";
 import DialogContent from "@mui/joy/DialogContent";
 import DialogTitle from "@mui/joy/DialogTitle";
@@ -32,6 +32,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 					packId: packId,
 					taskId: task.SK.S.split("#")[1],
 					answer: answer,
+					stdin
 				},
 			});
 			setSubmitTaskLoading(false);
@@ -114,7 +115,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											onChange={(e) => setAnswer(e)}
 											className="mb-4"
 										/>
-										<Input
+										<Textarea
 											value={stdin}
 											onChange={(e) => setStdin(e.currentTarget.value)}
 											placeholder="stdin"
@@ -142,7 +143,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											className="my-2">
 											Run
 										</Button>
-										<Input
+										<Textarea
 											readOnly
 											value={stdout}
 											placeholder="stdout"
