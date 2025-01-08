@@ -181,6 +181,7 @@ export const check: Handler = Util.handler(async (event) => {
 		packId: "",
 		taskId: "",
 		answer: "",
+		stdin: "",
 	};
 
 	if (event.body != null) {
@@ -288,7 +289,7 @@ export const check: Handler = Util.handler(async (event) => {
 			var result;
 			try {
 				result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
-					// check doesnt do anything with stdin atm
+					stdin: data.stdin,
 					source_code: data.answer.trim(),
 					language_id: languageId,
 				});
@@ -376,6 +377,7 @@ export const run: Handler = Util.handler(async (event) => {
 			language_id: languageId,
 			stdin: data.stdin,
 		});
+		console.log(result);
 	} catch (e) {
 		console.log(e.response.data);
 		throw new Error("Could not run submission");

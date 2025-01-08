@@ -45,7 +45,7 @@ export default function PlayCompetition() {
 					const newActivity = data.body;
 					setActivity([...(activity?.filter((a) => a.taskId.S != newActivity.taskId) || []), newActivity]);
 					console.log(waitingTask);
-					if (newActivity.taskId == waitingTask.SK.S.split("#")[1]) setWaitingTask(null);
+					if (waitingTask) if (newActivity.taskId == waitingTask.SK.S.split("#")[1]) setWaitingTask(null);
 					break;
 				default:
 					break;
