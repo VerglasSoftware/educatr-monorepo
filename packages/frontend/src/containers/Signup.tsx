@@ -1,7 +1,6 @@
 import "./Signup.css";
 import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
-import SignupStudent from "./SignupStudent";
 import SignupTeacher from "./SignupTeacher";
 
 export default function Signup() {
@@ -10,14 +9,9 @@ export default function Signup() {
 			<h1>Temp User Signup Form</h1>
 			<br />
 			<Tabs
-				defaultActiveKey="student"
+				defaultActiveKey="teacher"
 				id="users-tab"
 				className="mb-3">
-				<Tab
-					eventKey="student"
-					title="Student">
-					<SignupStudent />
-				</Tab>
 				<Tab
 					eventKey="teacher"
 					title="Teacher">
