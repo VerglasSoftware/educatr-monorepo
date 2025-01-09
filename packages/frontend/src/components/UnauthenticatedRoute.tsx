@@ -3,29 +3,29 @@ import { Navigate } from "react-router-dom";
 import { useAppContext } from "../lib/contextLib";
 
 interface Props {
-  children: ReactElement;
+	children: ReactElement;
 }
 
 export default function UnauthenticatedRoute(props: Props) {
-  const { isAuthenticated } = useAppContext();
-  const { children } = props;
-  const redirect = querystring("redirect");
+	const { isAuthenticated } = useAppContext();
+	const { children } = props;
+	const redirect = querystring("redirect");
 
-  if (isAuthenticated) {
-    return <Navigate to={redirect || "/"} />;
-  }
+	if (isAuthenticated) {
+		return <Navigate to={redirect || "/"} />;
+	}
 
-  return cloneElement(children, props);
+	return cloneElement(children, props);
 }
 
 function querystring(name: string, url = window.location.href) {
-  const parsedName = name.replace(/[[]]/g, "\\$&");
-  const regex = new RegExp(`[?&]${parsedName}(=([^&#]*)|&|#|$)`, "i");
-  const results = regex.exec(url);
+	const parsedName = name.replace(/[[]]/g, "\\$&");
+	const regex = new RegExp(`[?&]${parsedName}(=([^&#]*)|&|#|$)`, "i");
+	const results = regex.exec(url);
 
-  if (!results || !results[2]) {
-    return false;
-  }
+	if (!results || !results[2]) {
+		return false;
+	}
 
-  return decodeURIComponent(results[2].replace(/\+/g, " "));
+	return decodeURIComponent(results[2].replace(/\+/g, " "));
 }

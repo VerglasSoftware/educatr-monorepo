@@ -1,35 +1,42 @@
 import { Amplify } from "aws-amplify";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "./index.css";
+import { BrowserRouter as Router } from "react-router-dom";
 import App from "./App.tsx";
 import config from "./config.ts";
-import { BrowserRouter as Router } from "react-router-dom";
+import "./index.css";
 
 Amplify.configure({
-  Auth: {
-    mandatorySignIn: true,
-    region: config.cognito.REGION,
-    userPoolId: config.cognito.USER_POOL_ID,
-    identityPoolId: config.cognito.IDENTITY_POOL_ID,
-    userPoolWebClientId: config.cognito.APP_CLIENT_ID,
-  },
-  API: {
-    endpoints: [
-      {
-        name: "api",
-        endpoint: config.apiGateway.URL,
-        region: config.apiGateway.REGION,
-      },
-    ],
-  },
+	Auth: {
+		mandatorySignIn: true,
+		region: config.cognito.REGION,
+		userPoolId: config.cognito.USER_POOL_ID,
+		identityPoolId: config.cognito.IDENTITY_POOL_ID,
+		userPoolWebClientId: config.cognito.APP_CLIENT_ID,
+		oauth: {
+			domain: "educatr-dev-dandabs.auth.eu-west-1.amazoncognito.com",
+			//scope: ["openid", "profile", "email"],
+			redirectSignIn: "http://localhost:5173",
+			redirectSignOut: "http://localhost:5173",
+			responseType: "token",
+		},
+	},
+	API: {
+		endpoints: [
+			{
+				name: "api",
+				endpoint: config.apiGateway.URL,
+				region: config.apiGateway.REGION,
+			},
+		],
+	},
 });
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Router>
-      <App />
-    </Router>
-  </StrictMode>,
+	<StrictMode>
+		<Router>
+			<App />
+		</Router>
+	</StrictMode>
 );
