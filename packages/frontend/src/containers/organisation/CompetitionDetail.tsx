@@ -13,10 +13,11 @@ import { FaPlus } from "react-icons/fa6";
 export default function CompetitionDetail() {
 	const [competition, setCompetition] = useState<any>();
 	const [teams, setTeams] = useState<any>([]);
+	const [students, setStudents] = useState<any>([]);
 
 	const [name, setName] = useState<any>("");
 
-	const { compId } = useParams();
+	const { compId, orgId } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
@@ -27,6 +28,9 @@ export default function CompetitionDetail() {
 
 				const teams = await API.get("api", `/competition/${compId}/team`, {});
 				setTeams(teams);
+
+				const students = await API.get("api", `/organisation/${orgId}/students`, {});
+				setStudents(students);
 			} catch (e) {
 				console.log(e);
 			}
@@ -34,6 +38,8 @@ export default function CompetitionDetail() {
 
 		onLoad();
 	}, []);
+
+	console.log("teams is: " + JSON.stringify(teams));
 
 	return (
 		competition && (
@@ -196,6 +202,7 @@ export default function CompetitionDetail() {
 														size="sm"
 														placeholder="Name"
 														defaultValue={team.name.S}
+														onChange={(e) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, name: { S: e.target.value } } : t)))}
 													/>
 												</FormControl>
 											</Stack>
@@ -203,9 +210,13 @@ export default function CompetitionDetail() {
 												<FormLabel>Members</FormLabel>
 												<FormControl sx={{ gap: 2 }}>
 													<Autocomplete
+														multiple
 														placeholder="Members"
 														size="sm"
-														options={[]}
+														options={students.map((student: any) => { return { label: `${student.given_name} ${student.family_name}`, value: student.PK }; })}
+														loading={students.length == 0}
+														value={!team.students ? [] : team.students.SS.map((s: any) => { return { label: `${students.find((student: any) => student.PK == s)?.given_name} ${students.find((student: any) => student.PK == s)?.family_name}`, value: s }; })}
+														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, students: { SS: v.map((s: any) => s.value) } } : t)))}
 													/>
 												</FormControl>
 											</Stack>
@@ -219,7 +230,7 @@ export default function CompetitionDetail() {
 												<Button
 													onClick={async () => {
 														await API.del("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {});
-														setTeams(teams.filter((t: any) => t.SK.S == team.SK.S));
+														setTeams(teams.filter((t: any) => t.SK.S != team.SK.S));
 													}}>
 													Delete
 												</Button>
@@ -231,12 +242,12 @@ export default function CompetitionDetail() {
 
 														const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {
 															body: {
-																name,
-																students: [],
+																name: team.name.S,
+																students: team.students.SS,
 															},
 														});
 
-														setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? updatedTeam : t)));
+														//setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? updatedTeam : t)));
 													}}>
 													Save
 												</Button>
