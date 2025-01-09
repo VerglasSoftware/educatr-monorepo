@@ -1,91 +1,112 @@
+import { Auth } from "aws-amplify";
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
 import Stack from "react-bootstrap/Stack";
-import "./Login.css";
-import { Auth } from "aws-amplify";
-import { useAppContext } from "../lib/contextLib";
 import LoaderButton from "../components/LoaderButton";
+import { useAppContext } from "../lib/contextLib";
 import { useFormFields } from "../lib/hooksLib";
+import Button from "react-bootstrap/Button";
+import "./Login.css";
+import { signInWithRedirect } from "aws-amplify/auth";
 
-export default function Login() {
-  const { isAuthenticated, userHasAuthenticated } = useAppContext();
+export default function Login({ useEmail = false }) {
+	const { isAuthenticated, userHasAuthenticated } = useAppContext();
 
-  const [fields, handleFieldChange] = useFormFields({
-    email: "",
-    password: "",
-  });
+	const [fields, handleFieldChange] = useFormFields({
+		username: "",
+		password: "",
+	});
 
-  const [isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 
-  function validateForm() {
-    return fields.email.length > 0 && fields.password.length > 0;
-  }
+	function validateForm() {
+		return fields.username.length > 0 && fields.password.length > 0;
+	}
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+		event.preventDefault();
 
-    setIsLoading(true);
+		setIsLoading(true);
 
-    try {
-      await Auth.signIn(fields.email, fields.password);
-      userHasAuthenticated(true);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        alert(error.message);
-      } else {
-        alert(String(error));
-      }
-      setIsLoading(false);
-    }
-  }
+		try {
+			await Auth.signIn(fields.username, fields.password);
+			userHasAuthenticated(true);
+		} catch (error) {
+			console.error(error);
+			if (error instanceof Error) {
+				alert(error.message);
+			} else {
+				alert(String(error));
+			}
+			setIsLoading(false);
+		}
+	}
 
-  async function handleLogout() {
-    await Auth.signOut();
+	async function handleLogout() {
+		await Auth.signOut();
 
-    userHasAuthenticated(false);
-  }
+		userHasAuthenticated(false);
+	}
 
-  return (
-    <div className="Login">
-      <Form onSubmit={handleSubmit}>
-        <Stack gap={3}>
-          <Form.Group controlId="email">
-            <Form.Label>Email</Form.Label>
-            <Form.Control
-              autoFocus
-              size="lg"
-              type="email"
-              value={fields.email}
-              onChange={handleFieldChange}
-            />
-          </Form.Group>
-          <Form.Group controlId="password">
-            <Form.Label>Password</Form.Label>
-            <Form.Control
-              size="lg"
-              type="password"
-              value={fields.password}
-              onChange={handleFieldChange}
-            />
-          </Form.Group>
+	return (
+		<div className="Login">
+			<Form onSubmit={handleSubmit}>
+				<Stack gap={3}>
+					<Form.Group controlId="username">
+						<Form.Label>{useEmail ? "Email" : "Username"}</Form.Label>
+						<Form.Control
+							autoFocus
+							size="lg"
+							type={useEmail ? "email" : "username"}
+							value={fields.username}
+							onChange={handleFieldChange}
+						/>
+					</Form.Group>
+					<Form.Group controlId="password">
+						<Form.Label>Password</Form.Label>
+						<Form.Control
+							size="lg"
+							type="password"
+							value={fields.password}
+							onChange={handleFieldChange}
+						/>
+					</Form.Group>
 
-          {isAuthenticated ? (
-            <a href="#" onClick={handleLogout}>
-              Logout
-            </a>
-          ) : (
-            <LoaderButton
-              size="lg"
-              type="submit"
-              isLoading={isLoading}
-              disabled={!validateForm()}
-            >
-              Login
-            </LoaderButton>
-          )}
-        </Stack>
-      </Form>
-    </div>
-  );
+					{isAuthenticated ? (
+						<a
+							href="#"
+							onClick={handleLogout}>
+							Logout
+						</a>
+					) : (
+						<LoaderButton
+							size="lg"
+							type="submit"
+							isLoading={isLoading}
+							disabled={!validateForm()}>
+							Login
+						</LoaderButton>
+					)}
+				</Stack>
+			</Form>
+
+			<br />
+			<h4>Create new user account</h4>
+			<Button
+				size="lg"
+				type="submit"
+				href="/signup">
+				Create
+			</Button>
+
+			<br />
+			<h4>Sign in with Entra ID</h4>
+			<Button
+				size="lg"
+				type="button"
+				onClick={() => Auth.federatedSignIn({ customProvider: "EntraID" })}>
+				Create
+			</Button>
+		</div>
+	);
 }
