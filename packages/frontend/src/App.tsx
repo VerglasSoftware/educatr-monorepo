@@ -90,7 +90,7 @@ function App({ sidebar }: { sidebar?: ReactNode }) {
 			userHasAuthenticated(true);
 		} catch (e) {
 			if (e !== "No current user") {
-				alert(e);
+				console.log(e);
 			}
 		}
 

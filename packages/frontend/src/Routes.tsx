@@ -38,9 +38,9 @@ export default function Links() {
 			<Route
 				path="/signup"
 				element={
-					<UnauthenticatedRoute>
+					<AuthenticatedRoute>
 						<Signup />
-					</UnauthenticatedRoute>
+					</AuthenticatedRoute>
 				}
 			/>
 

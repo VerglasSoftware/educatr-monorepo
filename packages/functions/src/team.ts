@@ -4,6 +4,7 @@ import { QueryCommand, DynamoDBDocumentClient, PutCommand, DeleteCommand, Update
 import { Resource } from "sst";
 import { createId } from "@paralleldrive/cuid2";
 import { Util } from "@educatr/core/util";
+import { DynamoDB } from "aws-sdk";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -63,7 +64,7 @@ export const create: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: `TEAM#${createId()}`,
 			name: data.name,
-			students: data.students,
+			students: new Set(data.students),
 			createdAt: Date.now(),
 		},
 	};
@@ -161,7 +162,7 @@ export const update: Handler = Util.handler(async (event) => {
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
-			":students": data.students,
+			":students": new Set(data.students),
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};

@@ -66,9 +66,9 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 						<List aria-labelledby="nav-list-browse">
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S}/competitions`}
+									selected={location.pathname === `/dash/${org.PK.S.split('#')[1]}/competitions`}
 									component="a"
-									href={`/dash/${org.PK.S}/competitions`}>
+									href={`/dash/${org.PK.S.split('#')[1]}/competitions`}>
 									<ListItemDecorator>
 										<FaTrophy fontSize="small" />
 									</ListItemDecorator>
@@ -77,9 +77,9 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 							</ListItem>
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S}/classes`}
+									selected={location.pathname === `/dash/${org.PK.S.split('#')[1]}/classes`}
 									component="a"
-									href={`/dash/${org.PK.S}/classes`}>
+									href={`/dash/${org.PK.S.split('#')[1]}/classes`}>
 									<ListItemDecorator>
 										<FaPeopleGroup fontSize="small" />
 									</ListItemDecorator>
@@ -88,9 +88,9 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 							</ListItem>
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S}`}
+									selected={location.pathname === `/dash/${org.PK.S.split('#')[1]}`}
 									component="a"
-									href={`/dash/${org.PK.S}`}>
+									href={`/dash/${org.PK.S.split('#')[1]}`}>
 									<ListItemDecorator>
 										<FaGear fontSize="small" />
 									</ListItemDecorator>
