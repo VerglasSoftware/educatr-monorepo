@@ -17,7 +17,7 @@ import { Fragment, useEffect, useState } from "react";
 import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
 
-export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string, refreshManual: any }) {
+export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string; refreshManual: any }) {
 	const [answer, setAnswer] = useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 	const [stdin, setStdin] = useState<string>("");

@@ -213,9 +213,17 @@ export default function CompetitionDetail() {
 														multiple
 														placeholder="Members"
 														size="sm"
-														options={students.map((student: any) => { return { label: `${student.given_name} ${student.family_name}`, value: student.PK }; })}
+														options={students.map((student: any) => {
+															return { label: `${student.given_name} ${student.family_name}`, value: student.PK };
+														})}
 														loading={students.length == 0}
-														value={!team.students ? [] : team.students.SS.map((s: any) => { return { label: `${students.find((student: any) => student.PK == s)?.given_name} ${students.find((student: any) => student.PK == s)?.family_name}`, value: s }; })}
+														value={
+															!team.students
+																? []
+																: team.students.SS.map((s: any) => {
+																		return { label: `${students.find((student: any) => student.PK == s)?.given_name} ${students.find((student: any) => student.PK == s)?.family_name}`, value: s };
+																	})
+														}
 														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, students: { SS: v.map((s: any) => s.value) } } : t)))}
 													/>
 												</FormControl>

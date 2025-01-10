@@ -133,7 +133,10 @@ export default function TaskTable() {
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										<RowMenu taskId={row.PK.S} packId={id} />
+										<RowMenu
+											taskId={row.PK.S}
+											packId={id}
+										/>
 									</Box>
 								</td>
 							</tr>
