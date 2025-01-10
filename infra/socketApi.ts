@@ -15,7 +15,7 @@ export const socketApi = new sst.aws.ApiGatewayWebSocket("SocketApi", {
 	transform: {
 		route: {
 			args: {
-				auth: { iam: $app.stage === "prod" ? true : false },
+				auth: { iam: $app.stage === "prod" ? false : false },
 			},
 			handler: {
 				link: [socketConnectionsTable, permissions],

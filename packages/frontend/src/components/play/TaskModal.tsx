@@ -17,7 +17,7 @@ import { Fragment, useEffect, useState } from "react";
 import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
 
-export default function TaskModal({ open, setOpen, competition, task, packId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string }) {
+export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string, refreshManual: any }) {
 	const [answer, setAnswer] = useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 	const [stdin, setStdin] = useState<string>("");
@@ -38,7 +38,6 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 			setSubmitTaskLoading(false);
 
 			if (result.manual === true) {
-				refreshManual();
 				return toast.info(`${task.title.S} has been submitted for manual verification.`);
 			}
 
@@ -147,7 +146,6 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 											readOnly
 											value={stdout}
 											placeholder="stdout"
-											textArea
 										/>
 									</FormControl>
 								</Stack>

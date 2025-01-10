@@ -30,11 +30,11 @@ export default function NewUserModal({ open, setOpen, organisation }: { open: bo
 							event.preventDefault();
 
 							const user = await Auth.signUp({
-								username: event.currentTarget.elements[2].value,
-								password: event.currentTarget.elements[3].value,
+								username: (event.currentTarget.elements[2] as any).value,
+								password: (event.currentTarget.elements[3] as any).value,
 								attributes: {
-									given_name: event.currentTarget.elements[0].value,
-									family_name: event.currentTarget.elements[1].value,
+									given_name: (event.currentTarget.elements[0] as any).value,
+									family_name: (event.currentTarget.elements[1] as any).value,
 									"custom:initial": organisation.PK.split("#")[1],
 								},
 							});

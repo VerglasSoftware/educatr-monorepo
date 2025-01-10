@@ -29,7 +29,7 @@ export default function NewCompetitionModal({ open, setOpen }: { open: boolean; 
 
 							const competition = await API.post("api", `/competition`, {
 								body: {
-									name: event.currentTarget.elements[0].value,
+									name: (event.currentTarget.elements[0] as any).value,
 									organisationId: orgId,
 								},
 							});
