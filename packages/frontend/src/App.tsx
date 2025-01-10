@@ -1,7 +1,7 @@
 import { AppContext, AppContextType } from "./lib/contextLib";
 import "./App.css";
 import Routes from "./Routes.tsx";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import NavbarMain from "./components/Navbar.tsx";
 import { Box, CssBaseline, CssVarsProvider, extendTheme } from "@mui/joy";
@@ -14,7 +14,7 @@ import { loadFull } from "tsparticles";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-function App({ sidebar }: { sidebar?: ReactNode }) {
+function App() {
 	const [isAuthenticated, userHasAuthenticated] = useState(false);
 	const [isAuthenticating, setIsAuthenticating] = useState(true);
 	const [init, setInit] = useState(false);

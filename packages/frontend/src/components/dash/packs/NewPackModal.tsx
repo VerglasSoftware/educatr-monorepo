@@ -28,8 +28,8 @@ export default function NewPackModal({ open, setOpen }: { open: boolean; setOpen
 
 							const pack = await API.post("api", "/pack", {
 								body: {
-									name: event.currentTarget.elements[0].value,
-									description: event.currentTarget.elements[1].value,
+									name: (event.currentTarget.elements[0] as any).value,
+									description: (event.currentTarget.elements[1] as any).value,
 								},
 							});
 

@@ -29,7 +29,7 @@ export default function NewClassModal({ open, setOpen }: { open: boolean; setOpe
 
 							const clazz = await API.post("api", `/organisation/${orgId}/class`, {
 								body: {
-									name: event.currentTarget.elements[0].value,
+									name: (event.currentTarget.elements[0] as any).value,
 								},
 							});
 
