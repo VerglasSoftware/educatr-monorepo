@@ -28,7 +28,7 @@ export default function PlayCompetition() {
 
 	const { compId } = useParams();
 
-	const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI);
+	const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI, { shouldReconnect: () => true, onReconnectStop: () => { window.location.reload(); } });
 
 	useEffect(() => {
 		if (lastMessage !== null) {
