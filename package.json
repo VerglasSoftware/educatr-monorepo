@@ -23,7 +23,7 @@
 		"aws-amplify": "^6.10.3",
 		"ldrs": "^1.0.2",
 		"pdf417-generator": "^1.0.5",
-		"sst": "^3",
+		"sst": "latest",
 		"tsparticles": "^3.7.1"
 	}
 }
