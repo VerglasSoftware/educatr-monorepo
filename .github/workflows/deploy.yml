@@ -30,6 +30,11 @@ jobs:
               uses: actions/setup-node@v3
               with:
                 node-version: 18
+
+            - name: Clean environment
+              run: |
+                rm -rf node_modules
+                rm -f package-lock.json
     
             - name: Install dependencies
               run: npm install
