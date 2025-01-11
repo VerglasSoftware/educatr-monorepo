@@ -7,7 +7,8 @@
 	"scripts": {
 		"aws:login": "aws-azure-login",
 		"start:dev": "npm run aws:login && npx sst dev",
-		"start:dev:nologin": "npx sst dev"
+		"start:dev:nologin": "npx sst dev",
+		"test": "npx artillery run test/educatr-load-test.yml"
 	},
 	"devDependencies": {
 		"@tsconfig/node20": "^20.1.4",
@@ -18,9 +19,11 @@
 		"@aws-sdk/client-apigatewaymanagementapi": "^3.699.0",
 		"@tsparticles/react": "^3.0.0",
 		"@uiball/loaders": "^1.3.1",
-		"axios": "^1.7.9",
 		"@zxing/library": "^0.21.3",
+		"artillery": "^2.0.21",
 		"aws-amplify": "^6.10.3",
+		"aws-lambda": "^1.0.7",
+		"axios": "^1.7.9",
 		"ldrs": "^1.0.2",
 		"pdf417-generator": "^1.0.5",
 		"sst": "latest",
