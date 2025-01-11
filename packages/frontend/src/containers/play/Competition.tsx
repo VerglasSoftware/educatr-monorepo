@@ -211,6 +211,7 @@ export default function PlayCompetition() {
 												setSelectedTaskPackId(pack.PK.S);
 												setOpen(true);
 											}}
+											id={task.SK.S.split("#")[1]}
 											disabled={correct}>
 											<Card
 												variant="plain"
