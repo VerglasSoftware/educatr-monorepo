@@ -18,16 +18,16 @@ export default function NavbarMain({ ...props }) {
 
 	useEffect(() => {
 		async function fetchUser() {
-		  try {
-			const currentUser = await Auth.currentAuthenticatedUser();
-			setUser(currentUser);
-		  } catch (error) {
-			console.error("Error fetching user", error);
-		  }
+			try {
+				const currentUser = await Auth.currentAuthenticatedUser();
+				setUser(currentUser);
+			} catch (error) {
+				console.error("Error fetching user", error);
+			}
 		}
-		
+
 		fetchUser();
-	  }, []);
+	}, []);
 
 	return (
 		<Box

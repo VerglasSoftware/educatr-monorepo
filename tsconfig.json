@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
 		"noUnusedLocals": false,
-		"esModuleInterop": true,
+		"esModuleInterop": true
 	}
 }
