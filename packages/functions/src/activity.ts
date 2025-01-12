@@ -22,7 +22,7 @@ export const list: Handler = Util.handler(async (event) => {
 		ExpressionAttributeValues: {
 			":compId": { S: pk },
 			":skPrefix": { S: "TEAM#" },
-			":userId": { S: event.requestContext.authorizer!.jwt.claims['cognito:username'] },
+			":userId": { S: event.requestContext.authorizer!.jwt.claims["cognito:username"] },
 		},
 	};
 
@@ -47,25 +47,28 @@ export const list: Handler = Util.handler(async (event) => {
 	const userIdConditions = studentIdsArray.map((id, index) => `userId = :userId${index}`).join(" OR ");
 
 	const activityParams = {
-	TableName: Resource.Competitions.name,
-	FilterExpression: `begins_with(SK, :activityPrefix) AND (${userIdConditions})`,
-	ExpressionAttributeValues: studentIdsArray.reduce((acc: any, id, index) => {
-		acc[`:userId${index}`] = { S: id };
-		return acc;
-	}, {
-		":activityPrefix": { S: "ACTIVITY#" }
-	}),
+		TableName: Resource.Competitions.name,
+		FilterExpression: `begins_with(SK, :activityPrefix) AND (${userIdConditions})`,
+		ExpressionAttributeValues: studentIdsArray.reduce(
+			(acc: any, id, index) => {
+				acc[`:userId${index}`] = { S: id };
+				return acc;
+			},
+			{
+				":activityPrefix": { S: "ACTIVITY#" },
+			}
+		),
 	};
-	  
-	  try {
+
+	try {
 		const activityCommand = new ScanCommand(activityParams);
 		const activityResult = await client.send(activityCommand);
-	  
+
 		return JSON.stringify(activityResult.Items || []);
-	  } catch (e) {
+	} catch (e) {
 		console.error(e);
 		throw new Error("Could not retrieve activities");
-	  }
+	}
 });
 
 export const create: Handler = Util.handler(async (event) => {
@@ -236,7 +239,7 @@ export const approve: Handler = Util.handler(async (event) => {
 			"#correct": "correct",
 		},
 		ExpressionAttributeValues: {
-			":verifierId": event.requestContext.authorizer!.jwt.claims['cognito:username'],
+			":verifierId": event.requestContext.authorizer!.jwt.claims["cognito:username"],
 			":status": "FINISHED_VERIFICATION",
 			":correct": true,
 		},
@@ -300,7 +303,7 @@ export const reject: Handler = Util.handler(async (event) => {
 			"#correct": "correct",
 		},
 		ExpressionAttributeValues: {
-			":verifierId": event.requestContext.authorizer!.jwt.claims['cognito:username'],
+			":verifierId": event.requestContext.authorizer!.jwt.claims["cognito:username"],
 			":status": "FINISHED_VERIFICATION",
 			":correct": false,
 		},
