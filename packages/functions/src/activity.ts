@@ -1,5 +1,5 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
@@ -9,37 +9,63 @@ import { Resource } from "sst";
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 export const list: Handler = Util.handler(async (event) => {
-	const { compId: pk } = event.pathParameters || {};
+	const { compId: pk } = event.pathParameters || {}; // competition ID passed in path parameters.
 
 	if (!pk) {
 		throw new Error("Missing ID in path parameters");
 	}
 
-	const params = {
+	// Step 3: Query the Competitions table to find the user's team
+	const teamParams = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix) AND contains (students, :userId)",
 		ExpressionAttributeValues: {
 			":compId": { S: pk },
-			":skPrefix": { S: "ACTIVITY#" },
+			":skPrefix": { S: "TEAM#" },
+			":userId": { S: event.requestContext.authorizer!.jwt.claims['cognito:username'] },
 		},
 	};
 
+	let teamResult;
+
 	try {
-		const command = new ScanCommand(params);
-		const result = await client.send(command);
+		const teamCommand = new ScanCommand(teamParams);
+		teamResult = await client.send(teamCommand);
 
-		const competitions =
-			result.Items?.map((item) => {
-				const sk = item.SK.S as string;
-				const id = sk.split("#")[1];
-				return { ...item, id };
-			}) || [];
-
-		return JSON.stringify(competitions);
+		if (!teamResult.Items && !teamResult.Items![0]) {
+			throw new Error("User is not part of any team");
+		}
 	} catch (e) {
 		console.error(e);
-		throw new Error("Could not retrieve competitions");
+		throw new Error("Could not retrieve team information");
 	}
+
+	// Step 4: Query the Competitions table to find all activities for this user in the team
+	// Dynamically create FilterExpression for each userId
+	const studentIdsArray = teamResult.Items![0].students.SS!;
+
+	const userIdConditions = studentIdsArray.map((id, index) => `userId = :userId${index}`).join(" OR ");
+
+	const activityParams = {
+	TableName: Resource.Competitions.name,
+	FilterExpression: `begins_with(SK, :activityPrefix) AND (${userIdConditions})`,
+	ExpressionAttributeValues: studentIdsArray.reduce((acc: any, id, index) => {
+		acc[`:userId${index}`] = { S: id };
+		return acc;
+	}, {
+		":activityPrefix": { S: "ACTIVITY#" }
+	}),
+	};
+	  
+	  try {
+		const activityCommand = new ScanCommand(activityParams);
+		const activityResult = await client.send(activityCommand);
+	  
+		return JSON.stringify(activityResult.Items || []);
+	  } catch (e) {
+		console.error(e);
+		throw new Error("Could not retrieve activities");
+	  }
 });
 
 export const create: Handler = Util.handler(async (event) => {
@@ -210,7 +236,7 @@ export const approve: Handler = Util.handler(async (event) => {
 			"#correct": "correct",
 		},
 		ExpressionAttributeValues: {
-			":verifierId": event.requestContext.authorizer!.iam.cognitoIdentity.identityId,
+			":verifierId": event.requestContext.authorizer!.jwt.claims['cognito:username'],
 			":status": "FINISHED_VERIFICATION",
 			":correct": true,
 		},
@@ -274,7 +300,7 @@ export const reject: Handler = Util.handler(async (event) => {
 			"#correct": "correct",
 		},
 		ExpressionAttributeValues: {
-			":verifierId": event.requestContext.authorizer!.iam.cognitoIdentity.identityId,
+			":verifierId": event.requestContext.authorizer!.jwt.claims['cognito:username'],
 			":status": "FINISHED_VERIFICATION",
 			":correct": false,
 		},

@@ -1,9 +1,9 @@
 config:
     target: https://educatr.uk
     phases:
-        - duration: 1
+        - duration: 8
           arrivalRate: 1
-          maxVusers: 1
+          maxVusers: 8
           name: Ramp up
     engines:
         playwright:

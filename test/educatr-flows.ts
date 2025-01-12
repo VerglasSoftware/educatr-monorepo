@@ -1,6 +1,8 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import * as fs from 'node:fs';
+import 'dotenv/config';
+import { getCredsAndLockFile, releaseCreds } from './credManager';
 
 export async function helloWorld(page: Page, context) {
 	const userIndex = context.vars.$processEnvironment.LOCAL_WORKER_ID;
@@ -13,9 +15,11 @@ export async function helloWorld(page: Page, context) {
 	});
 
 	// Log in and navigate to competition
+	const username = await getCredsAndLockFile();
+
 	await page.goto("https://educatr.uk/");
 
-	await page.fill("#username", "test" + userIndex);
+	await page.fill("#username", username);
 	await page.fill("#password", process.env.PERF_TEST_PASSWORD);
 
 	await page.click("text=Login");
@@ -39,7 +43,6 @@ export async function helloWorld(page: Page, context) {
 
 		if (!['TEXT'].includes(question.answerType.S)) continue; // only allow text answers
 		if (!['COMPARE', 'ALGORITHM'].includes(question.verificationType.S)) continue; // only allow automatic compare verification
-		if (!['klawxt8g1agfkv6qn3jstajy'].includes(question.PK.S)) continue; // only allow specific categories
 
 		const button = await page.locator(`#${question.SK.S.split('#')[1]}`);
 		if (!await (button.evaluate(element => element.classList.contains('Mui-disabled')))) {
@@ -74,4 +77,6 @@ export async function helloWorld(page: Page, context) {
 
 		}
 	}
+
+	await releaseCreds(username);
 }

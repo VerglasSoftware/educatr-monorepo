@@ -43,7 +43,7 @@ export const create: Handler = Util.handler(async (event) => {
 			SK: "DETAILS",
 			name: data.name,
 			logo: data.logo,
-			students: data.students,
+			students: new Set(data.students),
 			createdAt: Date.now(),
 		},
 	};

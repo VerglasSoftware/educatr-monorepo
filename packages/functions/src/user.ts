@@ -8,19 +8,20 @@ import { Resource } from "sst";
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 export const getMe: Handler = Util.handler(async (event) => {
-	const cognitoUid = event.requestContext.authorizer!.iam.cognitoIdentity.identityId;
+	console.log(event.requestContext.authorizer!.jwt.claims['cognito:username']);
+	const cognitoUid = event.requestContext.authorizer!.jwt.claims['cognito:username'];
 	console.log(cognitoUid);
 
 	const params = {
 		TableName: Resource.Users.name,
-		FilterExpression: "cognitoUid = :cognitoUid",
+		KeyConditionExpression: "PK = :cognitoUid",
 		ExpressionAttributeValues: {
-			":cognitoUid": { S: cognitoUid },
+		  ":cognitoUid": cognitoUid,
 		},
-	};
+	  };
 
 	try {
-		const result = await client.send(new ScanCommand(params));
+		const result = await client.send(new QueryCommand(params));
 		console.log("result" + result);
 		console.log(result.Items);
 		if (!result.Items![0]) {
@@ -34,7 +35,7 @@ export const getMe: Handler = Util.handler(async (event) => {
 });
 
 export const updateMe: Handler = Util.handler(async (event) => {
-	const cognitoUid = event.requestContext.authorizer!.iam.cognitoIdentity.identityId;
+	const cognitoUid = event.requestContext.authorizer!.jwt.claims['cognito:username'];
 
 	let data = {
 		given_name: "",

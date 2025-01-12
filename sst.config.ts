@@ -4,7 +4,7 @@ export default $config({
 	app(input) {
 		return {
 			name: "educatr",
-			removal: input?.stage === "production" ? "retain" : "remove",
+			removal: input?.stage === "prod" ? "retain" : "remove",
 			home: "aws",
 		};
 	},
