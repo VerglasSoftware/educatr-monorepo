@@ -1,15 +1,15 @@
 config:
-  target: https://educatr.uk
-  phases:
-    - duration: 10
-      arrivalRate: 1
-      maxVusers: 1
-      name: Ramp up
-  engines:
-    playwright:
-      launchOptions:
-        headless: false
-  processor: './educatr-flows.js'
+    target: https://educatr.uk
+    phases:
+        - duration: 8
+          arrivalRate: 1
+          maxVusers: 8
+          name: Ramp up
+    engines:
+        playwright:
+            launchOptions:
+                headless: false
+    processor: "./educatr-flows.ts"
 scenarios:
-  - engine: playwright
-    testFunction: helloWorld
+    - engine: playwright
+      testFunction: helloWorld

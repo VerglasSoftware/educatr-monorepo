@@ -9,17 +9,13 @@ const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const handler = async (event: PostConfirmationTriggerEvent, context: Context, callback: Callback) => {
 	console.log(event);
 
-	const cognitoUid = `${event.region}:${event.request.userAttributes.sub}`;
-
-	const pk = createId();
+	const pk = event.userName;
 
 	const params = {
 		TableName: Resource.Users.name,
 		Item: {
 			PK: pk,
 			SK: "DETAILS",
-			cognitoUid,
-			username: event.userName,
 			email: event.request.userAttributes.email || undefined,
 			nickname: event.request.userAttributes.nickname || undefined,
 			given_name: event.request.userAttributes.given_name || undefined,
@@ -46,7 +42,7 @@ const handler = async (event: PostConfirmationTriggerEvent, context: Context, ca
 				PK: `ORG#${orgId}`,
 				SK: "DETAILS",
 			},
-			UpdateExpression: "SET #students = list_append(#students, :student)",
+			UpdateExpression: "ADD #students :student",
 			ExpressionAttributeNames: {
 				"#students": "students",
 			},

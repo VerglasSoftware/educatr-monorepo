@@ -57,7 +57,7 @@ export const identityPool = new sst.aws.CognitoIdentityPool("IdentityPool", {
 		authenticated: [
 			{
 				actions: ["execute-api:*"],
-				resources: [$concat("arn:aws:execute-api:", region, ":", aws.getCallerIdentityOutput({}).accountId, ":", api.nodes.api.id, "/*/*/*")],
+				resources: [$concat("arn:aws:execute-api:", region, ":", aws.getCallerIdentityOutput({}).accountId, ":/*/*/*")],
 			},
 		],
 	},

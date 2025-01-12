@@ -1,4 +1,4 @@
-import { Amplify } from "aws-amplify";
+import { Amplify, API, Auth } from "aws-amplify";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -28,6 +28,16 @@ Amplify.configure({
 				name: "api",
 				endpoint: config.apiGateway.URL,
 				region: config.apiGateway.REGION,
+				custom_header: async () => {
+					try {
+						const session = await Auth.currentSession();
+						const jwtToken = session.getIdToken().getJwtToken();
+						return { Authorization: `Bearer ${jwtToken}` };
+					} catch (error) {
+						console.error("Error retrieving JWT token:", error);
+						return {};
+					}
+				},
 			},
 		],
 	},

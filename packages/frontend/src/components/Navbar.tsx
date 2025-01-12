@@ -1,5 +1,5 @@
 import { Avatar, Box, Button, DialogTitle, Drawer, Dropdown, IconButton, Input, ListDivider, Menu, MenuButton, MenuItem, ModalClose, Stack, Tooltip, Typography } from "@mui/joy";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaBook, FaDoorOpen, FaHamburger, FaLanguage, FaWindowMaximize } from "react-icons/fa";
 import { FaGear, FaHand, FaMagnifyingGlass } from "react-icons/fa6";
 import { useAppContext } from "../lib/contextLib";
@@ -8,12 +8,26 @@ import { Auth } from "aws-amplify";
 export default function NavbarMain({ ...props }) {
 	const { isAuthenticated, userHasAuthenticated } = useAppContext();
 	const [open, setOpen] = useState(false);
+	const [user, setUser] = useState<any>();
 
 	async function handleLogout() {
 		await Auth.signOut();
 
 		userHasAuthenticated(false);
 	}
+
+	useEffect(() => {
+		async function fetchUser() {
+		  try {
+			const currentUser = await Auth.currentAuthenticatedUser();
+			setUser(currentUser);
+		  } catch (error) {
+			console.error("Error fetching user", error);
+		  }
+		}
+		
+		fetchUser();
+	  }, []);
 
 	return (
 		<Box
@@ -56,48 +70,31 @@ export default function NavbarMain({ ...props }) {
 					<Button
 						variant="plain"
 						color="neutral"
-						aria-pressed="true"
 						component="a"
-						href="/joy-ui/getting-started/templates/email/"
+						href="/dash"
 						size="sm"
 						sx={{ alignSelf: "center" }}>
-						Email
+						Dashboard
 					</Button>
 					<Button
 						variant="plain"
 						color="neutral"
 						component="a"
-						href="/joy-ui/getting-started/templates/team/"
+						href="/launch"
 						size="sm"
 						sx={{ alignSelf: "center" }}>
-						Team
+						Launchpad
 					</Button>
 					<Button
 						variant="plain"
 						color="neutral"
 						component="a"
-						href="/joy-ui/getting-started/templates/files/"
+						href="/play"
 						size="sm"
 						sx={{ alignSelf: "center" }}>
-						Files
+						Play
 					</Button>
 				</Stack>
-				<Box sx={{ display: { xs: "inline-flex", sm: "none" } }}>
-					<IconButton
-						variant="plain"
-						color="neutral"
-						onClick={() => setOpen(true)}>
-						<FaHamburger />
-					</IconButton>
-					<Drawer
-						sx={{ display: { xs: "inline-flex", sm: "none" } }}
-						open={open}
-						onClose={() => setOpen(false)}>
-						<ModalClose />
-						<DialogTitle>Acme Co.</DialogTitle>
-						<Box sx={{ px: 1 }}></Box>
-					</Drawer>
-				</Box>
 				<Box
 					sx={{
 						display: "flex",
@@ -158,8 +155,7 @@ export default function NavbarMain({ ...props }) {
 								size="sm"
 								sx={{ maxWidth: "32px", maxHeight: "32px", borderRadius: "9999999px" }}>
 								<Avatar
-									src="https://i.pravatar.cc/40?img=2"
-									srcSet="https://i.pravatar.cc/80?img=2"
+									src={user?.attributes.picture || `https://ui-avatars.com/api/?name=${user?.attributes.given_name}+${user?.attributes.family_name}`}
 									sx={{ maxWidth: "32px", maxHeight: "32px" }}
 								/>
 							</MenuButton>
@@ -175,45 +171,22 @@ export default function NavbarMain({ ...props }) {
 								<MenuItem>
 									<Box sx={{ display: "flex", alignItems: "center" }}>
 										<Avatar
-											src="https://i.pravatar.cc/40?img=2"
-											srcSet="https://i.pravatar.cc/80?img=2"
+											src={user?.attributes.picture || `https://ui-avatars.com/api/?name=${user?.attributes.given_name}+${user?.attributes.family_name}`}
 											sx={{ borderRadius: "50%" }}
 										/>
 										<Box sx={{ ml: 1.5 }}>
 											<Typography
 												level="title-sm"
 												textColor="text.primary">
-												Rick Sanchez
+												{user?.attributes.given_name} {user?.attributes.family_name}
 											</Typography>
 											<Typography
 												level="body-xs"
 												textColor="text.tertiary">
-												rick@email.com
+												{user?.attributes.email}
 											</Typography>
 										</Box>
 									</Box>
-								</MenuItem>
-								<ListDivider />
-								<MenuItem>
-									<FaHand />
-									Help
-								</MenuItem>
-								<MenuItem>
-									<FaGear />
-									Settings
-								</MenuItem>
-								<ListDivider />
-								<MenuItem
-									component="a"
-									href="/blog/first-look-at-joy/">
-									First look at Joy UI
-									<FaWindowMaximize />
-								</MenuItem>
-								<MenuItem
-									component="a"
-									href="https://github.com/mui/material-ui/tree/master/docs/data/joy/getting-started/templates/email">
-									Sourcecode
-									<FaWindowMaximize />
 								</MenuItem>
 								<ListDivider />
 								<MenuItem onClick={handleLogout}>
