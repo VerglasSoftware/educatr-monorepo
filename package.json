@@ -8,7 +8,7 @@
 		"aws:login": "aws-azure-login",
 		"start:dev": "npm run aws:login && npx sst dev",
 		"start:dev:nologin": "npx sst dev",
-		"test": "npx artillery run test/educatr-load-test.yml"
+		"test": "npx artillery run test/educatr-load-test.yml --record"
 	},
 	"devDependencies": {
 		"@tsconfig/node20": "^20.1.4",
@@ -16,6 +16,7 @@
 		"typescript": "5.6.2"
 	},
 	"dependencies": {
+		"@artilleryio/playwright-reporter": "^1.0.0",
 		"@aws-sdk/client-apigatewaymanagementapi": "^3.699.0",
 		"@tsparticles/react": "^3.0.0",
 		"@uiball/loaders": "^1.3.1",

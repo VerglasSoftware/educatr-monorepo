@@ -1,14 +1,15 @@
 config:
     target: https://educatr.uk
     phases:
-        - duration: 8
+        - duration: 500
           arrivalRate: 1
-          maxVusers: 8
+          maxVusers: 100
           name: Ramp up
     engines:
         playwright:
+            trace: true
             launchOptions:
-                headless: false
+                headless: true
     processor: "./educatr-flows.ts"
 scenarios:
     - engine: playwright

@@ -4,8 +4,16 @@ import * as fs from "node:fs";
 import "dotenv/config";
 import { getCredsAndLockFile, releaseCreds } from "./credManager";
 
-export async function helloWorld(page: Page, context) {
-	const userIndex = context.vars.$processEnvironment.LOCAL_WORKER_ID;
+export async function helloWorld(page: Page, context, events) {
+	// Create event listeners for custom metrics
+	page.on("response", (response) => {
+		if (response.url().includes("api.educatr.uk")) {
+			const time = Date.now() - response.request().timing().startTime;
+			events.emit('histogram', `api_response_time`, time);
+			events.emit('histogram', `api_response_time_${response.url()}`, time);
+			console.log(`Request to ${response.url()} took ${time}ms`);
+		}
+	});
 
 	// Reset browser instance (not sure if this is even required)
 	await page.goto("https://educatr.uk/");
@@ -39,41 +47,56 @@ export async function helloWorld(page: Page, context) {
 
 	const randomisedSampleQuestions = sampleQuestions.sort(() => Math.random() - 0.5);
 	for (const i in randomisedSampleQuestions) {
-		const question: any = randomisedSampleQuestions[i];
+		try {
+			const question: any = randomisedSampleQuestions[i];
 
-		if (!["TEXT"].includes(question.answerType.S)) continue; // only allow text answers
-		if (!["COMPARE", "ALGORITHM"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
+			if (!["TEXT"].includes(question.answerType.S)) continue; // only allow text answers
+			if (!["COMPARE", "ALGORITHM"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
 
-		const button = await page.locator(`#${question.SK.S.split("#")[1]}`);
-		if (!(await button.evaluate((element) => element.classList.contains("Mui-disabled")))) {
-			await button.click();
-			await page.waitForTimeout(2000);
+			const button = await page.locator(`#${question.SK.S.split("#")[1]}`);
+			if (!(await button.evaluate((element) => element.classList.contains("Mui-disabled")))) {
+				await button.click();
+				await page.waitForTimeout(2000);
 
-			// get it wrong once
-			await page.locator("input:visible").fill(question.answer.S + "fdsfasfadsfdsa");
-			await page.waitForTimeout(1000);
-			await page.locator('button:text("Submit"):visible').click();
-			await page.waitForResponse((response) => response.url().includes("/check"));
-			await page.waitForTimeout(2000);
-
-			// get it wrong twice
-			await page.locator("input:visible").fill(question.answer.S + "rrerererwrew");
-			await page.waitForTimeout(1000);
-			await page.locator('button:text("Submit"):visible').click();
-			await page.waitForResponse((response) => response.url().includes("/check"));
-			await page.waitForTimeout(2000);
-
-			// get it right (80% of the time)
-			if (Math.random() < 0.8) {
-				await page.locator("input:visible").fill(question.answer.S);
+				// get it wrong once
+				await page.locator("input:visible").fill(question.answer.S + "fdsfasfadsfdsa");
 				await page.waitForTimeout(1000);
 				await page.locator('button:text("Submit"):visible').click();
 				await page.waitForResponse((response) => response.url().includes("/check"));
-			} else {
-				await page.keyboard.press("Escape");
+				await page.waitForTimeout(2000);
+
+				// get it wrong twice
+				await page.locator("input:visible").fill(question.answer.S + "rrerererwrew");
+				await page.waitForTimeout(1000);
+				await page.locator('button:text("Submit"):visible').click();
+				await page.waitForResponse((response) => response.url().includes("/check"));
+				await page.waitForTimeout(2000);
+
+				// get it right (80% of the time)
+				if (Math.random() < 0.8) {
+					await page.locator("input:visible").fill(question.answerType.S == "CSHARP" ? `using System;
+
+	namespace IglooCode {
+		class Program {
+			static void Main(string[] args) {
+				// Write your code below this line
+				Console.WriteLine("${question.answer.S}");
+			}
+		}
+	}` : question.answer.S);
+					await page.waitForTimeout(1000);
+					await page.locator('button:text("Submit"):visible').click();
+					await page.waitForResponse((response) => response.url().includes("/check"));
+				} else {
+					await page.keyboard.press("Escape");
+				}
+
+				await page.waitForTimeout(3000);
+
 			}
 
-			await page.waitForTimeout(3000);
+		} catch (e) {
+			await page.keyboard.press("Escape");
 		}
 	}
 

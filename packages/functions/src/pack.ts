@@ -72,7 +72,7 @@ export const create: Handler = Util.handler(async (event) => {
 			SK: "DETAILS",
 			name: data.name,
 			description: data.description,
-			ownerId: event.requestContext.authorizer!.jwt.claims['cognito:username'],
+			ownerId: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 			createdAt: Date.now(),
 		},
 	};
