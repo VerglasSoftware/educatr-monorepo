@@ -176,7 +176,7 @@ export const listStudents: Handler = Util.handler(async (event) => {
 	const params = {
 		TableName: Resource.Organisations.name,
 		Key: {
-			PK: "ORG#" + pk,
+			PK: pk,
 			SK: "DETAILS",
 		},
 	};

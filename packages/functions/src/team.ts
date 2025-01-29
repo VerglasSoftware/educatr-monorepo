@@ -1,10 +1,9 @@
-import { Handler } from "aws-lambda";
 import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { QueryCommand, DynamoDBDocumentClient, PutCommand, DeleteCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { Resource } from "sst";
-import { createId } from "@paralleldrive/cuid2";
+import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
-import { DynamoDB } from "aws-sdk";
+import { createId } from "@paralleldrive/cuid2";
+import { Handler } from "aws-lambda";
+import { Resource } from "sst";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -64,15 +63,17 @@ export const create: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: `TEAM#${createId()}`,
 			name: data.name,
-			students: new Set(data.students),
+			students: data.students.length > 0 ? new Set(data.students) : [],
 			createdAt: Date.now(),
 		},
 	};
+
 
 	try {
 		await client.send(new PutCommand(params));
 		return JSON.stringify(params.Item);
 	} catch (e) {
+		console.log(e);
 		throw new Error("Could not create team");
 	}
 });
@@ -162,7 +163,7 @@ export const update: Handler = Util.handler(async (event) => {
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
-			":students": new Set(data.students),
+			":students": Array.isArray(data.students) && data.students.length > 0 ? new Set(data.students) : null,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -171,6 +172,7 @@ export const update: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
+		console.log(e);	
 		throw new Error(`Could not update team ${teamId} in org ${pk}`);
 	}
 });
