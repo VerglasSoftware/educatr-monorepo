@@ -1,13 +1,12 @@
 import { Box, Breadcrumbs, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Link, Stack, Textarea, Typography } from "@mui/joy";
-import Grid from "@mui/joy/Grid";
-import "./PackDetail.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
 import { API } from "aws-amplify";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
+import "./PackDetail.css";
 
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import TaskTable from "../../components/dash/packs/TaskTable";
 
 export default function PackDetail() {

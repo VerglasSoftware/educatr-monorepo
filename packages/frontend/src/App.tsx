@@ -1,18 +1,18 @@
-import { AppContext, AppContextType } from "./lib/contextLib";
-import "./App.css";
-import Routes from "./Routes.tsx";
-import { ReactNode, useEffect, useState } from "react";
-import { Auth } from "aws-amplify";
-import NavbarMain from "./components/Navbar.tsx";
 import { Box, CssBaseline, CssVarsProvider, extendTheme } from "@mui/joy";
-import { Helmet } from "react-helmet";
-import { useLocation } from "react-router-dom";
-import Sidebar from "./components/Sidebar.tsx";
 import { type ISourceOptions } from "@tsparticles/engine";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
-import { loadFull } from "tsparticles";
+import { Auth } from "aws-amplify";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
+import { useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { loadFull } from "tsparticles";
+import "./App.css";
+import NavbarMain from "./components/Navbar.tsx";
+import Sidebar from "./components/Sidebar.tsx";
+import { AppContext, AppContextType } from "./lib/contextLib";
+import Routes from "./Routes.tsx";
 
 function App() {
 	const [isAuthenticated, userHasAuthenticated] = useState(false);

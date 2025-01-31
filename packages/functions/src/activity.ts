@@ -1,84 +1,123 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { DynamoDBClient, QueryCommand, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
+import { itemsToConnections } from "./socket/sendMessage";
+import { itemToTeam } from "./team";
+import { Activity, ActivityCreateUpdate, ActivityDynamo } from "./types/activity";
+import { Team } from "./types/team";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-export const list: Handler = Util.handler(async (event) => {
-	const { compId: pk } = event.pathParameters || {}; // competition ID passed in path parameters.
+export const itemToActivity = (item: Record<string, any> | undefined): Activity => {
+	if (!item) {
+		throw new Error("Item not found");
+	}
+	const packDynamo: ActivityDynamo = item as unknown as ActivityDynamo;
+	return {
+		id: packDynamo.SK.S.split("#")[1],
+		userId: packDynamo.userId.S,
+		taskId: packDynamo.taskId.S,
+		verifierId: packDynamo.verifierId.S,
+		status: packDynamo.status.S,
+		correct: packDynamo.correct.S,
+		createdAt: new Date(parseInt(packDynamo.createdAt.N)).toISOString(),
+	};
+};
 
-	if (!pk) {
-		throw new Error("Missing ID in path parameters");
+export const itemsToClasses = (items: Record<string, AttributeValue>[] | undefined): Activity[] => {
+	if (!items) {
+		throw new Error("Items not found");
+	}
+	return items.map(itemToActivity);
+};
+
+export const list: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing comp ID in path parameters");
 	}
 
-	// Step 3: Query the Competitions table to find the user's team
+	// get the team the user is part of
 	const teamParams = {
 		TableName: Resource.Competitions.name,
 		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix) AND contains (students, :userId)",
 		ExpressionAttributeValues: {
-			":compId": { S: pk },
+			":compId": { S: compId },
 			":skPrefix": { S: "TEAM#" },
 			":userId": { S: event.requestContext.authorizer!.jwt.claims["cognito:username"] },
 		},
 	};
 
-	let teamResult;
-
+	var team: Team;
 	try {
-		const teamCommand = new ScanCommand(teamParams);
-		teamResult = await client.send(teamCommand);
-
-		if (!teamResult.Items && !teamResult.Items![0]) {
+		const teamResult = await client.send(new ScanCommand(teamParams));
+		if (!teamResult.Items || teamResult.Count === 0) {
 			throw new Error("User is not part of any team");
 		}
+		team = itemToTeam(teamResult.Items[0]);
 	} catch (e) {
-		console.error(e);
 		throw new Error("Could not retrieve team information");
 	}
 
-	// Step 4: Query the Competitions table to find all activities for this user in the team
+	// Query the Competitions table to find all activities for this user in the team
 	// Dynamically create FilterExpression for each userId
-	const studentIdsArray = teamResult.Items![0].students.SS!;
+	const userIdConditions = team.students.map((_, index) => `userId = :userId${index}`).join(" OR ");
 
-	const userIdConditions = studentIdsArray.map((id, index) => `userId = :userId${index}`).join(" OR ");
-
-	const activityParams = {
+	const activityParams: ScanCommandInput = {
 		TableName: Resource.Competitions.name,
 		FilterExpression: `begins_with(SK, :activityPrefix) AND (${userIdConditions})`,
-		ExpressionAttributeValues: studentIdsArray.reduce(
-			(acc: any, id, index) => {
+		ExpressionAttributeValues: team.students.reduce(
+			(acc: { [key: string]: { S: string } }, id, index) => {
 				acc[`:userId${index}`] = { S: id };
 				return acc;
 			},
-			{
-				":activityPrefix": { S: "ACTIVITY#" },
-			}
+			{ ":activityPrefix": { S: "ACTIVITY#" } }
 		),
 	};
 
 	try {
-		const activityCommand = new ScanCommand(activityParams);
-		const activityResult = await client.send(activityCommand);
-
-		return JSON.stringify(activityResult.Items || []);
+		const activityResult = await client.send(new ScanCommand(activityParams));
+		const activities = itemsToClasses(activityResult.Items);
+		return JSON.stringify(activities);
 	} catch (e) {
-		console.error(e);
 		throw new Error("Could not retrieve activities");
 	}
 });
 
-export const create: Handler = Util.handler(async (event) => {
-	const { compId: pk } = event.pathParameters || {};
-
-	if (!pk) {
+export const get: Handler = Util.handler(async (event) => {
+	const { compId, activityId } = event.pathParameters || {};
+	if (!compId || !activityId) {
 		throw new Error("Missing ID in path parameters");
 	}
 
-	let data = {
+	const params: GetCommandInput = {
+		TableName: Resource.Competitions.name,
+		Key: {
+			PK: compId,
+			SK: `ACTIVITY#${activityId}`,
+		},
+	};
+
+	try {
+		const result = await client.send(new GetCommand(params));
+		const activity = itemToActivity(result.Item);
+		return JSON.stringify(activity);
+	} catch (e) {
+		throw new Error("Could not retrieve activity:" + e);
+	}
+});
+
+export const create: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing comp ID in path parameters");
+	}
+
+	const data: ActivityCreateUpdate = {
 		userId: "",
 		taskId: "",
 		verifierId: "",
@@ -87,14 +126,14 @@ export const create: Handler = Util.handler(async (event) => {
 	};
 
 	if (event.body != null) {
-		data = JSON.parse(event.body);
+		Object.assign(data, JSON.parse(event.body));
 	} else throw new Error("No body provided");
 
-	const params = {
+	const params: PutCommandInput = {
 		TableName: Resource.Competitions.name,
 		Item: {
-			PK: pk,
-			SK: `ACTIVITY#${createId()}`,
+			PK: compId,
+			SK: "ACTIVITY#" + createId(),
 			userId: data.userId,
 			taskId: data.taskId,
 			verifierId: data.verifierId,
@@ -105,75 +144,21 @@ export const create: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		await client.send(new PutCommand(params));
-		return JSON.stringify(params.Item);
+		const result = await client.send(new PutCommand(params));
+		const activity = itemToActivity(result.Attributes);
+		return JSON.stringify(activity);
 	} catch (e) {
 		throw new Error("Could not create competition");
 	}
 });
 
-export const get: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
-
-	if (!pk || !activityId) {
-		throw new Error("Missing ID in path parameters");
-	}
-
-	const params = {
-		TableName: Resource.Competitions.name,
-		Key: {
-			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
-		},
-	};
-
-	try {
-		const result = await client.send(new GetCommand(params));
-		if (!result.Item) {
-			throw new Error("Activity not found");
-		}
-		return JSON.stringify(result.Item);
-	} catch (e) {
-		throw new Error("Could not retrieve activity:" + e);
-	}
-});
-
-export const del: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
-
-	if (!pk || !activityId) {
-		throw new Error("Missing PK in path parameters");
-	}
-
-	const deleteParams = {
-		TableName: Resource.Competitions.name,
-		Key: {
-			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
-		},
-	};
-
-	try {
-		await client.send(new DeleteCommand(deleteParams));
-
-		return JSON.stringify({
-			message: `Activity with SK ${activityId} under competition with PK ${pk} has been deleted`,
-			pk,
-			activityId,
-		});
-	} catch (e) {
-		throw new Error(`Could not delete activity with SK ${activityId} from competition ${pk}`);
-	}
-});
-
 export const update: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
-
-	if (!pk || !activityId) {
+	const { compId, activityId } = event.pathParameters || {};
+	if (!compId || !activityId) {
 		throw new Error("Missing PK or SK in path parameters");
 	}
 
-	let data = {
+	const data: ActivityCreateUpdate = {
 		userId: "",
 		taskId: "",
 		verifierId: "",
@@ -182,16 +167,16 @@ export const update: Handler = Util.handler(async (event) => {
 	};
 
 	if (event.body != null) {
-		data = JSON.parse(event.body);
+		Object.assign(data, JSON.parse(event.body));
 	} else {
 		throw new Error("No body provided");
 	}
 
-	const params = {
+	const params: UpdateCommandInput = {
 		TableName: Resource.Competitions.name,
 		Key: {
-			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
+			PK: compId,
+			SK: "ACTIVITY#" + activityId,
 		},
 		UpdateExpression: "SET #userId = :userId, #taskId = :taskId, #verifierId = :verifierId, #status = :status, #correct = :correct",
 		ExpressionAttributeNames: {
@@ -213,24 +198,47 @@ export const update: Handler = Util.handler(async (event) => {
 
 	try {
 		const result = await client.send(new UpdateCommand(params));
-		return JSON.stringify(result.Attributes);
+		const activity = itemToActivity(result.Attributes);
+		return JSON.stringify(activity);
 	} catch (e) {
-		throw new Error(`Could not update activity ${activityId} in competition ${pk}`);
+		throw new Error(`Could not update activity ${activityId} in competition ${compId}`);
+	}
+});
+
+export const del: Handler = Util.handler(async (event) => {
+	const { compId, activityId } = event.pathParameters || {};
+
+	if (!compId || !activityId) {
+		throw new Error("Missing PK in path parameters");
+	}
+
+	const params: DeleteCommandInput = {
+		TableName: Resource.Competitions.name,
+		Key: {
+			PK: compId,
+			SK: "ACTIVITY#" + activityId,
+		},
+	};
+
+	try {
+		await client.send(new DeleteCommand(params));
+		return JSON.stringify({ message: `Activity with SK ${activityId} under competition with PK ${compId} has been deleted` });
+	} catch (e) {
+		throw new Error(`Could not delete activity with SK ${activityId} from competition ${compId}`);
 	}
 });
 
 export const approve: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
-
-	if (!pk || !activityId) {
+	const { compId, activityId } = event.pathParameters || {};
+	if (!compId || !activityId) {
 		throw new Error("Missing PK or SK in path parameters");
 	}
 
 	const params = {
 		TableName: Resource.Competitions.name,
 		Key: {
-			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
+			PK: compId,
+			SK: "ACTIVITY#" + activityId,
 		},
 		UpdateExpression: "SET #verifierId = :verifierId, #status = :status, #correct = :correct",
 		ExpressionAttributeNames: {
@@ -248,53 +256,60 @@ export const approve: Handler = Util.handler(async (event) => {
 
 	try {
 		const result = await client.send(new UpdateCommand(params));
+		const activity = itemToActivity(result.Attributes);
 
-		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
+		const socketParams: ScanCommandInput = {
+			TableName: Resource.SocketConnections.name,
+			ProjectionExpression: "id",
+		};
+		const connectionsResult = await client.send(new ScanCommand(socketParams));
+		const connections = itemsToConnections(connectionsResult.Items);
 
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
 
-		const postToConnection = async function ({ id }: any) {
+		const postToConnection = async function ({ id }: { id: string }) {
 			try {
 				await apiG.postToConnection({
-					ConnectionId: id.S,
+					ConnectionId: id,
 					Data: JSON.stringify({
 						filter: {
-							competitionId: pk,
+							competitionId: compId,
 						},
 						type: "TASK:ANSWERED",
-						body: result.Attributes,
+						body: activity,
 					}),
 				});
 			} catch (e: any) {
 				if (e.statusCode === 410) {
 					// Remove stale connections
-					await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+					const deleteParams: DeleteCommandInput = {
+						TableName: Resource.SocketConnections.name,
+						Key: { id },
+					};
+					await client.send(new DeleteCommand(deleteParams));
 				}
 			}
 		};
-
-		await Promise.all(connections.Items!.map(postToConnection));
-
-		return JSON.stringify(result.Attributes);
+		await Promise.all(connections.map(postToConnection));
+		return JSON.stringify(activity);
 	} catch (e) {
-		throw new Error(`Could not approve activity ${activityId} in competition ${pk}`);
+		throw new Error(`Could not approve activity ${activityId} in competition ${compId}`);
 	}
 });
 
 export const reject: Handler = Util.handler(async (event) => {
-	const { compId: pk, activityId } = event.pathParameters || {};
-
-	if (!pk || !activityId) {
+	const { compId, activityId } = event.pathParameters || {};
+	if (!compId || !activityId) {
 		throw new Error("Missing PK or SK in path parameters");
 	}
 
-	const params = {
+	const params: UpdateCommandInput = {
 		TableName: Resource.Competitions.name,
 		Key: {
-			PK: pk,
-			SK: `ACTIVITY#${activityId}`,
+			PK: compId,
+			SK: "ACTIVITY#" + activityId,
 		},
 		UpdateExpression: "SET #verifierId = :verifierId, #status = :status, #correct = :correct",
 		ExpressionAttributeNames: {
@@ -312,37 +327,46 @@ export const reject: Handler = Util.handler(async (event) => {
 
 	try {
 		const result = await client.send(new UpdateCommand(params));
+		const activity = itemToActivity(result.Attributes);
 
-		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
+		const socketParams: ScanCommandInput = {
+			TableName: Resource.SocketConnections.name,
+			ProjectionExpression: "id",
+		};
+		const connectionsResult = await client.send(new ScanCommand(socketParams));
+		const connections = itemsToConnections(connectionsResult.Items);
 
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
 
-		const postToConnection = async function ({ id }: any) {
+		const postToConnection = async function ({ id }: { id: string }) {
 			try {
 				await apiG.postToConnection({
-					ConnectionId: id.S,
+					ConnectionId: id,
 					Data: JSON.stringify({
 						filter: {
-							competitionId: pk,
+							competitionId: compId,
 						},
 						type: "TASK:ANSWERED",
-						body: result.Attributes,
+						body: activity,
 					}),
 				});
 			} catch (e: any) {
 				if (e.statusCode === 410) {
 					// Remove stale connections
-					await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+					const deleteParams: DeleteCommandInput = {
+						TableName: Resource.SocketConnections.name,
+						Key: { id },
+					};
+					await client.send(new DeleteCommand(deleteParams));
 				}
 			}
 		};
 
-		await Promise.all(connections.Items!.map(postToConnection));
-
-		return JSON.stringify(result.Attributes);
+		await Promise.all(connections.map(postToConnection));
+		return JSON.stringify(activity);
 	} catch (e) {
-		throw new Error(`Could not reject activity ${activityId} in competition ${pk}`);
+		throw new Error(`Could not reject activity ${activityId} in competition ${compId}`);
 	}
 });

@@ -1,14 +1,37 @@
-import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
+import { Organisation, OrganisationCreateUpdate, OrganisationDynamo } from "./types/organisation";
+import { itemsToUsers } from "./user";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
+const itemToOrganisation = (item: Record<string, any> | undefined): Organisation => {
+	if (!item) {
+		throw new Error("Item not found");
+	}
+	const packDynamo: OrganisationDynamo = item as unknown as OrganisationDynamo;
+	return {
+		id: packDynamo.PK.S,
+		name: packDynamo.name.S,
+		logo: packDynamo.logo.S,
+		students: packDynamo.students.L.map((student) => student.S),
+		createdAt: new Date(parseInt(packDynamo.createdAt.N)).toISOString(),
+	};
+};
+
+const itemsToOrganisations = (items: Record<string, AttributeValue>[] | undefined): Organisation[] => {
+	if (!items) {
+		throw new Error("Items not found");
+	}
+	return items.map(itemToOrganisation);
+};
+
 export const list: Handler = Util.handler(async (event) => {
-	const params = {
+	const params: ScanCommandInput = {
 		TableName: Resource.Organisations.name,
 		FilterExpression: "SK = :sk",
 		ExpressionAttributeValues: {
@@ -17,16 +40,39 @@ export const list: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		const command = new ScanCommand(params);
-		const result = await client.send(command);
-		return JSON.stringify(result.Items);
+		const result = await client.send(new ScanCommand(params));
+		const organisations = itemsToOrganisations(result.Items);
+		return JSON.stringify(organisations);
 	} catch (e) {
 		throw new Error("Could not retrieve organiations");
 	}
 });
 
+export const get: Handler = Util.handler(async (event) => {
+	const { orgId } = event.pathParameters || {};
+	if (!orgId) {
+		throw new Error("Missing ID in path parameters");
+	}
+
+	const params: GetCommandInput = {
+		TableName: Resource.Organisations.name,
+		Key: {
+			PK: "ORG#" + orgId,
+			SK: "DETAILS",
+		},
+	};
+
+	try {
+		const result = await client.send(new GetCommand(params));
+		const organisation = itemToOrganisation(result.Item);
+		return JSON.stringify(organisation);
+	} catch (e) {
+		throw new Error("Could not retrieve organisation");
+	}
+});
+
 export const create: Handler = Util.handler(async (event) => {
-	let data = {
+	let data: OrganisationCreateUpdate = {
 		name: "",
 		logo: "",
 		students: [],
@@ -36,97 +82,34 @@ export const create: Handler = Util.handler(async (event) => {
 		data = JSON.parse(event.body);
 	} else throw new Error("No body provided");
 
-	const params = {
+	const params: PutCommandInput = {
 		TableName: Resource.Organisations.name,
 		Item: {
 			PK: createId(),
 			SK: "DETAILS",
 			name: data.name,
 			logo: data.logo,
-			students: new Set(data.students),
+			students: data.students,
 			createdAt: Date.now(),
 		},
 	};
 
 	try {
 		const result = await client.send(new PutCommand(params));
-		return JSON.stringify(result.Attributes);
+		const organisation = itemToOrganisation(result.Attributes);
+		return JSON.stringify(organisation);
 	} catch (e) {
 		throw new Error("Could not create organisation");
 	}
 });
 
-export const get: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
-
-	if (!pk) {
-		throw new Error("Missing ID in path parameters");
-	}
-
-	const params = {
-		TableName: Resource.Organisations.name,
-		Key: {
-			PK: "ORG#" + pk,
-			SK: "DETAILS",
-		},
-	};
-
-	try {
-		const result = await client.send(new GetCommand(params));
-		if (!result.Item) {
-			throw new Error("Organisation not found");
-		}
-		return JSON.stringify(result.Item);
-	} catch (e) {
-		throw new Error("Could not retrieve organisation");
-	}
-});
-
-export const del: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
-
-	if (!pk) {
-		throw new Error("Missing PK in path parameters");
-	}
-
-	const queryParams = {
-		TableName: Resource.Organisations.name,
-		KeyConditionExpression: "PK = :pk",
-		ExpressionAttributeValues: {
-			":pk": pk,
-		},
-	};
-
-	try {
-		const queryCommand = new QueryCommand(queryParams);
-		const queryResult = await client.send(queryCommand);
-		const itemsToDelete = queryResult.Items || [];
-
-		for (const item of itemsToDelete) {
-			const deleteParams = {
-				TableName: Resource.Organisations.name,
-				Key: {
-					PK: item.PK,
-					SK: item.SK,
-				},
-			};
-			await client.send(new DeleteCommand(deleteParams));
-		}
-
-		return JSON.stringify({ message: "All items under the specified PK have been deleted", pk });
-	} catch (e) {
-		throw new Error("Could not delete organisation");
-	}
-});
-
 export const update: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
-
-	if (!pk) {
+	const { orgId } = event.pathParameters || {};
+	if (!orgId) {
 		throw new Error("Missing PK in path parameters");
 	}
 
-	let data = {
+	let data: OrganisationCreateUpdate = {
 		name: "",
 		logo: "",
 		students: [],
@@ -134,14 +117,12 @@ export const update: Handler = Util.handler(async (event) => {
 
 	if (event.body != null) {
 		data = JSON.parse(event.body);
-	} else {
-		throw new Error("No body provided");
-	}
+	} else throw new Error("No body provided");
 
-	const params = {
+	const params: UpdateCommandInput = {
 		TableName: Resource.Organisations.name,
 		Key: {
-			PK: "ORG#" + pk,
+			PK: "ORG#" + orgId,
 			SK: "DETAILS",
 		},
 		UpdateExpression: "SET #name = :name, #logo = :logo, #students = :students",
@@ -160,53 +141,65 @@ export const update: Handler = Util.handler(async (event) => {
 
 	try {
 		const result = await client.send(new UpdateCommand(params));
-		return JSON.stringify(result.Attributes);
+		const organisation = itemToOrganisation(result.Attributes);
+		return JSON.stringify(organisation);
 	} catch (e) {
 		throw new Error("Could not update organisation details");
 	}
 });
 
-export const listStudents: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
+export const del: Handler = Util.handler(async (event) => {
+	const { orgId } = event.pathParameters || {};
+	if (!orgId) {
+		throw new Error("Missing PK in path parameters");
+	}
 
-	if (!pk) {
+	const params: DeleteCommandInput = {
+		TableName: Resource.Organisations.name,
+		Key: {
+			PK: orgId,
+		},
+	};
+
+	try {
+		await client.send(new DeleteCommand(params));
+		return JSON.stringify({ message: `Organisation with PK ${orgId} has been deleted` });
+	} catch (e) {
+		return JSON.stringify({ message: `Could not delete organisation with PK ${orgId}` });
+	}
+});
+
+export const listStudents: Handler = Util.handler(async (event) => {
+	const { orgId } = event.pathParameters || {};
+	if (!orgId) {
 		throw new Error("Missing ID in path parameters");
 	}
 
 	const params = {
 		TableName: Resource.Organisations.name,
 		Key: {
-			PK: pk,
+			PK: orgId,
 			SK: "DETAILS",
 		},
 	};
 
 	try {
 		const result = await client.send(new GetCommand(params));
-		if (!result.Item) {
-			throw new Error("Organisation not found");
-		}
+		const students = itemToOrganisation(result.Item).students;
 
-		const students: any[] = [];
+		const userParams: ScanCommandInput = {
+			TableName: Resource.Users.name,
+			FilterExpression: "PK IN (:students)",
+			ExpressionAttributeValues: {
+				":students": { SS: students },
+			},
+		};
 
-		for (const student of result.Item.students) {
-			console.log(student);
-			const userParams = {
-				TableName: Resource.Users.name,
-				Key: {
-					PK: student,
-					SK: "DETAILS",
-				},
-			};
+		const userResult = await client.send(new ScanCommand(userParams));
+		const users = itemsToUsers(userResult.Items);
 
-			const sR = await client.send(new GetCommand(userParams));
-			console.log(sR);
-			students.push(sR.Item);
-		}
-
-		return JSON.stringify(students);
+		return JSON.stringify(users);
 	} catch (e) {
-		console.log(e);
 		throw new Error("Could not retrieve organisation");
 	}
 });

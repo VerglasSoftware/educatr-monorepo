@@ -1,9 +1,9 @@
-import { Avatar, Box, Button, DialogTitle, Drawer, Dropdown, IconButton, Input, ListDivider, Menu, MenuButton, MenuItem, ModalClose, Stack, Tooltip, Typography } from "@mui/joy";
-import { useEffect, useState } from "react";
-import { FaBook, FaDoorOpen, FaHamburger, FaLanguage, FaWindowMaximize } from "react-icons/fa";
-import { FaGear, FaHand, FaMagnifyingGlass } from "react-icons/fa6";
-import { useAppContext } from "../lib/contextLib";
+import { Avatar, Box, Button, Dropdown, IconButton, Input, ListDivider, Menu, MenuButton, MenuItem, Stack, Tooltip, Typography } from "@mui/joy";
 import { Auth } from "aws-amplify";
+import { useEffect, useState } from "react";
+import { FaBook, FaDoorOpen, FaLanguage } from "react-icons/fa";
+import { FaMagnifyingGlass } from "react-icons/fa6";
+import { useAppContext } from "../lib/contextLib";
 
 export default function NavbarMain({ ...props }) {
 	const { isAuthenticated, userHasAuthenticated } = useAppContext();

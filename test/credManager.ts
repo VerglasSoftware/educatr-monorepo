@@ -1,7 +1,6 @@
-import * as fs from "node:fs";
 import csv from "csv-parser";
+import * as fs from "node:fs";
 import lockfile from "proper-lockfile";
-import path from "path";
 
 // Helper function to lock the file and read/write safely
 export async function lockAndUpdateCreds(): Promise<string | null> {
