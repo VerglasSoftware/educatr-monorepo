@@ -8,6 +8,8 @@ import NavbarMain from "../../components/launch/Navbar";
 import { DotWave } from "@uiball/loaders";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from "@zxing/library";
+import LeaderboardModal from "../../components/play/LeaderboardModal";
+import LeaderboardChart from "../../components/play/LeaderboardChart";
 
 export default function LaunchCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -23,6 +25,8 @@ export default function LaunchCompetition() {
 	const [scanButtonLoading, setScanButtonLoading] = useState(false);
 	const [approveButtonLoading, setApproveButtonLoading] = useState(false);
 	const [rejectButtonLoading, setRejectButtonLoading] = useState(false);
+
+	const [openLeaderboard, setOpenLeaderboard] = useState(false);
 
 	const [selectedTask, setSelectedTask] = useState<any>();
 
@@ -424,7 +428,56 @@ export default function LaunchCompetition() {
 						)}
 					</CardContent>
 				</Card>
+
+				<Card
+					variant="plain"
+					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "50%" }}>
+					<CardContent
+						sx={{
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "left",
+							justifyContent: "center",
+							padding: "2%",
+						}}>
+						<Typography
+							level="h3"
+							component="h2"
+							textColor="common.white">
+							Leaderboard
+						</Typography>
+						{
+							!openLeaderboard &&
+							<Box sx={{
+								height: '30vh',
+								width: undefined,
+								backgroundColor: "white",
+								}}>
+								<LeaderboardChart competitionId={competition.PK} />
+							</Box>
+						}
+						<Button
+							color="primary"
+							onClick={() => setOpenLeaderboard(true)}>
+							Open
+						</Button>
+					</CardContent>
+				</Card>
 			</Box>
+			{
+				openLeaderboard &&
+				<Box sx={{
+					height: '100vh',
+					width: '100vw',
+					backgroundColor: "white",
+					position: "absolute",
+					left: 0,
+					top: 0,
+					zIndex: 999,
+					}}>
+					<LeaderboardChart competitionId={competition.PK} />
+				</Box>
+			}
 		</div>
 	);
 }
