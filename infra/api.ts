@@ -351,6 +351,14 @@ api.route(
 );
 
 api.route(
+	"GET /competition/{compId}/leaderboard",
+	{
+		handler: "packages/functions/src/competition.getLb",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
 	"GET /user/me",
 	{
 		handler: "packages/functions/src/user.getMe",
