@@ -9,8 +9,8 @@ export async function helloWorld(page: Page, context, events) {
 	page.on("response", (response) => {
 		if (response.url().includes("api.educatr.uk")) {
 			const time = Date.now() - response.request().timing().startTime;
-			events.emit("histogram", `api_response_time`, time);
-			events.emit("histogram", `api_response_time_${response.url()}`, time);
+			events.emit('histogram', `api_response_time`, time);
+			events.emit('histogram', `api_response_time_${response.url()}`, time);
 			console.log(`Request to ${response.url()} took ${time}ms`);
 		}
 	});
@@ -74,9 +74,7 @@ export async function helloWorld(page: Page, context, events) {
 
 				// get it right (80% of the time)
 				if (Math.random() < 0.8) {
-					await page.locator("input:visible").fill(
-						question.answerType.S == "CSHARP"
-							? `using System;
+					await page.locator("input:visible").fill(question.answerType.S == "CSHARP" ? `using System;
 
 	namespace IglooCode {
 		class Program {
@@ -85,9 +83,7 @@ export async function helloWorld(page: Page, context, events) {
 				Console.WriteLine("${question.answer.S}");
 			}
 		}
-	}`
-							: question.answer.S
-					);
+	}` : question.answer.S);
 					await page.waitForTimeout(1000);
 					await page.locator('button:text("Submit"):visible').click();
 					await page.waitForResponse((response) => response.url().includes("/check"));
@@ -96,7 +92,9 @@ export async function helloWorld(page: Page, context, events) {
 				}
 
 				await page.waitForTimeout(3000);
+
 			}
+
 		} catch (e) {
 			await page.keyboard.press("Escape");
 		}
