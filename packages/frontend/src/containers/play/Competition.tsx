@@ -183,9 +183,7 @@ export default function PlayCompetition() {
 			<Helmet>
 				<title>{competition.name}</title>
 			</Helmet>
-			<NavbarMain 
-			competition = { competition }	
-			/>
+			<NavbarMain competition={competition} />
 			<Box
 				sx={{
 					display: "flex",

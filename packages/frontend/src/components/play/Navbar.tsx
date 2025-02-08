@@ -91,12 +91,13 @@ export default function NavbarMain({ competition, ...props }) {
 							<Typography sx={{ color: "inherit", ml: 1 }}>1st</Typography>
 						</IconButton>
 					</Tooltip>
-					{ competition && competition.showLeaderboard &&
+					{competition && competition.showLeaderboard && (
 						<LeaderboardModal
-						open={openLeaderboard}
-						setOpen={setOpenLeaderboard}
-						competitionId={compId} />
-					}
+							open={openLeaderboard}
+							setOpen={setOpenLeaderboard}
+							competitionId={compId}
+						/>
+					)}
 
 					<Tooltip
 						title="Points"
