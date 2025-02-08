@@ -167,7 +167,7 @@ export default function LaunchCompetition() {
 					filter: {
 						competitionId: compId,
 					},
-					type: "COMPETITION:SHOW_LEADERBOARD",
+					type:  "COMPETITION:SHOW_LEADERBOARD",
 					body: {
 						showLeaderboard: false,
 					},
