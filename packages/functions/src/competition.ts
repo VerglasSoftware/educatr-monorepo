@@ -134,6 +134,7 @@ export const update: Handler = Util.handler(async (event) => {
 		name: "",
 		status: "",
 		packs: [],
+		showLeaderboard: true,
 	};
 
 	if (event.body != null) {
@@ -148,16 +149,18 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: "DETAILS",
 		},
-		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs",
+		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs, #showLeaderboard = :showLeaderboard",
 		ExpressionAttributeNames: {
 			"#name": "name",
 			"#status": "status",
 			"#packs": "packs",
+			"#showLeaderboard": "showLeaderboard",
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
 			":status": data.status,
 			":packs": data.packs,
+			":showLeaderboard": data.showLeaderboard,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
