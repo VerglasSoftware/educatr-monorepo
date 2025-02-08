@@ -1,15 +1,9 @@
 import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/joy";
 import { useState } from "react";
 import { FaCaretLeft, FaCoins, FaMaximize, FaMinimize, FaTrophy } from "react-icons/fa6";
-import LeaderboardChart from "./LeaderboardChart";
-import { useParams } from "react-router-dom";
-import LeaderboardModal from "./LeaderboardModal";
 
-export default function NavbarMain({ competition, ...props }) {
+export default function NavbarMain({ ...props }) {
 	const [open, setOpen] = useState(false);
-	const [openLeaderboard, setOpenLeaderboard] = useState(false);
-
-	const { compId } = useParams();
 
 	const isFullscreen = () => !!document.fullscreenElement;
 
@@ -30,7 +24,7 @@ export default function NavbarMain({ competition, ...props }) {
 					gridColumn: "1 / -1",
 					position: "sticky",
 					top: 0,
-					zIndex: 900,
+					zIndex: 1100,
 				},
 			]}>
 			<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(3, 1fr)", justifyContent: "center" }}>
@@ -82,7 +76,6 @@ export default function NavbarMain({ competition, ...props }) {
 						title="Ranking"
 						variant="outlined">
 						<IconButton
-							onClick={() => setOpenLeaderboard(true)}
 							size="sm"
 							variant="plain"
 							color="neutral"
@@ -91,13 +84,6 @@ export default function NavbarMain({ competition, ...props }) {
 							<Typography sx={{ color: "inherit", ml: 1 }}>1st</Typography>
 						</IconButton>
 					</Tooltip>
-					{competition && competition.showLeaderboard && (
-						<LeaderboardModal
-							open={openLeaderboard}
-							setOpen={setOpenLeaderboard}
-							competitionId={compId}
-						/>
-					)}
 
 					<Tooltip
 						title="Points"
