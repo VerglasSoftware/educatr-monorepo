@@ -163,7 +163,7 @@ export default function NavbarMain({ ...props }) {
 								placement="bottom-end"
 								size="sm"
 								sx={{
-									zIndex: "900",
+									zIndex: "1100",
 									p: 1,
 									gap: 1,
 									"--ListItem-radius": "var(--joy-radius-sm)",
