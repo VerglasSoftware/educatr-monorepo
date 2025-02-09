@@ -8,6 +8,7 @@ import CodeIcon from "@mui/icons-material/Code";
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import EditIcon from "@mui/icons-material/Edit";
 import HelpIcon from "@mui/icons-material/Help";
+import InputIcon from "@mui/icons-material/Input";
 import { Box, Button, Checkbox, FormControl, FormLabel, Input, Option, Select, Textarea, Typography } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
 import CodeMirror from "@uiw/react-codemirror";
@@ -48,6 +49,7 @@ export default function TaskEditor() {
 			verificationType: "",
 			prerequisites: [] as string[],
 			points: 0,
+			stdin: "",
 		},
 		onSubmit: async (values) => {
 			const newTask = await API.put("api", `/pack/${id}/task/${task.id}`, {
@@ -62,6 +64,7 @@ export default function TaskEditor() {
 					verificationType: values.verificationType,
 					prerequisites: values.prerequisites,
 					points: values.points,
+					stdin: values.stdin,
 				},
 			});
 			// doing this becuase the repsonse of the put request doesnt have the S's and N's dynamodb types.
@@ -79,6 +82,7 @@ export default function TaskEditor() {
 						verificationType: { S: newTask.verificationType },
 						prerequisites: { L: newTask.prerequisites.map((item) => ({ S: item })) },
 						points: { N: newTask.points.toString() },
+						stdin: { S: newTask.stdin },
 					};
 				}
 				return t;
@@ -142,6 +146,7 @@ export default function TaskEditor() {
 				verificationType: task.verificationType.S,
 				prerequisites: task.prerequisites.L.map((item) => item.S),
 				points: parseInt(task.points.N),
+				stdin: task.stdin.S,
 			});
 		}
 	}, [tasks]);
@@ -219,6 +224,7 @@ export default function TaskEditor() {
 									verificationType: tasks[index - 1].verificationType.S,
 									prerequisites: tasks[index - 1].prerequisites.L.map((item) => item.S),
 									points: parseInt(tasks[index - 1].points.N),
+									stdin: tasks[index - 1].stdin.S,
 								});
 							}}>
 							<ArrowBackIcon />
@@ -267,6 +273,7 @@ export default function TaskEditor() {
 									verificationType: tasks[index + 1].verificationType.S,
 									prerequisites: tasks[index + 1].prerequisites.L.map((item) => item.S),
 									points: parseInt(tasks[index + 1].points.N),
+									stdin: tasks[index + 1].stdin.S,
 								});
 							}}>
 							<ArrowForwardIcon />
@@ -451,6 +458,19 @@ export default function TaskEditor() {
 													value={formik.values.answer}
 												/>
 											</FormControl>
+											<FormLabel className="flex items-center">
+												<InputIcon className="mr-1" />
+												Stdin value
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<Input
+													id="stdin"
+													name="stdin"
+													type="text"
+													onChange={formik.handleChange}
+													value={formik.values.stdin}
+												/>
+											</FormControl>
 										</>
 									)}
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "PYTHON" && (
@@ -499,6 +519,19 @@ export default function TaskEditor() {
 													type="text"
 													onChange={formik.handleChange}
 													value={formik.values.answer}
+												/>
+											</FormControl>
+											<FormLabel className="flex items-center">
+												<InputIcon className="mr-1" />
+												Stdin value
+											</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<Input
+													id="stdin"
+													name="stdin"
+													type="text"
+													onChange={formik.handleChange}
+													value={formik.values.stdin}
 												/>
 											</FormControl>
 										</>
