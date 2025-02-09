@@ -18,7 +18,7 @@ Amplify.configure({
 			domain: "educatr.auth.eu-west-1.amazoncognito.com",
 			//scope: ["openid", "profile", "email"],
 			redirectSignIn: "https://educatr.uk",
-			redirectSignOut: "https://localhost:5173",
+			redirectSignOut: "https://educatr.uk",
 			responseType: "token",
 		},
 	},
