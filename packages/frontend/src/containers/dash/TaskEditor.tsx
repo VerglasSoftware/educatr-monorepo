@@ -608,7 +608,7 @@ export default function TaskEditor() {
 														break;
 												}
 												formik.setFieldValue("answerType", newValue);
-											}}x
+											}}
 											value={formik.values.answerType}>
 											<Option value="TEXT">Text</Option>
 											<Option value="MULTIPLE">Multiple Choice</Option>
