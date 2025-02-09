@@ -1,9 +1,9 @@
-import { Box, Button, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
-import "./Play.css";
-import "./Home.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
+import { Box, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
+import "./Home.css";
+import "./Play.css";
 
 export default function PlayHome() {
 	const [competitions, setCompetitions] = useState<any[]>([]);

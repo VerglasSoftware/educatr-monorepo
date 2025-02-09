@@ -4,14 +4,13 @@ import { cardio, pulsar } from "ldrs";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
-import { DotWave } from "@uiball/loaders";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import Loading from "../../components/play/Loading";
 import NavbarMain from "../../components/play/Navbar";
 import NotInProgress from "../../components/play/NotInProgress";
+import { PDF417 } from "../../components/play/PDF417";
 import TaskModal from "../../components/play/TaskModal";
 import "./Play.css";
-import { PDF417 } from "../../components/play/PDF417";
 
 export default function PlayCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -77,7 +76,6 @@ export default function PlayCompetition() {
 		async function onLoad() {
 			try {
 				const promises = [API.get("api", `/competition/${compId}`, {}).then(setCompetition), API.get("api", `/pack?include=tasks`, {}).then(setPacks), API.get("api", `/competition/${compId}/activity`, {}).then(setActivity)];
-
 				await Promise.allSettled(promises);
 			} catch (e) {
 				console.log(e);
@@ -164,9 +162,7 @@ export default function PlayCompetition() {
 								textColor="common.white">
 								A member of our team will be with you as soon as possible.
 							</Typography>
-
 							<br />
-
 							<PDF417 value={waitingTask.activity && waitingTask.activity.SK.S.split("#")[1]} />
 						</CardContent>
 					</Card>
@@ -203,6 +199,11 @@ export default function PlayCompetition() {
 							<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(5, 1fr)", justifyContent: "center", gap: 2 }}>
 								{pack.tasks.map((task: any) => {
 									const correct = activity.find((a) => (a.taskId.S && a.correct ? a.taskId.S == task.SK.S.split("#")[1] && a.correct.BOOL === true : a.taskId == task.SK.S.split("#")[1] && a.correct === true));
+									if (task.prerequisites.L.length > 0) {
+										const prereqs = task.prerequisites.L.map((p) => p.S);
+										const completedPrereqs = prereqs.filter((p) => activity.find((a) => a.taskId.S == p && a.correct.BOOL === true));
+										if (completedPrereqs.length != prereqs.length) return null;
+									}
 									return (
 										<Link
 											component="button"

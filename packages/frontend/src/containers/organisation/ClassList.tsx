@@ -1,14 +1,11 @@
-import { Box, Breadcrumbs, Button, Link, Typography } from "@mui/joy";
-import "./ClassList.css";
-import { Helmet } from "react-helmet";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import PackTable from "../../components/dash/packs/PackTable";
-import { FaPlus } from "react-icons/fa6";
+import { Box, Button, Typography } from "@mui/joy";
 import { useState } from "react";
-import NewPackModal from "../../components/dash/packs/NewPackModal";
+import { Helmet } from "react-helmet";
+import { FaPlus } from "react-icons/fa6";
+import Breadcrumb from "../../components/dash/breadcrumb";
 import ClassTable from "../../components/dash/organisations/ClassTable";
 import NewClassModal from "../../components/dash/organisations/NewClassModal";
+import "./ClassList.css";
 
 export default function ClassList() {
 	const [open, setOpen] = useState(false);
@@ -20,31 +17,12 @@ export default function ClassList() {
 			</Helmet>
 			<div>
 				<Box sx={{ display: "flex", alignItems: "center" }}>
-					<Breadcrumbs
-						size="sm"
-						aria-label="breadcrumbs"
-						separator={<ChevronRightRoundedIcon fontSize="small" />}
-						sx={{ pl: 0 }}>
-						<Link
-							underline="none"
-							color="neutral"
-							href="#some-link"
-							aria-label="Home">
-							<HomeRoundedIcon />
-						</Link>
-						<Link
-							underline="hover"
-							color="neutral"
-							href="#some-link"
-							sx={{ fontSize: 12, fontWeight: 500 }}>
-							Dashboard
-						</Link>
-						<Typography
-							color="primary"
-							sx={{ fontWeight: 500, fontSize: 12 }}>
-							Classes
-						</Typography>
-					</Breadcrumbs>
+					<Breadcrumb
+						items={[
+							{ label: "Dashboard", href: "/dash" },
+							{ label: "Classes", href: "/dash/classes" },
+						]}
+					/>
 				</Box>
 
 				<Box
