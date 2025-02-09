@@ -14,7 +14,7 @@ export default function CompetitionDetail() {
 
 	const [name, setName] = useState<any>("");
 
-	const { compId, orgId } = useParams();
+	const { orgId, compId } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
@@ -190,10 +190,11 @@ export default function CompetitionDetail() {
 														})}
 														loading={students.length == 0}
 														value={
-															!team.students
+															!team.students || !team.students.SS
 																? []
-																: team.students.SS.map((s: any) => {
-																		return { label: `${students.find((student: any) => student.PK == s)?.given_name} ${students.find((student: any) => student.PK == s)?.family_name}`, value: s };
+																: team.students.SS.map((s: string) => {
+																		const student = students.find((student: any) => student.PK == s);
+																		return { label: `${student?.given_name} ${student?.family_name}`, value: s };
 																	})
 														}
 														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, students: { SS: v.map((s: any) => s.value) } } : t)))}
