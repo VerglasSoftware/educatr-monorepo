@@ -15,10 +15,10 @@ Amplify.configure({
 		identityPoolId: config.cognito.IDENTITY_POOL_ID,
 		userPoolWebClientId: config.cognito.APP_CLIENT_ID,
 		oauth: {
-			domain: "educatr.auth.eu-west-1.amazoncognito.com",
+			domain: "educatr-dev-dandabs.auth.eu-west-1.amazoncognito.com",
 			//scope: ["openid", "profile", "email"],
-			redirectSignIn: "https://educatr.uk",
-			redirectSignOut: "https://educatr.uk",
+			redirectSignIn: "http://localhost:5173",
+			redirectSignOut: "http://localhost:5173",
 			responseType: "token",
 		},
 	},

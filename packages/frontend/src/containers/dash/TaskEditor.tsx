@@ -137,16 +137,16 @@ export default function TaskEditor() {
 				content: task.content.S,
 				placeholder: task.placeholder.S,
 				answer: task.answer.S,
-				answerChoices: task.answerChoices.L.map((item) => ({
+				answerChoices: task.answerChoices ? task.answerChoices.L.map((item) => ({
 					id: item.M.id.S,
 					name: item.M.name.S,
 					correct: item.M.correct.BOOL,
-				})),
+				})) : [],
 				answerType: task.answerType.S,
 				verificationType: task.verificationType.S,
 				prerequisites: task.prerequisites.L.map((item) => item.S),
 				points: parseInt(task.points.N),
-				stdin: task.stdin.S,
+				stdin: task.stdin ? task.stdin.S : "",
 			});
 		}
 	}, [tasks]);
@@ -215,16 +215,16 @@ export default function TaskEditor() {
 									content: tasks[index - 1].content.S,
 									placeholder: tasks[index - 1].placeholder.S,
 									answer: tasks[index - 1].answer.S,
-									answerChoices: tasks[index - 1].answerChoices.L.map((item) => ({
+									answerChoices: tasks[index - 1].answerChoices ? tasks[index - 1].answerChoices.L.map((item) => ({
 										id: item.M.id.S,
 										name: item.M.name.S,
 										correct: item.M.correct.BOOL,
-									})),
+									})) : [],
 									answerType: tasks[index - 1].answerType.S,
 									verificationType: tasks[index - 1].verificationType.S,
 									prerequisites: tasks[index - 1].prerequisites.L.map((item) => item.S),
 									points: parseInt(tasks[index - 1].points.N),
-									stdin: tasks[index - 1].stdin.S,
+									stdin: tasks[index - 1].stdin ? tasks[index - 1].stdin.S : "",
 								});
 							}}>
 							<ArrowBackIcon />
@@ -264,16 +264,16 @@ export default function TaskEditor() {
 									content: tasks[index + 1].content.S,
 									placeholder: tasks[index + 1].placeholder.S,
 									answer: tasks[index + 1].answer.S,
-									answerChoices: tasks[index + 1].answerChoices.L.map((item) => ({
+									answerChoices: tasks[index + 1].answerChoices ? tasks[index + 1].answerChoices.L.map((item) => ({
 										id: item.M.id.S,
 										name: item.M.name.S,
 										correct: item.M.correct.BOOL,
-									})),
+									})) : [],
 									answerType: tasks[index + 1].answerType.S,
 									verificationType: tasks[index + 1].verificationType.S,
 									prerequisites: tasks[index + 1].prerequisites.L.map((item) => item.S),
 									points: parseInt(tasks[index + 1].points.N),
-									stdin: tasks[index + 1].stdin.S,
+									stdin: tasks[index + 1].stdin ? tasks[index + 1].stdin.S : "",
 								});
 							}}>
 							<ArrowForwardIcon />
