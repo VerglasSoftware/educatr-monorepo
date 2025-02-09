@@ -51,6 +51,9 @@ export default function PlayCompetition() {
 					console.log(waitingTask);
 					if (waitingTask) if (newActivity.taskId == waitingTask.SK.S.split("#")[1]) setWaitingTask(null);
 					break;
+				case "COMPETITION:SHOW_LEADERBOARD":
+					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
+					break;
 				default:
 					break;
 			}
@@ -176,7 +179,7 @@ export default function PlayCompetition() {
 			<Helmet>
 				<title>{competition.name}</title>
 			</Helmet>
-			<NavbarMain />
+			<NavbarMain competition={competition} />
 			<Box
 				sx={{
 					display: "flex",

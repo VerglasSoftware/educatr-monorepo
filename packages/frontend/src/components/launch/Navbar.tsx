@@ -25,7 +25,7 @@ export default function NavbarMain({ ...props }) {
 					gridColumn: "1 / -1",
 					position: "sticky",
 					top: 0,
-					zIndex: 1100,
+					zIndex: 900,
 				},
 			]}>
 			<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(3, 1fr)", justifyContent: "center" }}>
