@@ -1,9 +1,9 @@
-import { Handler } from "aws-lambda";
 import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { QueryCommand, DynamoDBDocumentClient, PutCommand, DeleteCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { Resource } from "sst";
-import { createId } from "@paralleldrive/cuid2";
+import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
+import { createId } from "@paralleldrive/cuid2";
+import { Handler } from "aws-lambda";
+import { Resource } from "sst";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -48,17 +48,7 @@ export const create: Handler = Util.handler(async (event) => {
 		throw new Error("Missing ID in path parameters");
 	}
 
-	let data = {
-		title: "",
-		subtitle: "",
-		points: 0,
-		content: "",
-		answer: null,
-		verificationType: "",
-		answerType: "",
-		placeholder: "",
-		prerequisites: [],
-	};
+	let data;
 
 	if (event.body != null) {
 		data = JSON.parse(event.body);
@@ -74,6 +64,7 @@ export const create: Handler = Util.handler(async (event) => {
 			points: data.points,
 			content: data.content,
 			answer: data.answer,
+			stdin: data.stdin,
 			verificationType: data.verificationType,
 			answerType: data.answerType,
 			placeholder: data.placeholder,
@@ -151,17 +142,7 @@ export const update: Handler = Util.handler(async (event) => {
 		throw new Error("Missing PK or SK in path parameters");
 	}
 
-	let data = {
-		title: "",
-		subtitle: "",
-		points: 0,
-		content: "",
-		answer: null,
-		verificationType: "",
-		answerType: "",
-		placeholder: "",
-		prerequisites: [],
-	};
+	let data;
 
 	if (event.body != null) {
 		data = JSON.parse(event.body);
@@ -175,17 +156,19 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: `TASK#${taskId}`,
 		},
-		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites",
+		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #answerChoices = :answerChoices, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites, #stdin = :stdin",
 		ExpressionAttributeNames: {
 			"#title": "title",
 			"#subtitle": "subtitle",
 			"#points": "points",
 			"#content": "content",
 			"#answer": "answer",
+			"#answerChoices": "answerChoices",
 			"#verificationType": "verificationType",
 			"#answerType": "answerType",
 			"#placeholder": "placeholder",
 			"#prerequisites": "prerequisites",
+			"#stdin": "stdin",
 		},
 		ExpressionAttributeValues: {
 			":title": data.title,
@@ -193,10 +176,12 @@ export const update: Handler = Util.handler(async (event) => {
 			":points": data.points,
 			":content": data.content,
 			":answer": data.answer,
+			":answerChoices": data.answerChoices,
 			":verificationType": data.verificationType,
 			":answerType": data.answerType,
 			":placeholder": data.placeholder,
 			":prerequisites": data.prerequisites,
+			":stdin": data.stdin,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};

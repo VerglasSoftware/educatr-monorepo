@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { Auth } from "aws-amplify";
+import { useEffect } from "react";
 
 const Callback = () => {
 	useEffect(() => {

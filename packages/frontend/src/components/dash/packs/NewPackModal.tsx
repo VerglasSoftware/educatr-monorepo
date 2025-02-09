@@ -1,21 +1,18 @@
-import * as React from "react";
 import Button from "@mui/joy/Button";
+import DialogContent from "@mui/joy/DialogContent";
+import DialogTitle from "@mui/joy/DialogTitle";
 import FormControl from "@mui/joy/FormControl";
 import FormLabel from "@mui/joy/FormLabel";
 import Input from "@mui/joy/Input";
 import Modal from "@mui/joy/Modal";
 import ModalDialog from "@mui/joy/ModalDialog";
-import DialogTitle from "@mui/joy/DialogTitle";
-import DialogContent from "@mui/joy/DialogContent";
 import Stack from "@mui/joy/Stack";
-import { useNavigate } from "react-router-dom";
 import { API } from "aws-amplify";
+import { Dispatch, FormEvent, Fragment, SetStateAction } from "react";
 
-export default function NewPackModal({ open, setOpen }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
-	const nav = useNavigate();
-
+export default function NewPackModal({ open, setOpen }: { open: boolean; setOpen: Dispatch<SetStateAction<boolean>> }) {
 	return (
-		<React.Fragment>
+		<Fragment>
 			<Modal
 				open={open}
 				onClose={() => setOpen(false)}>
@@ -23,7 +20,7 @@ export default function NewPackModal({ open, setOpen }: { open: boolean; setOpen
 					<DialogTitle>Create new pack</DialogTitle>
 					<DialogContent>Fill in the information of the pack.</DialogContent>
 					<form
-						onSubmit={async (event: React.FormEvent<HTMLFormElement>) => {
+						onSubmit={async (event: FormEvent<HTMLFormElement>) => {
 							event.preventDefault();
 
 							const pack = await API.post("api", "/pack", {
@@ -52,6 +49,6 @@ export default function NewPackModal({ open, setOpen }: { open: boolean; setOpen
 					</form>
 				</ModalDialog>
 			</Modal>
-		</React.Fragment>
+		</Fragment>
 	);
 }

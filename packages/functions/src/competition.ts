@@ -134,6 +134,7 @@ export const update: Handler = Util.handler(async (event) => {
 		name: "",
 		status: "",
 		packs: [],
+		showLeaderboard: true,
 	};
 
 	if (event.body != null) {
@@ -148,16 +149,18 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: "DETAILS",
 		},
-		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs",
+		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs, #showLeaderboard = :showLeaderboard",
 		ExpressionAttributeNames: {
 			"#name": "name",
 			"#status": "status",
 			"#packs": "packs",
+			"#showLeaderboard": "showLeaderboard",
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
 			":status": data.status,
 			":packs": data.packs,
+			":showLeaderboard": data.showLeaderboard,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -398,5 +401,62 @@ export const run: Handler = Util.handler(async (event) => {
 				return JSON.stringify({ output: status.data.stderr });
 			}
 		}
+	}
+});
+
+export const getLb: Handler = Util.handler(async (event) => {
+	const { compId: pk } = event.pathParameters || {};
+
+	if (!pk) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const params = {
+		TableName: Resource.Competitions.name,
+		FilterExpression: "PK = :pk and (SK = :details or begins_with(SK, :team) or begins_with(SK, :activity))",
+		ExpressionAttributeValues: {
+			":pk": { S: pk },
+			":details": { S: "DETAILS" },
+			":team": { S: "TEAM#" },
+			":activity": { S: "ACTIVITY#" },
+		},
+	};
+
+	try {
+		const result = await client.send(new ScanCommand(params));
+		if (!result.Items || result.Items.length === 0) {
+			throw new Error("Competition not found");
+		}
+
+		const teamLabels = result.Items.filter((item) => item.SK.S!.startsWith("TEAM#")).reduce((acc: any, item, index) => {
+			acc[item.SK.S!.split("TEAM#")[1]] = item.name.S;
+			return acc;
+		}, {});
+
+		const timeStarted = parseInt(result.Items.find((item) => item.SK.S === "DETAILS")?.createdAt.N!);
+		const timeNow = Date.now();
+
+		const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
+
+		const timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
+
+		const teamData = [];
+
+		for (const index in timestamps) {
+			const currentTimestamp = new Date(timestamps[index]);
+			const obj: any = { timestamp: currentTimestamp.getTime() };
+
+			for (const key in teamLabels) {
+				const activity = result.Items.filter((item) => item.SK.S?.startsWith("ACTIVITY") && result.Items!.find((team) => team.SK.S == `TEAM#${key}`)!.students.SS!.includes(item.userId.S!) && parseInt(item.createdAt.N!) < timestamps[index] && item.correct && item.correct.BOOL == true);
+				obj[key] = activity.length;
+			}
+
+			teamData.push(obj);
+		}
+
+		return JSON.stringify({ teamLabels, teamData });
+	} catch (e) {
+		console.log(e);
+		return JSON.stringify({ error: "Could not retrieve competition" });
 	}
 });

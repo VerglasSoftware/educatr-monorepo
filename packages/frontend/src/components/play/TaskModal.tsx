@@ -32,7 +32,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 					packId: packId,
 					taskId: task.SK.S.split("#")[1],
 					answer: answer,
-					stdin,
+					stdin: task.stdin.S,
 				},
 			});
 			setSubmitTaskLoading(false);

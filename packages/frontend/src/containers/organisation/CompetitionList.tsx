@@ -1,12 +1,11 @@
-import { Box, Breadcrumbs, Button, Link, Typography } from "@mui/joy";
-import "./CompetitionList.css";
-import { Helmet } from "react-helmet";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import { FaPlus } from "react-icons/fa6";
+import { Box, Button, Typography } from "@mui/joy";
 import { useState } from "react";
+import { Helmet } from "react-helmet";
+import { FaPlus } from "react-icons/fa6";
+import Breadcrumb from "../../components/dash/breadcrumb";
 import CompetitionTable from "../../components/dash/organisations/CompetitionTable";
 import NewCompetitionModal from "../../components/dash/organisations/NewCompetitionModal";
+import "./CompetitionList.css";
 
 export default function CompetitionList() {
 	const [open, setOpen] = useState(false);
@@ -18,31 +17,12 @@ export default function CompetitionList() {
 			</Helmet>
 			<div>
 				<Box sx={{ display: "flex", alignItems: "center" }}>
-					<Breadcrumbs
-						size="sm"
-						aria-label="breadcrumbs"
-						separator={<ChevronRightRoundedIcon fontSize="small" />}
-						sx={{ pl: 0 }}>
-						<Link
-							underline="none"
-							color="neutral"
-							href="#some-link"
-							aria-label="Home">
-							<HomeRoundedIcon />
-						</Link>
-						<Link
-							underline="hover"
-							color="neutral"
-							href="#some-link"
-							sx={{ fontSize: 12, fontWeight: 500 }}>
-							Dashboard
-						</Link>
-						<Typography
-							color="primary"
-							sx={{ fontWeight: 500, fontSize: 12 }}>
-							Competitions
-						</Typography>
-					</Breadcrumbs>
+					<Breadcrumb
+						items={[
+							{ label: "Dashboard", href: "/dash" },
+							{ label: "Competitions", href: "/dash/competitions" },
+						]}
+					/>
 				</Box>
 
 				<Box

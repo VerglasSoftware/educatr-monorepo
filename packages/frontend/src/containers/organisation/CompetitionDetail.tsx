@@ -1,14 +1,11 @@
-import { Autocomplete, Box, Breadcrumbs, Button, ButtonGroup, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Link, Stack, Textarea, Typography } from "@mui/joy";
-import { Helmet } from "react-helmet";
-import { useEffect, useState } from "react";
+import { Autocomplete, Box, Button, ButtonGroup, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
-import { useParams } from "react-router-dom";
-
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import TaskTable from "../../components/dash/packs/TaskTable";
-import CompetitionPackTable from "../../components/dash/organisations/CompetitionPackTable";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
 import { FaPlus } from "react-icons/fa6";
+import { useParams } from "react-router-dom";
+import Breadcrumb from "../../components/dash/breadcrumb";
+import CompetitionPackTable from "../../components/dash/organisations/CompetitionPackTable";
 
 export default function CompetitionDetail() {
 	const [competition, setCompetition] = useState<any>();
@@ -49,38 +46,13 @@ export default function CompetitionDetail() {
 				</Helmet>
 				<div>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumbs
-							size="sm"
-							aria-label="breadcrumbs"
-							separator={<ChevronRightRoundedIcon fontSize="small" />}
-							sx={{ pl: 0 }}>
-							<Link
-								underline="none"
-								color="neutral"
-								href="/"
-								aria-label="Home">
-								<HomeRoundedIcon />
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Dashboard
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Competitions
-							</Link>
-							<Typography
-								color="primary"
-								sx={{ fontWeight: 500, fontSize: 12 }}>
-								{competition.name}
-							</Typography>
-						</Breadcrumbs>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dash" },
+								{ label: "Competitions", href: "/dash/competitions" },
+								{ label: competition.name, href: `/dash/competitions/${compId}` },
+							]}
+						/>
 					</Box>
 
 					<Box
