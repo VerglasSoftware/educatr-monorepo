@@ -7,10 +7,8 @@ import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import NavbarMain from "../../components/launch/Navbar";
-import "../play/Play.css";
-import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from "@zxing/library";
-import LeaderboardModal from "../../components/play/LeaderboardModal";
 import LeaderboardChart from "../../components/play/LeaderboardChart";
+import "../play/Play.css";
 
 export default function LaunchCompetition() {
 	const [competition, setCompetition] = useState<any>();
