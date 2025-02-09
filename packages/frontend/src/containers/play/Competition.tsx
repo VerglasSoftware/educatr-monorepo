@@ -12,6 +12,9 @@ import NotInProgress from "../../components/play/NotInProgress";
 import TaskModal from "../../components/play/TaskModal";
 import "./Play.css";
 import { PDF417 } from "../../components/play/PDF417";
+import AnnounceModal from "../../components/play/AnnounceModal";
+import { toast } from "react-toastify";
+import { Auth } from "aws-amplify";
 
 export default function PlayCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -24,7 +27,12 @@ export default function PlayCompetition() {
 
 	const [waitingTask, setWaitingTask] = useState<any>();
 
+	const [announceModalOpen, setAnnounceModalOpen] = useState(false);
+	const [announceMessage, setAnnounceMessage] = useState("");
+
 	const [activity, setActivity] = useState<any[]>();
+
+	const [user, setUser] = useState<any>();
 
 	const { compId } = useParams();
 
@@ -36,24 +44,34 @@ export default function PlayCompetition() {
 	});
 
 	useEffect(() => {
-		if (lastMessage !== null) {
+		if (lastMessage) {
 			const data = JSON.parse(lastMessage.data);
-			console.log(data);
-
-			if (data.filter.competitionId && data.filter.competitionId != compId) return;
+			if (data.type !== "COMPETITION:ANNOUNCE" && (!data.filter?.competitionId || data.filter.competitionId !== compId)) return;
 
 			switch (data.type) {
 				case "COMPETITION:STATUS_UPDATE":
-					setCompetition({ ...competition, status: data.body.status });
+					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
 					break;
 				case "TASK:ANSWERED":
 					const newActivity = data.body;
-					setActivity([...(activity?.filter((a) => a.taskId.S != newActivity.taskId) || []), newActivity]);
-					console.log(waitingTask);
-					if (waitingTask) if (newActivity.taskId == waitingTask.SK.S.split("#")[1]) setWaitingTask(null);
+					setActivity([...(activity?.filter((a) => a.taskId.S !== newActivity.taskId) || []), newActivity]);
+					if (waitingTask && newActivity.taskId === waitingTask.SK.S.split("#")[1]) {
+						setWaitingTask(null);
+					}
+					if (user && user.username != newActivity.userId) {
+						if (newActivity.correct) {
+							toast.success(`Someone answered ${newActivity.taskId} correctly, and points have been added to your team.`);
+						} else {
+							toast.error(`Someone answered ${newActivity.taskId} incorrectly, but no points have been taken from your team.`);
+						}
+					}
 					break;
 				case "COMPETITION:SHOW_LEADERBOARD":
 					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
+					break;
+				case "COMPETITION:ANNOUNCE":
+					setAnnounceMessage(data.body.announce);
+					setAnnounceModalOpen(true);
 					break;
 				default:
 					break;
@@ -87,7 +105,18 @@ export default function PlayCompetition() {
 			}
 		}
 
+		async function fetchUser() {
+			try {
+				const currentUser = await Auth.currentAuthenticatedUser();
+				console.log(currentUser);
+				setUser(currentUser);
+			} catch (error) {
+				console.error("Error fetching user", error);
+			}
+		}
+
 		onLoad();
+		fetchUser();
 	}, []);
 
 	useEffect(() => {
@@ -258,6 +287,14 @@ export default function PlayCompetition() {
 					API.get("api", `/competition/${compId}/activity`, {}).then(setActivity);
 				}}
 			/>
+
+			{announceModalOpen && (
+				<AnnounceModal
+					open={announceModalOpen}
+					setOpen={setAnnounceModalOpen}
+					announce={announceMessage}
+				/>
+			)}
 		</div>
 	);
 }
