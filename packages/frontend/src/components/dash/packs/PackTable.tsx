@@ -34,7 +34,7 @@ function RowMenu({ id }: RowMenuProps) {
 			<Menu
 				size="sm"
 				sx={{ minWidth: 140 }}>
-				<MenuItem onClick={() => nav(`/dash/packs/${id}`)}>Edit</MenuItem>
+				<MenuItem onClick={() => nav(`/dash/packs/${id}/edit`)}>Edit</MenuItem>
 				<Divider />
 				<MenuItem
 					color="danger"
