@@ -31,6 +31,7 @@
 		"axios": "^1.7.9",
 		"csv-parser": "^3.1.0",
 		"dotenv": "^16.4.7",
+		"formik": "^2.4.6",
 		"ldrs": "^1.0.2",
 		"pdf417-generator": "^1.0.5",
 		"proper-lockfile": "^4.1.2",

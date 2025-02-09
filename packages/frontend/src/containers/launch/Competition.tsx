@@ -1,15 +1,14 @@
 import { Box, Button, ButtonGroup, Card, CardContent, Divider, Typography } from "@mui/joy";
-import "../play/Play.css";
-import { Helmet } from "react-helmet";
-import { useEffect, useRef, useState } from "react";
-import { API } from "aws-amplify";
-import { useParams } from "react-router-dom";
-import NavbarMain from "../../components/launch/Navbar";
 import { DotWave } from "@uiball/loaders";
+import { BarcodeFormat, BrowserMultiFormatReader, DecodeHintType } from "@zxing/library";
+import { API } from "aws-amplify";
+import { useEffect, useRef, useState } from "react";
+import { Helmet } from "react-helmet";
+import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from "@zxing/library";
-import LeaderboardModal from "../../components/play/LeaderboardModal";
+import NavbarMain from "../../components/launch/Navbar";
 import LeaderboardChart from "../../components/play/LeaderboardChart";
+import "../play/Play.css";
 
 export default function LaunchCompetition() {
 	const [competition, setCompetition] = useState<any>();

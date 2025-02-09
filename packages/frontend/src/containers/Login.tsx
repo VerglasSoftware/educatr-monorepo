@@ -1,13 +1,12 @@
 import { Auth } from "aws-amplify";
 import React, { useState } from "react";
+import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Stack from "react-bootstrap/Stack";
 import LoaderButton from "../components/LoaderButton";
 import { useAppContext } from "../lib/contextLib";
 import { useFormFields } from "../lib/hooksLib";
-import Button from "react-bootstrap/Button";
 import "./Login.css";
-import { signInWithRedirect } from "aws-amplify/auth";
 
 export default function Login({ useEmail = false }) {
 	const { isAuthenticated, userHasAuthenticated } = useAppContext();
