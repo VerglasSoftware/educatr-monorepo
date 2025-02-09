@@ -144,7 +144,7 @@ export default function TaskEditor() {
 				})) : [],
 				answerType: task.answerType.S,
 				verificationType: task.verificationType.S,
-				prerequisites: task.prerequisites.L.map((item) => item.S),
+				prerequisites: task.prerequisites ? task.prerequisites.L.map((item) => item.S) : [],
 				points: parseInt(task.points.N),
 				stdin: task.stdin ? task.stdin.S : "",
 			});
@@ -222,7 +222,7 @@ export default function TaskEditor() {
 									})) : [],
 									answerType: tasks[index - 1].answerType.S,
 									verificationType: tasks[index - 1].verificationType.S,
-									prerequisites: tasks[index - 1].prerequisites.L.map((item) => item.S),
+									prerequisites: tasks[index - 1].prerequisites ? tasks[index - 1].prerequisites.L.map((item) => item.S) : [],
 									points: parseInt(tasks[index - 1].points.N),
 									stdin: tasks[index - 1].stdin ? tasks[index - 1].stdin.S : "",
 								});
@@ -271,7 +271,7 @@ export default function TaskEditor() {
 									})) : [],
 									answerType: tasks[index + 1].answerType.S,
 									verificationType: tasks[index + 1].verificationType.S,
-									prerequisites: tasks[index + 1].prerequisites.L.map((item) => item.S),
+									prerequisites: tasks[index + 1].prerequisites ? tasks[index + 1].prerequisites.L.map((item) => item.S) : [],
 									points: parseInt(tasks[index + 1].points.N),
 									stdin: tasks[index + 1].stdin ? tasks[index + 1].stdin.S : "",
 								});
@@ -339,7 +339,7 @@ export default function TaskEditor() {
 															name={`answerChoices.${index}.name`}
 															type="text"
 															onChange={formik.handleChange}
-															value={item.name}
+															value={item.name} 
 														/>
 													</FormControl>
 													<FormControl>
@@ -608,7 +608,7 @@ export default function TaskEditor() {
 														break;
 												}
 												formik.setFieldValue("answerType", newValue);
-											}}
+											}}x
 											value={formik.values.answerType}>
 											<Option value="TEXT">Text</Option>
 											<Option value="MULTIPLE">Multiple Choice</Option>
