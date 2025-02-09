@@ -26,7 +26,8 @@ export default function LaunchCompetition() {
 	const [rejectButtonLoading, setRejectButtonLoading] = useState(false);
 
 	const [openLeaderboard, setOpenLeaderboard] = useState(false);
-	const [leaderboard, setLeaderboard] = useState<any>();
+
+	const [announce, setAnnounce] = useState<any>();
 
 	const [selectedTask, setSelectedTask] = useState<any>();
 
@@ -126,6 +127,25 @@ export default function LaunchCompetition() {
 			videoRef.current!.hidden = true;
 			console.error("Error during scanning:", error);
 		}
+	}
+
+	async function sendAnnoucement() {
+		setStartButtonLoading(true);
+
+		sendMessage(
+			JSON.stringify({
+				action: "sendmessage",
+				data: JSON.stringify({
+					type: "COMPETITION:ANNOUNCE",
+					body: {
+						announce: announce,
+					},
+				}),
+			})
+		);
+
+		setStartButtonLoading(false);
+		setAnnounce("");
 	}
 
 	async function showLeaderboard() {
@@ -346,212 +366,255 @@ export default function LaunchCompetition() {
 			<Box
 				sx={{
 					display: "flex",
-					justifyContent: "center",
-					alignItems: "left",
-					flexDirection: "column",
+					justifyContent: "space-between",
 					padding: "2%",
-					gap: 2,
 				}}>
-				<Card
-					variant="plain"
-					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "50%" }}>
-					<CardContent
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "left",
-							justifyContent: "center",
-							padding: "2%",
-						}}>
-						<Typography
-							level="h2"
-							component="h1"
-							textColor="common.white">
-							{competition.name} launchpad
-						</Typography>
+				<Box
+					sx={{
+						display: "flex",
+						flexDirection: "column",
+						width: "48%",
+						gap: 2,
+					}}>
+					<Card
+						variant="plain"
+						sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "100%" }}>
+						<CardContent
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "left",
+								justifyContent: "center",
+								padding: "2%",
+							}}>
+							<Typography
+								level="h2"
+								component="h1"
+								textColor="common.white">
+								{competition.name} Launchpad
+							</Typography>
 
-						<ButtonGroup
-							variant="solid"
-							buttonFlex={1}>
-							<Button
-								color="success"
-								disabled={competition.status != "NOT_STARTED"}
-								onClick={startCompetition}
-								loading={startButtonLoading}>
-								Start
-							</Button>
-							{competition.status != "PAUSED" && (
-								<Button
-									color="warning"
-									disabled={competition.status != "IN_PROGRESS"}
-									onClick={pauseCompetition}
-									loading={pauseButtonLoading}>
-									Pause
-								</Button>
-							)}
-							{competition.status == "PAUSED" && (
+							<ButtonGroup
+								variant="solid"
+								buttonFlex={1}>
 								<Button
 									color="success"
-									disabled={competition.status != "PAUSED"}
-									onClick={resumeCompetition}
-									loading={resumeButtonLoading}>
-									Resume
+									disabled={competition.status != "NOT_STARTED"}
+									onClick={startCompetition}
+									loading={startButtonLoading}>
+									Start
 								</Button>
-							)}
-							<Button
-								color="danger"
-								disabled={competition.status != "PAUSED"}
-								onClick={endCompetition}
-								loading={endButtonLoading}>
-								End
-							</Button>
-						</ButtonGroup>
-					</CardContent>
-				</Card>
-
-				<Card
-					variant="plain"
-					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "50%" }}>
-					<CardContent
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "left",
-							justifyContent: "center",
-							padding: "2%",
-						}}>
-						<Typography
-							level="h3"
-							component="h2"
-							textColor="common.white">
-							Manual verification
-						</Typography>
-
-						<Button
-							color="primary"
-							disabled={competition.status != "IN_PROGRESS"}
-							onClick={startScan}
-							loading={scanButtonLoading}>
-							Scan
-						</Button>
-
-						<video
-							ref={videoRef}
-							style={{ width: "100%", border: "1px solid black" }}
-							autoPlay
-							hidden={true}></video>
-
-						<Divider orientation="horizontal" />
-
-						{selectedTask && (
-							<>
-								<Typography
-									level="h4"
-									component="h3"
-									textColor="common.white">
-									{selectedTask.pack.name && selectedTask.pack.name.S} | {selectedTask.task.title && selectedTask.task.title.S}
-								</Typography>
-
-								<Typography
-									level="body-md"
-									textColor="common.white">
-									{selectedTask.task.content && selectedTask.task.content.S}
-								</Typography>
-
-								<ButtonGroup
-									variant="solid"
-									buttonFlex={1}>
+								{competition.status != "PAUSED" && (
+									<Button
+										color="warning"
+										disabled={competition.status != "IN_PROGRESS"}
+										onClick={pauseCompetition}
+										loading={pauseButtonLoading}>
+										Pause
+									</Button>
+								)}
+								{competition.status == "PAUSED" && (
 									<Button
 										color="success"
-										onClick={approveTask}
-										loading={approveButtonLoading}>
-										Grant
+										disabled={competition.status != "PAUSED"}
+										onClick={resumeCompetition}
+										loading={resumeButtonLoading}>
+										Resume
 									</Button>
-									<Button
-										color="danger"
-										onClick={rejectTask}
-										loading={rejectButtonLoading}>
-										Reject
-									</Button>
-								</ButtonGroup>
-							</>
-						)}
-					</CardContent>
-				</Card>
+								)}
+								<Button
+									color="danger"
+									disabled={competition.status != "PAUSED"}
+									onClick={endCompetition}
+									loading={endButtonLoading}>
+									End
+								</Button>
+							</ButtonGroup>
+						</CardContent>
+					</Card>
 
-				<Card
-					variant="plain"
-					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "50%" }}>
-					<CardContent
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "left",
-							justifyContent: "center",
-							padding: "2%",
-						}}>
-						<Typography
-							level="h3"
-							component="h2"
-							textColor="common.white">
-							Leaderboard
-						</Typography>
-						{!openLeaderboard && (
-							<Box
-								sx={{
-									height: "30vh",
-									width: undefined,
-									backgroundColor: "white",
-								}}>
-								<LeaderboardChart competitionId={competition.PK} />
-							</Box>
-						)}
-						<Button
-							color="primary"
-							onClick={() => setOpenLeaderboard(true)}>
-							Open
-						</Button>
-					</CardContent>
-				</Card>
-				<Card
-					variant="plain"
-					sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "50%" }}>
-					<CardContent
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "left",
-							justifyContent: "center",
-							padding: "2%",
-						}}>
-						<Typography
-							level="h3"
-							component="h2"
-							textColor="common.white">
-							Leaderboard View Control
-						</Typography>
+					<Card
+						variant="plain"
+						sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "100%" }}>
+						<CardContent
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "left",
+								justifyContent: "center",
+								padding: "2%",
+							}}>
+							<Typography
+								level="h3"
+								component="h2"
+								textColor="common.white">
+								Manual Verification
+							</Typography>
+							<Button
+								color="primary"
+								disabled={competition.status != "IN_PROGRESS"}
+								onClick={startScan}
+								loading={scanButtonLoading}>
+								Scan
+							</Button>
 
-						<ButtonGroup
-							variant="solid"
-							buttonFlex={1}>
+							<video
+								ref={videoRef}
+								style={{ width: "100%", border: "1px solid black" }}
+								autoPlay
+								hidden={true}></video>
+
+							<Divider orientation="horizontal" />
+
+							{selectedTask && (
+								<>
+									<Typography
+										level="h4"
+										component="h3"
+										textColor="common.white">
+										{selectedTask.pack.name && selectedTask.pack.name.S} | {selectedTask.task.title && selectedTask.task.title.S}
+									</Typography>
+
+									<Typography
+										level="body-md"
+										textColor="common.white">
+										{selectedTask.task.content && selectedTask.task.content.S}
+									</Typography>
+
+									<ButtonGroup
+										variant="solid"
+										buttonFlex={1}>
+										<Button
+											color="success"
+											onClick={approveTask}
+											loading={approveButtonLoading}>
+											Grant
+										</Button>
+										<Button
+											color="danger"
+											onClick={rejectTask}
+											loading={rejectButtonLoading}>
+											Reject
+										</Button>
+									</ButtonGroup>
+								</>
+							)}
+						</CardContent>
+					</Card>
+
+					<Card
+						variant="plain"
+						sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "100%" }}>
+						<CardContent
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "left",
+								justifyContent: "center",
+								padding: "2%",
+							}}>
+							<Typography
+								level="h3"
+								component="h2"
+								textColor="common.white">
+								Leaderboard View Control
+							</Typography>
+							<ButtonGroup
+								variant="solid"
+								buttonFlex={1}>
+								<Button
+									color="success"
+									disabled={competition.showLeaderboard}
+									onClick={showLeaderboard}
+									loading={startButtonLoading}>
+									Show
+								</Button>
+								<Button
+									color="danger"
+									disabled={!competition.showLeaderboard}
+									onClick={hideLeaderboard}
+									loading={endButtonLoading}>
+									Hide
+								</Button>
+							</ButtonGroup>
+						</CardContent>
+					</Card>
+
+					<Card
+						variant="plain"
+						sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "100%" }}>
+						<CardContent
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "left",
+								justifyContent: "center",
+								padding: "2%",
+							}}>
+							<Typography
+								level="h3"
+								component="h2"
+								textColor="common.white">
+								Send Announcement Message
+							</Typography>
+							<textarea
+								style={{ width: "100%", marginBottom: "8px" }}
+								value={announce}
+								onChange={(e) => setAnnounce(e.target.value)}
+							/>
 							<Button
 								color="success"
-								disabled={competition.showLeaderboard}
-								onClick={showLeaderboard}
+								onClick={sendAnnoucement}
 								loading={startButtonLoading}>
-								Show
+								Send
 							</Button>
+						</CardContent>
+					</Card>
+				</Box>
+
+				<Box
+					sx={{
+						display: "flex",
+						flexDirection: "column",
+						width: "48%",
+					}}>
+					<Card
+						variant="plain"
+						sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "100%" }}>
+						<CardContent
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "left",
+								justifyContent: "center",
+								padding: "2%",
+							}}>
+							<Typography
+								level="h3"
+								component="h2"
+								textColor="common.white">
+								Leaderboard
+							</Typography>
+							{!openLeaderboard && (
+								<Box
+									sx={{
+										height: "30vh",
+										backgroundColor: "white",
+										width: "100%",
+									}}>
+									<LeaderboardChart competitionId={competition.PK} />
+								</Box>
+							)}
 							<Button
-								color="danger"
-								disabled={!competition.showLeaderboard}
-								onClick={hideLeaderboard}
-								loading={endButtonLoading}>
-								Hide
+								color="primary"
+								onClick={() => setOpenLeaderboard(true)}>
+								Open
 							</Button>
-						</ButtonGroup>
-					</CardContent>
-				</Card>
+						</CardContent>
+					</Card>
+				</Box>
 			</Box>
+
 			{openLeaderboard && (
 				<Box
 					sx={{

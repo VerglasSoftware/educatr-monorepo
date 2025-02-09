@@ -447,7 +447,7 @@ export const getLb: Handler = Util.handler(async (event) => {
 			const obj: any = { timestamp: currentTimestamp.getTime() };
 
 			for (const key in teamLabels) {
-				const activity = result.Items.filter((item) => item.SK.S?.startsWith("ACTIVITY") && result.Items!.find((team) => team.SK.S == `TEAM#${key}`)!.students.SS!.includes(item.userId.S!) && parseInt(item.createdAt.N!) < timestamps[index] && item.correct.BOOL == true);
+				const activity = result.Items.filter((item) => item.SK.S?.startsWith("ACTIVITY") && result.Items!.find((team) => team.SK.S == `TEAM#${key}`)!.students.SS!.includes(item.userId.S!) && parseInt(item.createdAt.N!) < timestamps[index] && item.correct && item.correct.BOOL == true);
 				obj[key] = activity.length;
 			}
 
