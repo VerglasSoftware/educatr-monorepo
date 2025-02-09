@@ -366,15 +366,15 @@ export default function LaunchCompetition() {
 
 			<Box
 				sx={{
-					display: 'flex',
-					justifyContent: 'space-between',
-					padding: '2%',
+					display: "flex",
+					justifyContent: "space-between",
+					padding: "2%",
 				}}>
 				<Box
 					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						width: '48%',
+						display: "flex",
+						flexDirection: "column",
+						width: "48%",
 						gap: 2,
 					}}>
 					<Card
@@ -395,7 +395,9 @@ export default function LaunchCompetition() {
 								{competition.name} Launchpad
 							</Typography>
 
-							<ButtonGroup variant="solid" buttonFlex={1}>
+							<ButtonGroup
+								variant="solid"
+								buttonFlex={1}>
 								<Button
 									color="success"
 									disabled={competition.status != "NOT_STARTED"}
@@ -518,7 +520,9 @@ export default function LaunchCompetition() {
 								textColor="common.white">
 								Leaderboard View Control
 							</Typography>
-							<ButtonGroup variant="solid" buttonFlex={1}>
+							<ButtonGroup
+								variant="solid"
+								buttonFlex={1}>
 								<Button
 									color="success"
 									disabled={competition.showLeaderboard}
@@ -554,10 +558,10 @@ export default function LaunchCompetition() {
 								textColor="common.white">
 								Send Announcement Message
 							</Typography>
-							<textarea 
-							style={{ width: '100%', marginBottom: '8px' }}
-							value={announce}
-							onChange={(e) => setAnnounce(e.target.value)}
+							<textarea
+								style={{ width: "100%", marginBottom: "8px" }}
+								value={announce}
+								onChange={(e) => setAnnounce(e.target.value)}
 							/>
 							<Button
 								color="success"
@@ -571,9 +575,9 @@ export default function LaunchCompetition() {
 
 				<Box
 					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						width: '48%',
+						display: "flex",
+						flexDirection: "column",
+						width: "48%",
 					}}>
 					<Card
 						variant="plain"
@@ -597,7 +601,7 @@ export default function LaunchCompetition() {
 									sx={{
 										height: "30vh",
 										backgroundColor: "white",
-										width: '100%',
+										width: "100%",
 									}}>
 									<LeaderboardChart competitionId={competition.PK} />
 								</Box>
