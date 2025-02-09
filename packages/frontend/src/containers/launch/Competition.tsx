@@ -447,7 +447,7 @@ export default function LaunchCompetition() {
 								level="h3"
 								component="h2"
 								textColor="common.white">
-								Manual verification
+								Manual Verification
 							</Typography>
 							<Button
 								color="primary"

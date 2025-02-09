@@ -16,7 +16,11 @@ export default function AnnounceModal({ open, setOpen, announce }: { open: boole
               backgroundColor: "neutral.softBg",
             }}
           >
-            <Typography level="h4" component="h3" textColor="neutral.900">
+            <Typography level="h4" component="h3" textColor="neutral.900"
+            sx={{
+              whiteSpace: "normal",
+              wordWrap: "break-word",
+            }}>
               {announce}
             </Typography>
           </Box>

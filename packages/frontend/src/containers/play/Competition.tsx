@@ -13,6 +13,8 @@ import TaskModal from "../../components/play/TaskModal";
 import "./Play.css";
 import { PDF417 } from "../../components/play/PDF417";
 import AnnounceModal from "../../components/play/AnnounceModal";
+import { toast } from "react-toastify";
+import { Auth } from "aws-amplify";
 
 export default function PlayCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -30,6 +32,8 @@ export default function PlayCompetition() {
 
 	const [activity, setActivity] = useState<any[]>();
 
+	const [user, setUser] = useState<any>();
+
 	const { compId } = useParams();
 
 	const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI, {
@@ -42,7 +46,6 @@ export default function PlayCompetition() {
 	useEffect(() => {
 		if (lastMessage) {
 			const data = JSON.parse(lastMessage.data);
-			// Only enforce filter check for messages other than announcements
 			if (data.type !== "COMPETITION:ANNOUNCE" && (!data.filter?.competitionId || data.filter.competitionId !== compId)) return;
 
 			switch (data.type) {
@@ -54,6 +57,13 @@ export default function PlayCompetition() {
 					setActivity([...(activity?.filter((a) => a.taskId.S !== newActivity.taskId) || []), newActivity]);
 					if (waitingTask && newActivity.taskId === waitingTask.SK.S.split("#")[1]) {
 						setWaitingTask(null);
+					}
+					if (user && user.username != newActivity.userId) {
+						if (newActivity.correct) {
+							toast.success(`Someone answered ${newActivity.taskId} correctly, and points have been added to your team.`);
+						} else {
+							toast.error(`Someone answered ${newActivity.taskId} incorrectly, but no points have been taken from your team.`);
+						}
 					}
 					break;
 				case "COMPETITION:SHOW_LEADERBOARD":
@@ -95,7 +105,18 @@ export default function PlayCompetition() {
 			}
 		}
 
+		async function fetchUser() {
+			try {
+				const currentUser = await Auth.currentAuthenticatedUser();
+				console.log(currentUser);
+				setUser(currentUser);
+			} catch (error) {
+				console.error("Error fetching user", error);
+			}
+		}
+
 		onLoad();
+		fetchUser();
 	}, []);
 
 	useEffect(() => {
