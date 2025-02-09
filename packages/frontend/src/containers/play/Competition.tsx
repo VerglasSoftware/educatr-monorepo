@@ -11,7 +11,6 @@ import NotInProgress from "../../components/play/NotInProgress";
 import { PDF417 } from "../../components/play/PDF417";
 import TaskModal from "../../components/play/TaskModal";
 import "./Play.css";
-import { PDF417 } from "../../components/play/PDF417";
 import AnnounceModal from "../../components/play/AnnounceModal";
 import { toast } from "react-toastify";
 import { Auth } from "aws-amplify";
