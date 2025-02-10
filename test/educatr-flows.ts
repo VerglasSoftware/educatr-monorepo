@@ -23,7 +23,10 @@ export async function helloWorld(page: Page, context, events) {
 	});
 
 	// Log in and navigate to competition
-	const username = await getCredsAndLockFile();
+	let username = null;
+	while (username == null) {
+		username = await getCredsAndLockFile();
+	}
 
 	await page.goto("https://educatr.uk/");
 
@@ -53,7 +56,7 @@ export async function helloWorld(page: Page, context, events) {
 		try {
 			const question: any = randomisedSampleQuestions[i];
 
-			if (!["PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
+			if (!["TEXT", "PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
 			if (!["COMPARE"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
 
 			const button = await page.locator(`#${question.SK.S.split("#")[1]}`);

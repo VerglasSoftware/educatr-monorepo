@@ -190,6 +190,9 @@ ssh -o StrictHostKeyChecking=no -i "$KEY_FILE" "ubuntu@$PUBLIC_IP" <<EOF
 
     # Install npm dependencies and run tests
     cd /home/ubuntu/project
+    git checkout dev
+    git pull
+
     npm install
     npx playwright install-deps
     npm run test
