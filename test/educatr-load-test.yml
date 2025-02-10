@@ -3,13 +3,13 @@ config:
     phases:
         - duration: 500
           arrivalRate: 1
-          maxVusers: 100
+          maxVusers: 1
           name: Ramp up
     engines:
         playwright:
             trace: true
             launchOptions:
-                headless: true
+                headless: false
     processor: "./educatr-flows.ts"
 scenarios:
     - engine: playwright

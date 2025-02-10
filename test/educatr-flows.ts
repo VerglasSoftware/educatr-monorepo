@@ -23,9 +23,13 @@ export async function helloWorld(page: Page, context, events) {
 	});
 
 	// Log in and navigate to competition
-	const username = await getCredsAndLockFile();
+	let username = await getCredsAndLockFile();;
+	if (!username) return;
 
 	await page.goto("https://educatr.uk/");
+
+	await expect(page.locator("#username")).toBeEditable({ timeout: 200000 });
+	await expect(page.locator("#password")).toBeEditable({ timeout: 200000 });
 
 	await page.fill("#username", username);
 	await page.fill("#password", process.env.PERF_TEST_PASSWORD);
@@ -34,13 +38,13 @@ export async function helloWorld(page: Page, context, events) {
 
 	await page.waitForTimeout(2000);
 
-	await page.waitForURL("https://educatr.uk/");
+	await page.waitForURL("https://educatr.uk/", { timeout: 200000 });
 
 	await page.goto("https://educatr.uk/play/ejn9p6bwx5ajl7oeldatdzoa");
 
 	await page.waitForTimeout(2000);
 
-	await expect(page.getByText("Logic Gates")).toBeVisible({ timeout: 20000 });
+	await expect(page.getByText("Logic Gates")).toBeVisible({ timeout: 200000 });
 
 	// Question login
 	const sampleQuestions = JSON.parse(fs.readFileSync("test/sample.json", "utf8"));
@@ -50,38 +54,56 @@ export async function helloWorld(page: Page, context, events) {
 		try {
 			const question: any = randomisedSampleQuestions[i];
 
-			if (!["TEXT"].includes(question.answerType.S)) continue; // only allow text answers
-			if (!["COMPARE", "ALGORITHM"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
+			if (!["PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
+			if (!["COMPARE"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
 
 			const button = await page.locator(`#${question.SK.S.split("#")[1]}`);
 			if (!(await button.evaluate((element) => element.classList.contains("Mui-disabled")))) {
 				await button.click();
 				await page.waitForTimeout(2000);
 
-				// get it wrong once
-				await page.locator("input:visible").fill(question.answer.S + "fdsfasfadsfdsa");
-				await page.waitForTimeout(1000);
-				await page.locator('button:text("Submit"):visible').click();
-				await page.waitForResponse((response) => response.url().includes("/check"));
-				await page.waitForTimeout(2000);
+				if (question.answerType.S != "PYTHON") {
+					// get it wrong once
+					await page.locator("input:visible").fill(question.answer.S + "fdsfasfadsfdsa");
+					await page.waitForTimeout(1000);
+					await page.locator('button:text("Submit"):visible').click();
+					await page.waitForResponse((response) => response.url().includes("/check"));
+					await page.waitForTimeout(2000);
 
-				// get it wrong twice
-				await page.locator("input:visible").fill(question.answer.S + "rrerererwrew");
-				await page.waitForTimeout(1000);
-				await page.locator('button:text("Submit"):visible').click();
-				await page.waitForResponse((response) => response.url().includes("/check"));
-				await page.waitForTimeout(2000);
+					// get it wrong twice
+					await page.locator("input:visible").fill(question.answer.S + "rrerererwrew");
+					await page.waitForTimeout(1000);
+					await page.locator('button:text("Submit"):visible').click();
+					await page.waitForResponse((response) => response.url().includes("/check"));
+					await page.waitForTimeout(2000);
+				} else {
+					await page.evaluate(([answer]) => {
+						let editor = document.querySelector('.cm-content');
+						editor.textContent = `print(${answer}eeeeee);`;
+						editor.dispatchEvent(new Event('input', { bubbles: true }));
+					}, [question.answer.S])
+
+					await page.waitForTimeout(2000);
+
+					await page.evaluate(([answer]) => {
+						let editor = document.querySelector('.cm-content');
+						editor.textContent = `print(${answer}ssssss);`;
+						editor.dispatchEvent(new Event('input', { bubbles: true }));
+					}, [question.answer.S])
+				}
 
 				// get it right (80% of the time)
 				if (Math.random() < 0.8) {
-					await page.locator("input:visible").fill(
-						question.answerType.S == "PYTHON"
-							? `print("${question.answer.S}");
-			}
-		}
-	}`
-							: question.answer.S
-					);
+					console.log(question.answerType.S == "PYTHON");
+					if (question.answerType.S == "PYTHON") {
+						page.evaluate(([answer]) => {
+							let editor = document.querySelector('.cm-content');
+    						editor.textContent = `print('${answer}');`;
+    						editor.dispatchEvent(new Event('input', { bubbles: true }));
+						}, [question.answer.S])
+					} else {
+						await page.locator("input:visible").fill(question.answer.S);
+					}
 					await page.waitForTimeout(1000);
 					await page.locator('button:text("Submit"):visible').click();
 					await page.waitForResponse((response) => response.url().includes("/check"));
@@ -90,7 +112,7 @@ export async function helloWorld(page: Page, context, events) {
 				}
 
 				await page.waitForTimeout(3000);
-			}
+			} else console.log("Task already complete");
 		} catch (e) {
 			await page.keyboard.press("Escape");
 		}

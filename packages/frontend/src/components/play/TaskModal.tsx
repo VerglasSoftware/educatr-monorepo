@@ -32,7 +32,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 					packId: packId,
 					taskId: task.SK.S.split("#")[1],
 					answer: answer,
-					stdin: task.stdin.S,
+					stdin: task.stdin && task.stdin.S,
 				},
 			});
 			setSubmitTaskLoading(false);
@@ -49,6 +49,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 			}
 		} catch (e) {
 			setSubmitTaskLoading(false);
+			console.log(e);
 			toast.warn(`Something went wrong when checking your task.`);
 		}
 	}
