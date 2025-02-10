@@ -54,7 +54,7 @@ export async function helloWorld(page: Page, context, events) {
 		try {
 			const question: any = randomisedSampleQuestions[i];
 
-			if (!["PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
+			if (!["TEXT", "PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
 			if (!["COMPARE"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
 
 			const button = await page.locator(`#${question.SK.S.split("#")[1]}`);
@@ -67,14 +67,14 @@ export async function helloWorld(page: Page, context, events) {
 					await page.locator("input:visible").fill(question.answer.S + "fdsfasfadsfdsa");
 					await page.waitForTimeout(1000);
 					await page.locator('button:text("Submit"):visible').click();
-					await page.waitForResponse((response) => response.url().includes("/check"));
+					await page.waitForResponse((response) => response.url().includes("/check"), { timeout: 20000 });
 					await page.waitForTimeout(2000);
 
 					// get it wrong twice
 					await page.locator("input:visible").fill(question.answer.S + "rrerererwrew");
 					await page.waitForTimeout(1000);
 					await page.locator('button:text("Submit"):visible').click();
-					await page.waitForResponse((response) => response.url().includes("/check"));
+					await page.waitForResponse((response) => response.url().includes("/check"), { timeout: 20000 });
 					await page.waitForTimeout(2000);
 				} else {
 					await page.evaluate(([answer]) => {
@@ -82,7 +82,9 @@ export async function helloWorld(page: Page, context, events) {
 						editor.textContent = `print(${answer}eeeeee);`;
 						editor.dispatchEvent(new Event('input', { bubbles: true }));
 					}, [question.answer.S])
-
+					await page.waitForTimeout(1000);
+					await page.locator('button:text("Submit"):visible').click();
+					await page.waitForResponse((response) => response.url().includes("/check"), { timeout: 20000 });
 					await page.waitForTimeout(2000);
 
 					await page.evaluate(([answer]) => {
@@ -90,6 +92,10 @@ export async function helloWorld(page: Page, context, events) {
 						editor.textContent = `print(${answer}ssssss);`;
 						editor.dispatchEvent(new Event('input', { bubbles: true }));
 					}, [question.answer.S])
+					await page.waitForTimeout(1000);
+					await page.locator('button:text("Submit"):visible').click();
+					await page.waitForResponse((response) => response.url().includes("/check"), { timeout: 20000 });
+					await page.waitForTimeout(2000);
 				}
 
 				// get it right (80% of the time)
@@ -106,7 +112,7 @@ export async function helloWorld(page: Page, context, events) {
 					}
 					await page.waitForTimeout(1000);
 					await page.locator('button:text("Submit"):visible').click();
-					await page.waitForResponse((response) => response.url().includes("/check"));
+					await page.waitForResponse((response) => response.url().includes("/check"), { timeout: 20000 });
 				} else {
 					await page.keyboard.press("Escape");
 				}
