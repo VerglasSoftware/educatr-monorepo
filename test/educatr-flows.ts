@@ -23,10 +23,8 @@ export async function helloWorld(page: Page, context, events) {
 	});
 
 	// Log in and navigate to competition
-	let username = null;
-	while (username == null) {
-		username = await getCredsAndLockFile();
-	}
+	let username = await getCredsAndLockFile();;
+	if (!username) return;
 
 	await page.goto("https://educatr.uk/");
 
