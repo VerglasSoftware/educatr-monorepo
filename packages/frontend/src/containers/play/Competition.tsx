@@ -231,7 +231,7 @@ export default function PlayCompetition() {
 							<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(5, 1fr)", justifyContent: "center", gap: 2 }}>
 								{pack.tasks.map((task: any) => {
 									const correct = activity.find((a) => (a.taskId.S && a.correct ? a.taskId.S == task.SK.S.split("#")[1] && a.correct.BOOL === true : a.taskId == task.SK.S.split("#")[1] && a.correct === true));
-									if (task.prerequisites.L.length > 0) {
+									if (task.prerequisites && task.prerequisites.L.length > 0) {
 										const prereqs = task.prerequisites.L.map((p) => p.S);
 										const completedPrereqs = prereqs.filter((p) => activity.find((a) => a.taskId.S == p && a.correct.BOOL === true));
 										if (completedPrereqs.length != prereqs.length) return null;

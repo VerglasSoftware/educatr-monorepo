@@ -75,14 +75,8 @@ export async function helloWorld(page: Page, context, events) {
 				// get it right (80% of the time)
 				if (Math.random() < 0.8) {
 					await page.locator("input:visible").fill(
-						question.answerType.S == "CSHARP"
-							? `using System;
-
-	namespace IglooCode {
-		class Program {
-			static void Main(string[] args) {
-				// Write your code below this line
-				Console.WriteLine("${question.answer.S}");
+						question.answerType.S == "PYTHON"
+							? `print("${question.answer.S}");
 			}
 		}
 	}`
