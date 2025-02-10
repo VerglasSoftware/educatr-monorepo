@@ -112,7 +112,7 @@ export async function helloWorld(page: Page, context, events) {
 				}
 
 				await page.waitForTimeout(3000);
-			}
+			} else console.log("Task already complete");
 		} catch (e) {
 			await page.keyboard.press("Escape");
 		}
