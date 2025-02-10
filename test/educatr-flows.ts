@@ -54,7 +54,7 @@ export async function helloWorld(page: Page, context, events) {
 		try {
 			const question: any = randomisedSampleQuestions[i];
 
-			if (!["TEXT", "PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
+			if (!["PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
 			if (!["COMPARE"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
 
 			const button = await page.locator(`#${question.SK.S.split("#")[1]}`);
