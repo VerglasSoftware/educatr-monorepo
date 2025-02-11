@@ -17,22 +17,22 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
+		KeyConditionExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
-			":orgId": { S: pk },
-			":skPrefix": { S: "TEAM#" },
+			":orgId": pk,
+			":skPrefix": "TEAM#",
 		},
 	};
 
 	try {
-		const command = new ScanCommand(params);
+		const command = new QueryCommand(params);
 		const result = await client.send(command);
 
 		const orgs =
 			result.Items?.map((item) => {
-				const sk = item.SK.S as string;
+				const sk = item.SK;
 				const id = sk.split("#")[1];
-				return { ...item, id };
+				return { ...item, students: [...item.students], id };
 			}) || [];
 
 		return JSON.stringify(orgs);

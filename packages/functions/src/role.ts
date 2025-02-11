@@ -16,15 +16,15 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params = {
 		TableName: Resource.Organisations.name,
-		FilterExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
+		KeyConditionExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
-			":orgId": { S: pk },
-			":skPrefix": { S: "ROLE#" },
+			":orgId": pk,
+			":skPrefix": "ROLE#",
 		},
 	};
 
 	try {
-		const command = new ScanCommand(params);
+		const command = new QueryCommand(params);
 		const result = await client.send(command);
 
 		const orgs =

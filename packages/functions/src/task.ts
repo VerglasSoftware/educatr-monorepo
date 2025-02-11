@@ -1,5 +1,5 @@
 import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
@@ -16,20 +16,20 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params = {
 		TableName: Resource.Packs.name,
-		FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+		KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
-			":packId": { S: pk },
-			":skPrefix": { S: "TASK#" },
+			":packId": pk,
+			":skPrefix": "TASK#",
 		},
 	};
 
 	try {
-		const command = new ScanCommand(params);
+		const command = new QueryCommand(params);
 		const result = await client.send(command);
 
 		const packs =
 			result.Items?.map((item) => {
-				const sk = item.SK.S as string;
+				const sk = item.SK;
 				const id = sk.split("#")[1];
 				return { ...item, id };
 			}) || [];
