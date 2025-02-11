@@ -129,11 +129,11 @@ export default function ClassTable() {
 									/>
 								</td>
 								<td>
-									<Typography level="body-xs">{row.name.S}</Typography>
+									<Typography level="body-xs">{row.name}</Typography>
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										<RowMenu id={row.SK.S.split("#")[1]} />
+										<RowMenu id={row.SK.split("#")[1]} />
 									</Box>
 								</td>
 							</tr>

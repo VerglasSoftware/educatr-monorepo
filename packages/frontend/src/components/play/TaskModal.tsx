@@ -30,22 +30,22 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 			const result = await API.post("api", `/competition/${competition.PK}/check`, {
 				body: {
 					packId: packId,
-					taskId: task.SK.S.split("#")[1],
+					taskId: task.SK.split("#")[1],
 					answer: answer,
-					stdin: task.stdin && task.stdin.S,
+					stdin: task.stdin,
 				},
 			});
 			setSubmitTaskLoading(false);
 
 			if (result.manual === true) {
-				return toast.info(`${task.title.S} has been submitted for manual verification.`);
+				return toast.info(`${task.title} has been submitted for manual verification.`);
 			}
 
 			if (result.result === true) {
-				toast.success(`You answered ${task.title.S} correctly, and ${task.points.N} point${task.points.N != 1 && "s"} have been added to your team.`);
+				toast.success(`You answered ${task.title} correctly, and ${task.points} point${task.points != 1 && "s"} have been added to your team.`);
 				setOpen(false);
 			} else {
-				toast.error(`You answered ${task.title.S} incorrectly, but no points have been taken from your team.`);
+				toast.error(`You answered ${task.title} incorrectly, but no points have been taken from your team.`);
 			}
 		} catch (e) {
 			setSubmitTaskLoading(false);
@@ -55,7 +55,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 	}
 	useEffect(() => {
 		if (task) {
-			setAnswer(task.placeholder.S);
+			setAnswer(task.placeholder);
 		}
 	}, [task]);
 	return (
@@ -65,16 +65,16 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 					open={open}
 					onClose={() => setOpen(false)}>
 					<ModalDialog minWidth="50%">
-						<DialogTitle>{task.title.S}</DialogTitle>
+						<DialogTitle>{task.title}</DialogTitle>
 						<DialogContent>
-							{task.subtitle.S}
-							{task.points.N} point{task.points.N != 1 && "s"}
+							{task.subtitle}
+							{task.points} point{task.points != 1 && "s"}
 						</DialogContent>
 						<Divider />
-						<DialogContent>{task.content.S}</DialogContent>
+						<DialogContent>{task.content}</DialogContent>
 						<Divider />
 						<DialogContent>
-							{task.answerType.S == "TEXT" && (
+							{task.answerType == "TEXT" && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
@@ -85,7 +85,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 									</FormControl>
 								</Stack>
 							)}
-							{task.answerType.S == "MULTIPLE" && (
+							{task.answerType == "MULTIPLE" && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
@@ -94,7 +94,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											name="radio-buttons-group"
 											value={answer}
 											onChange={(e) => setAnswer(e.currentTarget.value)}>
-											{JSON.parse(task.answer.S).map((answer: any) => (
+											{JSON.parse(task.answer).map((answer: any) => (
 												<Radio
 													value={answer.text}
 													label={answer.text}
@@ -104,13 +104,13 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 									</FormControl>
 								</Stack>
 							)}
-							{(task.answerType.S == "CSHARP" || task.answerType.S == "PYTHON") && (
+							{(task.answerType == "CSHARP" || task.answerType == "PYTHON") && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
 										<CodeMirror
 											height="40vh"
-											extensions={task.answerType.S == "CSHARP" ? [csharp()] : [python()]}
+											extensions={task.answerType == "CSHARP" ? [csharp()] : [python()]}
 											value={answer}
 											onChange={(e) => setAnswer(e)}
 											className="mb-4"
@@ -127,7 +127,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 												try {
 													const result = await API.post("api", `/competition/${competition.PK}/run`, {
 														body: {
-															language: task.answerType.S,
+															language: task.answerType,
 															code: answer,
 															stdin: stdin,
 														},
@@ -151,7 +151,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 									</FormControl>
 								</Stack>
 							)}
-							{task.answerType.S == "WEB" && (
+							{task.answerType == "WEB" && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>

@@ -1,5 +1,5 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { BatchGetItemCommand, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
@@ -413,32 +413,30 @@ export const getLb: Handler = Util.handler(async (event) => {
 
 	const params = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :pk and (SK = :details or begins_with(SK, :team) or begins_with(SK, :activity))",
+		KeyConditionExpression: "PK = :pk",
 		ExpressionAttributeValues: {
-			":pk": { S: pk },
-			":details": { S: "DETAILS" },
-			":team": { S: "TEAM#" },
-			":activity": { S: "ACTIVITY#" },
-		},
+			":pk": pk
+		}
 	};
 
 	try {
-		const result = await client.send(new ScanCommand(params));
-		if (!result.Items || result.Items.length === 0) {
+		const result = await client.send(new QueryCommand(params));
+		if (!result.Items || result.Items.length == 0) {
 			throw new Error("Competition not found");
 		}
 
-		const teamLabels = result.Items.filter((item) => item.SK.S!.startsWith("TEAM#")).reduce((acc: any, item, index) => {
-			acc[item.SK.S!.split("TEAM#")[1]] = item.name.S;
+		const teamLabels = result.Items.filter((item) => item.SK.startsWith("TEAM#")).reduce((acc: any, item, index) => {
+			acc[item.SK.split("TEAM#")[1]] = item.name;
 			return acc;
 		}, {});
 
-		const timeStarted = parseInt(result.Items.find((item) => item.SK.S === "DETAILS")?.createdAt.N!);
+		const timeStarted = parseInt(result.Items.find((item) => item.SK === "DETAILS")?.createdAt);
 		const timeNow = Date.now();
 
 		const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
 
-		const timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
+		let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
+		timestamps = timestamps.slice(-100);
 
 		const teamData = [];
 
@@ -447,7 +445,7 @@ export const getLb: Handler = Util.handler(async (event) => {
 			const obj: any = { timestamp: currentTimestamp.getTime() };
 
 			for (const key in teamLabels) {
-				const activity = result.Items.filter((item) => item.SK.S?.startsWith("ACTIVITY") && result.Items!.find((team) => team.SK.S == `TEAM#${key}`)!.students.SS!.includes(item.userId.S!) && parseInt(item.createdAt.N!) < timestamps[index] && item.correct && item.correct.BOOL == true);
+				const activity = result.Items.filter((item) => item.SK.startsWith("ACTIVITY") && [...result.Items!.find((team) => team.SK == `TEAM#${key}`)!.students].includes(item.userId) && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
 				obj[key] = activity.length;
 			}
 

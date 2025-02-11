@@ -72,17 +72,17 @@ export default function TaskEditor() {
 				if (t.id == newTask.SK.split("#")[1]) {
 					return {
 						...t,
-						title: { S: newTask.title },
-						subtitle: { S: newTask.subtitle },
-						content: { S: newTask.content },
-						placeholder: { S: newTask.placeholder },
-						answer: { S: newTask.answer },
-						answerChoices: { L: newTask.answerChoices.map((item) => ({ M: { id: { S: item.id }, name: { S: item.name }, correct: { BOOL: item.correct } } })) },
-						answerType: { S: newTask.answerType },
-						verificationType: { S: newTask.verificationType },
-						prerequisites: { L: newTask.prerequisites.map((item) => ({ S: item })) },
-						points: { N: newTask.points.toString() },
-						stdin: { S: newTask.stdin },
+						title: newTask.title,
+						subtitle: newTask.subtitle,
+						content: newTask.content,
+						placeholder: newTask.placeholder,
+						answer: newTask.answer,
+						answerChoices: newTask.answerChoices.map((item) => ({ id: item.id, name: item.name, correct: item.correct })),
+						answerType: newTask.answerType,
+						verificationType: newTask.verificationType,
+						prerequisites: newTask.prerequisites,
+						points: newTask.points,
+						stdin: newTask.stdin,
 					};
 				}
 				return t;
@@ -132,21 +132,21 @@ export default function TaskEditor() {
 					break;
 			}
 			formik.setValues({
-				title: task.title.S,
-				subtitle: task.subtitle.S,
-				content: task.content.S,
-				placeholder: task.placeholder.S,
-				answer: task.answer.S,
-				answerChoices: task.answerChoices ? task.answerChoices.L.map((item) => ({
-					id: item.M.id.S,
-					name: item.M.name.S,
-					correct: item.M.correct.BOOL,
+				title: task.title,
+				subtitle: task.subtitle,
+				content: task.content,
+				placeholder: task.placeholder,
+				answer: task.answer,
+				answerChoices: task.answerChoices ? task.answerChoices.map((item) => ({
+					id: item.id,
+					name: item.name,
+					correct: item.correct,
 				})) : [],
-				answerType: task.answerType.S,
-				verificationType: task.verificationType.S,
-				prerequisites: task.prerequisites ? task.prerequisites.L.map((item) => item.S) : [],
-				points: parseInt(task.points.N),
-				stdin: task.stdin ? task.stdin.S : "",
+				answerType: task.answerType,
+				verificationType: task.verificationType,
+				prerequisites: task.prerequisites ? task.prerequisites.map((item) => item) : [],
+				points: parseInt(task.points),
+				stdin: task.stdin ? task.stdin : "",
 			});
 		}
 	}, [tasks]);
@@ -192,7 +192,7 @@ export default function TaskEditor() {
 							onClick={() => {
 								const index = tasks.findIndex((t) => t.id == task.id);
 								setTask(tasks[index - 1]);
-								switch (tasks[index - 1].answerType.S) {
+								switch (tasks[index - 1].answerType) {
 									case "PYTHON":
 										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
 										break;
@@ -210,21 +210,21 @@ export default function TaskEditor() {
 										break;
 								}
 								formik.setValues({
-									title: tasks[index - 1].title.S,
-									subtitle: tasks[index - 1].subtitle.S,
-									content: tasks[index - 1].content.S,
-									placeholder: tasks[index - 1].placeholder.S,
-									answer: tasks[index - 1].answer.S,
-									answerChoices: tasks[index - 1].answerChoices ? tasks[index - 1].answerChoices.L.map((item) => ({
-										id: item.M.id.S,
-										name: item.M.name.S,
-										correct: item.M.correct.BOOL,
+									title: tasks[index - 1].title,
+									subtitle: tasks[index - 1].subtitle,
+									content: tasks[index - 1].content,
+									placeholder: tasks[index - 1].placeholder,
+									answer: tasks[index - 1].answer,
+									answerChoices: tasks[index - 1].answerChoices ? tasks[index - 1].answerChoices.map((item) => ({
+										id: item.id,
+										name: item.name,
+										correct: item.correct,
 									})) : [],
-									answerType: tasks[index - 1].answerType.S,
-									verificationType: tasks[index - 1].verificationType.S,
-									prerequisites: tasks[index - 1].prerequisites ? tasks[index - 1].prerequisites.L.map((item) => item.S) : [],
-									points: parseInt(tasks[index - 1].points.N),
-									stdin: tasks[index - 1].stdin ? tasks[index - 1].stdin.S : "",
+									answerType: tasks[index - 1].answerType,
+									verificationType: tasks[index - 1].verificationType,
+									prerequisites: tasks[index - 1].prerequisites ? tasks[index - 1].prerequisites.L.map((item) => item) : [],
+									points: parseInt(tasks[index - 1].points),
+									stdin: tasks[index - 1].stdin ? tasks[index - 1].stdin : "",
 								});
 							}}>
 							<ArrowBackIcon />
@@ -233,7 +233,7 @@ export default function TaskEditor() {
 							level="h3"
 							component="h2"
 							sx={{ my: 0 }}>
-							{task.title.S}
+							{task.title}
 						</Typography>
 						<Button
 							variant="plain"
@@ -241,7 +241,7 @@ export default function TaskEditor() {
 							onClick={() => {
 								const index = tasks.findIndex((t) => t.id == task.id);
 								setTask(tasks[index + 1]);
-								switch (tasks[index + 1].answerType.S) {
+								switch (tasks[index + 1].answerType) {
 									case "PYTHON":
 										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
 										break;
@@ -259,21 +259,21 @@ export default function TaskEditor() {
 										break;
 								}
 								formik.setValues({
-									title: tasks[index + 1].title.S,
-									subtitle: tasks[index + 1].subtitle.S,
-									content: tasks[index + 1].content.S,
-									placeholder: tasks[index + 1].placeholder.S,
-									answer: tasks[index + 1].answer.S,
-									answerChoices: tasks[index + 1].answerChoices ? tasks[index + 1].answerChoices.L.map((item) => ({
-										id: item.M.id.S,
-										name: item.M.name.S,
-										correct: item.M.correct.BOOL,
+									title: tasks[index + 1].title,
+									subtitle: tasks[index + 1].subtitle,
+									content: tasks[index + 1].content,
+									placeholder: tasks[index + 1].placeholder,
+									answer: tasks[index + 1].answer,
+									answerChoices: tasks[index + 1].answerChoices ? tasks[index + 1].answerChoices.map((item) => ({
+										id: item.id,
+										name: item.name,
+										correct: item.correct,
 									})) : [],
-									answerType: tasks[index + 1].answerType.S,
-									verificationType: tasks[index + 1].verificationType.S,
-									prerequisites: tasks[index + 1].prerequisites ? tasks[index + 1].prerequisites.L.map((item) => item.S) : [],
-									points: parseInt(tasks[index + 1].points.N),
-									stdin: tasks[index + 1].stdin ? tasks[index + 1].stdin.S : "",
+									answerType: tasks[index + 1].answerType,
+									verificationType: tasks[index + 1].verificationType,
+									prerequisites: tasks[index + 1].prerequisites ? tasks[index + 1].prerequisites.map((item) => item) : [],
+									points: parseInt(tasks[index + 1].points),
+									stdin: tasks[index + 1].stdin ? tasks[index + 1].stdin : "",
 								});
 							}}>
 							<ArrowForwardIcon />
@@ -669,7 +669,7 @@ export default function TaskEditor() {
 												const isRecursive = newValue.some((id) => {
 													return tasks
 														.find((t) => t.id === id)
-														.prerequisites.L.map((item) => item.S)
+														.prerequisites.map((item) => item)
 														.includes(task.id);
 												});
 												if (!isRecursive) {
@@ -683,7 +683,7 @@ export default function TaskEditor() {
 											{tasks
 												.filter((item) => item.id != task.id)
 												.map((item) => (
-													<Option value={item.id}>{item.title.S}</Option>
+													<Option value={item.id}>{item.title}</Option>
 												))}
 										</Select>
 									</FormControl>

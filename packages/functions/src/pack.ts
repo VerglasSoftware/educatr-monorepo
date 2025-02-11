@@ -29,16 +29,16 @@ export const list: Handler = Util.handler(async (event) => {
 
 		const packsWithTasks = await Promise.all(
 			packs!.map(async (pack) => {
-				const tasksParams = {
+				const params = {
 					TableName: Resource.Packs.name,
-					FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
 					ExpressionAttributeValues: {
-						":packId": { S: pack.PK.S! },
-						":skPrefix": { S: "TASK#" },
-					},
+						":pk": pack.PK.S!,
+						":sk": "TASK#"
+					}
 				};
 
-				const tasksCommand = new ScanCommand(tasksParams);
+				const tasksCommand = new QueryCommand(params);
 				const tasksResult = await client.send(tasksCommand);
 
 				return {

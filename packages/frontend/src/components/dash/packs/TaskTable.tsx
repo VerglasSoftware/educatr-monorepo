@@ -19,8 +19,6 @@ interface RowMenuProps {
 }
 
 function RowMenu({ packId, taskId }: RowMenuProps) {
-	console.log("packId is: " + packId);
-	console.log("taskId is: " + taskId);
 	return (
 		<Dropdown>
 			<MenuButton
@@ -127,10 +125,10 @@ export default function TaskTable() {
 									/>
 								</td>
 								<td>
-									<Typography level="body-xs">{row.title.S}</Typography>
+									<Typography level="body-xs">{row.title}</Typography>
 								</td>
 								<td>
-									<Typography level="body-xs">{row.points.N}</Typography>
+									<Typography level="body-xs">{row.points}</Typography>
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>

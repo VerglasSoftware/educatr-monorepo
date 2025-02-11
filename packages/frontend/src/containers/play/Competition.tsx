@@ -230,10 +230,10 @@ export default function PlayCompetition() {
 							</Typography>
 							<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(5, 1fr)", justifyContent: "center", gap: 2 }}>
 								{pack.tasks.map((task: any) => {
-									const correct = activity.find((a) => (a.taskId.S && a.correct ? a.taskId.S == task.SK.S.split("#")[1] && a.correct.BOOL === true : a.taskId == task.SK.S.split("#")[1] && a.correct === true));
-									if (task.prerequisites && task.prerequisites.L.length > 0) {
-										const prereqs = task.prerequisites.L.map((p) => p.S);
-										const completedPrereqs = prereqs.filter((p) => activity.find((a) => a.taskId.S == p && a.correct.BOOL === true));
+									const correct = activity.find((a) => (a.taskId && a.correct ? a.taskId == task.SK.split("#")[1] && a.correct === true : a.taskId == task.SK.split("#")[1] && a.correct === true));
+									if (task.prerequisites && task.prerequisites.length > 0) {
+										const prereqs = task.prerequisites.map((p) => p);
+										const completedPrereqs = prereqs.filter((p) => activity.find((a) => a.taskId == p && a.correct === true));
 										if (completedPrereqs.length != prereqs.length) return null;
 									}
 									return (
@@ -244,7 +244,7 @@ export default function PlayCompetition() {
 												setSelectedTaskPackId(pack.PK.S);
 												setOpen(true);
 											}}
-											id={task.SK.S.split("#")[1]}
+											id={task.SK.split("#")[1]}
 											disabled={correct}>
 											<Card
 												variant="plain"
@@ -260,12 +260,12 @@ export default function PlayCompetition() {
 													<Typography
 														level="title-lg"
 														textColor="common.white">
-														{task.title.S}
+														{task.title}
 													</Typography>
 													<Typography
 														level="body-sm"
 														textColor="common.white">
-														{task.points.N} point{task.points.N != 1 && "s"}
+														{task.points} point{task.points != 1 && "s"}
 													</Typography>
 												</CardContent>
 											</Card>

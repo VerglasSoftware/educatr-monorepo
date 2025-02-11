@@ -173,8 +173,8 @@ export default function CompetitionDetail() {
 													<Input
 														size="sm"
 														placeholder="Name"
-														defaultValue={team.name.S}
-														onChange={(e) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, name: { S: e.target.value } } : t)))}
+														defaultValue={team.name}
+														onChange={(e) => setTeams(teams.map((t: any) => (t.SK == team.SK ? { ...t, name:  e.target.value } : t)))}
 													/>
 												</FormControl>
 											</Stack>
@@ -192,11 +192,11 @@ export default function CompetitionDetail() {
 														value={
 															!team.students
 																? []
-																: team.students.SS.map((s: any) => {
+																: team.students.map((s: any) => {
 																		return { label: `${students.find((student: any) => student.PK == s)?.given_name} ${students.find((student: any) => student.PK == s)?.family_name}`, value: s };
 																	})
 														}
-														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, students: { SS: v.map((s: any) => s.value) } } : t)))}
+														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK == team.SK ? { ...t, students: v.map((s: any) => s.value) } : t)))}
 													/>
 												</FormControl>
 											</Stack>
@@ -209,8 +209,8 @@ export default function CompetitionDetail() {
 												size="sm">
 												<Button
 													onClick={async () => {
-														await API.del("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {});
-														setTeams(teams.filter((t: any) => t.SK.S != team.SK.S));
+														await API.del("api", `/competition/${compId}/team/${team.SK.split("#")[1]}`, {});
+														setTeams(teams.filter((t: any) => t.SK != team.SK));
 													}}>
 													Delete
 												</Button>
@@ -220,10 +220,10 @@ export default function CompetitionDetail() {
 													onClick={async (e) => {
 														const name = e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement?.querySelectorAll("input")[0].value;
 
-														const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {
+														const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.split("#")[1]}`, {
 															body: {
-																name: team.name.S,
-																students: team.students.SS,
+																name: team.name,
+																students: team.students,
 															},
 														});
 
