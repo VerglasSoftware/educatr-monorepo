@@ -19,7 +19,7 @@ export const list: Handler = Util.handler(async (event) => {
 		KeyConditionExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
 			":orgId": pk,
-			":skPrefix": "CLASS#"
+			":skPrefix": "CLASS#",
 		},
 	};
 

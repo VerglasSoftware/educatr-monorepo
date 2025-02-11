@@ -415,8 +415,8 @@ export const getLb: Handler = Util.handler(async (event) => {
 		TableName: Resource.Competitions.name,
 		KeyConditionExpression: "PK = :pk",
 		ExpressionAttributeValues: {
-			":pk": pk
-		}
+			":pk": pk,
+		},
 	};
 
 	try {

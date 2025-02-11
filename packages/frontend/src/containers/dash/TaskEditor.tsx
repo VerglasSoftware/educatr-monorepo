@@ -137,11 +137,13 @@ export default function TaskEditor() {
 				content: task.content,
 				placeholder: task.placeholder,
 				answer: task.answer,
-				answerChoices: task.answerChoices ? task.answerChoices.map((item) => ({
-					id: item.id,
-					name: item.name,
-					correct: item.correct,
-				})) : [],
+				answerChoices: task.answerChoices
+					? task.answerChoices.map((item) => ({
+							id: item.id,
+							name: item.name,
+							correct: item.correct,
+						}))
+					: [],
 				answerType: task.answerType,
 				verificationType: task.verificationType,
 				prerequisites: task.prerequisites ? task.prerequisites.map((item) => item) : [],
@@ -215,11 +217,13 @@ export default function TaskEditor() {
 									content: tasks[index - 1].content,
 									placeholder: tasks[index - 1].placeholder,
 									answer: tasks[index - 1].answer,
-									answerChoices: tasks[index - 1].answerChoices ? tasks[index - 1].answerChoices.map((item) => ({
-										id: item.id,
-										name: item.name,
-										correct: item.correct,
-									})) : [],
+									answerChoices: tasks[index - 1].answerChoices
+										? tasks[index - 1].answerChoices.map((item) => ({
+												id: item.id,
+												name: item.name,
+												correct: item.correct,
+											}))
+										: [],
 									answerType: tasks[index - 1].answerType,
 									verificationType: tasks[index - 1].verificationType,
 									prerequisites: tasks[index - 1].prerequisites ? tasks[index - 1].prerequisites.L.map((item) => item) : [],
@@ -264,11 +268,13 @@ export default function TaskEditor() {
 									content: tasks[index + 1].content,
 									placeholder: tasks[index + 1].placeholder,
 									answer: tasks[index + 1].answer,
-									answerChoices: tasks[index + 1].answerChoices ? tasks[index + 1].answerChoices.map((item) => ({
-										id: item.id,
-										name: item.name,
-										correct: item.correct,
-									})) : [],
+									answerChoices: tasks[index + 1].answerChoices
+										? tasks[index + 1].answerChoices.map((item) => ({
+												id: item.id,
+												name: item.name,
+												correct: item.correct,
+											}))
+										: [],
 									answerType: tasks[index + 1].answerType,
 									verificationType: tasks[index + 1].verificationType,
 									prerequisites: tasks[index + 1].prerequisites ? tasks[index + 1].prerequisites.map((item) => item) : [],
@@ -339,7 +345,7 @@ export default function TaskEditor() {
 															name={`answerChoices.${index}.name`}
 															type="text"
 															onChange={formik.handleChange}
-															value={item.name} 
+															value={item.name}
 														/>
 													</FormControl>
 													<FormControl>

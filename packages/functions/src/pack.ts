@@ -34,8 +34,8 @@ export const list: Handler = Util.handler(async (event) => {
 					KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
 					ExpressionAttributeValues: {
 						":pk": pack.PK.S!,
-						":sk": "TASK#"
-					}
+						":sk": "TASK#",
+					},
 				};
 
 				const tasksCommand = new QueryCommand(params);

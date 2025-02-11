@@ -174,7 +174,7 @@ export default function CompetitionDetail() {
 														size="sm"
 														placeholder="Name"
 														defaultValue={team.name}
-														onChange={(e) => setTeams(teams.map((t: any) => (t.SK == team.SK ? { ...t, name:  e.target.value } : t)))}
+														onChange={(e) => setTeams(teams.map((t: any) => (t.SK == team.SK ? { ...t, name: e.target.value } : t)))}
 													/>
 												</FormControl>
 											</Stack>
