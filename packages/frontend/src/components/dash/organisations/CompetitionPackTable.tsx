@@ -71,6 +71,8 @@ export default function CompetitionPackTable({ competition }: { competition: any
 		onLoad();
 	}, []);
 
+	console.log(competition.packs);
+
 	return (
 		<React.Fragment>
 			<Box
@@ -90,7 +92,7 @@ export default function CompetitionPackTable({ competition }: { competition: any
 					}}
 					sx={{ flexGrow: 1 }}>
 					<Option value="">Select one</Option>
-					{availablePacks.map((pack) => (
+					{availablePacks.filter((pack) => !packs.includes(pack.PK.S)).map((pack) => (
 						<Option
 							key={pack.PK.S}
 							value={pack.PK.S}>
