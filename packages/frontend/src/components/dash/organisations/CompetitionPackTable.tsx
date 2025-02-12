@@ -92,13 +92,15 @@ export default function CompetitionPackTable({ competition }: { competition: any
 					}}
 					sx={{ flexGrow: 1 }}>
 					<Option value="">Select one</Option>
-					{availablePacks.filter((pack) => !packs.includes(pack.PK.S)).map((pack) => (
-						<Option
-							key={pack.PK.S}
-							value={pack.PK.S}>
-							{pack.name.S}
-						</Option>
-					))}
+					{availablePacks
+						.filter((pack) => !packs.includes(pack.PK.S))
+						.map((pack) => (
+							<Option
+								key={pack.PK.S}
+								value={pack.PK.S}>
+								{pack.name.S}
+							</Option>
+						))}
 				</Select>
 				<Button
 					color="primary"
