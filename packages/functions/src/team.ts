@@ -64,7 +64,6 @@ export const create: Handler = Util.handler(async (event) => {
 			PK: pk,
 			SK: `TEAM#${createId()}`,
 			name: data.name,
-			students: new Set(data.students),
 			createdAt: Date.now(),
 		},
 	};
@@ -73,6 +72,7 @@ export const create: Handler = Util.handler(async (event) => {
 		await client.send(new PutCommand(params));
 		return JSON.stringify(params.Item);
 	} catch (e) {
+		console.log(e);
 		throw new Error("Could not create team");
 	}
 });
