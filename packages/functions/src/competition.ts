@@ -160,7 +160,7 @@ export const update: Handler = Util.handler(async (event) => {
 			":name": data.name,
 			":status": data.status,
 			":packs": data.packs,
-			":showLeaderboard": data.showLeaderboard,
+			":showLeaderboard": data.showLeaderboard || false,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -169,6 +169,7 @@ export const update: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 		return JSON.stringify(result.Attributes);
 	} catch (e) {
+		console.log(e);
 		throw new Error("Could not update competition details");
 	}
 });

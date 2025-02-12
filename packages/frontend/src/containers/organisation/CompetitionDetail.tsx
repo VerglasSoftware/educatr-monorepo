@@ -36,7 +36,13 @@ export default function CompetitionDetail() {
 		onLoad();
 	}, []);
 
-	console.log("teams is: " + JSON.stringify(teams));
+	let teamMembers = [];
+
+	for (const member in teams) {
+		teamMembers = teamMembers.concat(teams[member].students);
+	}
+
+	console.log(teamMembers);
 
 	return (
 		competition && (
@@ -185,9 +191,11 @@ export default function CompetitionDetail() {
 														multiple
 														placeholder="Members"
 														size="sm"
-														options={students.map((student: any) => {
-															return { label: `${student.given_name} ${student.family_name}`, value: student.PK };
-														})}
+														options={students
+															.filter((student) => !teamMembers.includes(student.PK))
+															.map((student: any) => {
+																return { label: `${student.given_name} ${student.family_name}`, value: student.PK };
+															})}
 														loading={students.length == 0}
 														value={
 															!team.students
