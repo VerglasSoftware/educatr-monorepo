@@ -1,10 +1,12 @@
-import { Box, Button, Typography } from "@mui/joy";
+import { Box, Breadcrumbs, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Link, Stack, Textarea, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import Breadcrumb from "../../components/dash/breadcrumb";
 import PackCard from "../../components/dash/packs/PackCard";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import TaskTable from "../../components/dash/packs/TaskTable";
 import "./PackDetail.css";
 

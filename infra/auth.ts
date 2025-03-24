@@ -1,5 +1,3 @@
-import { Resource } from "sst";
-import { api } from "./api";
 import { entraClientId, entraClientSecret, organisationTable, userTable } from "./storage";
 
 const region = aws.getRegionOutput().name;

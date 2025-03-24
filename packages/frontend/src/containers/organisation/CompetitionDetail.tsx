@@ -1,4 +1,6 @@
-import { Autocomplete, Box, Button, ButtonGroup, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Stack, Typography } from "@mui/joy";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
+import { Autocomplete, Box, Breadcrumbs, Button, ButtonGroup, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Link, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
@@ -14,7 +16,7 @@ export default function CompetitionDetail() {
 
 	const [name, setName] = useState<any>("");
 
-	const { compId, orgId } = useParams();
+	const { orgId, compId } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
@@ -198,10 +200,11 @@ export default function CompetitionDetail() {
 															})}
 														loading={students.length == 0}
 														value={
-															!team.students
+															!team.students || !team.students.SS
 																? []
-																: team.students.map((s: any) => {
-																		return { label: `${students.find((student: any) => student.PK == s)?.given_name} ${students.find((student: any) => student.PK == s)?.family_name}`, value: s };
+																: team.students.SS.map((s: string) => {
+																		const student = students.find((student: any) => student.PK == s);
+																		return { label: `${student?.given_name} ${student?.family_name}`, value: s };
 																	})
 														}
 														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK == team.SK ? { ...t, students: v.map((s: any) => s.value) } : t)))}
