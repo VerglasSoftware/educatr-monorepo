@@ -1,4 +1,3 @@
-
 import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, QueryCommand, UpdateCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
@@ -59,17 +58,16 @@ export const list: Handler = Util.handler(async (event) => {
 	try {
 		const command = new QueryCommand(params);
 		const result = await client.send(command);
-// dev code
-// 		const packs =
-// 			result.Items?.map((item) => {
-// 				const sk = item.SK;
-// 				const id = sk.split("#")[1];
-// 				return { ...item, id };
-// 			}) || [];
+		// dev code
+		// 		const packs =
+		// 			result.Items?.map((item) => {
+		// 				const sk = item.SK;
+		// 				const id = sk.split("#")[1];
+		// 				return { ...item, id };
+		// 			}) || [];
 
-// 		return JSON.stringify(packs);
+		// 		return JSON.stringify(packs);
 		return JSON.stringify(itemsToTasks(result.Items));
-
 	} catch (e) {
 		console.error(e);
 		throw new Error("Could not retrieve packs");

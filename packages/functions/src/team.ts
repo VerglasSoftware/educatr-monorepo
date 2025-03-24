@@ -36,12 +36,12 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params: ScanCommandInput = {
 		TableName: Resource.Competitions.name,
-   
-// check this
-// 		KeyConditionExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
-// 		ExpressionAttributeValues: {
-// 			":orgId": pk,
-// 			":skPrefix": "TEAM#",
+
+		// check this
+		// 		KeyConditionExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
+		// 		ExpressionAttributeValues: {
+		// 			":orgId": pk,
+		// 			":skPrefix": "TEAM#",
 		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
 			":compId": { S: compId },
@@ -52,15 +52,15 @@ export const list: Handler = Util.handler(async (event) => {
 	try {
 		const command = new QueryCommand(params);
 		const result = await client.send(command);
-    // check this
-// 		const orgs =
-// 			result.Items?.map((item) => {
-// 				const sk = item.SK;
-// 				const id = sk.split("#")[1];
-// 				return { ...item, students: [...item.students], id };
-// 			}) || [];
+		// check this
+		// 		const orgs =
+		// 			result.Items?.map((item) => {
+		// 				const sk = item.SK;
+		// 				const id = sk.split("#")[1];
+		// 				return { ...item, students: [...item.students], id };
+		// 			}) || [];
 
-// 		return JSON.stringify(orgs);
+		// 		return JSON.stringify(orgs);
 		return JSON.stringify(itemsToTeams(result.Items));
 	} catch (e) {
 		console.error(e);

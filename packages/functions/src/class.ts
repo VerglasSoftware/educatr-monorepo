@@ -55,10 +55,10 @@ export const list: Handler = Util.handler(async (event) => {
 			}) || [];
 
 		return JSON.stringify(orgs);
-// old
-// 		const result = await client.send(new ScanCommand(params));
-// 		const classes = itemsToClasses(result.Items);
-// 		return JSON.stringify(classes);
+		// old
+		// 		const result = await client.send(new ScanCommand(params));
+		// 		const classes = itemsToClasses(result.Items);
+		// 		return JSON.stringify(classes);
 	} catch (e) {
 		console.error(e);
 		throw new Error("Could not retrieve classes");
