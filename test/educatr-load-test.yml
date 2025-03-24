@@ -3,7 +3,7 @@ config:
     phases:
         - duration: 500
           arrivalRate: 1
-          maxVusers: 100
+          maxVusers: 90
           name: Ramp up
     engines:
         playwright:

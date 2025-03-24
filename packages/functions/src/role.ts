@@ -36,7 +36,7 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params: ScanCommandInput = {
 		TableName: Resource.Organisations.name,
-		FilterExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
+		KeyConditionExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
 			":orgId": { S: orgId },
 			":skPrefix": { S: "ROLE#" },
@@ -44,7 +44,7 @@ export const list: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		const command = new ScanCommand(params);
+		const command = new QueryCommand(params);
 		const result = await client.send(command);
 		return JSON.stringify(itemsToRoles(result.Items));
 	} catch (e) {

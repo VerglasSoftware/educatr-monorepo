@@ -3,17 +3,18 @@ import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
-import "./PackDetail.css";
-
+import Breadcrumb from "../../components/dash/breadcrumb";
+import PackCard from "../../components/dash/packs/PackCard";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import TaskTable from "../../components/dash/packs/TaskTable";
+import "./PackDetail.css";
 
 export default function PackDetail() {
 	const [pack, setPack] = useState<any>();
 
-	const [name, setName] = useState<any>("");
-	const [description, setDescription] = useState<any>("");
+	const [name, setName] = useState<string>("");
+	const [description, setDescription] = useState<string>("");
 
 	const { id } = useParams();
 
@@ -30,7 +31,7 @@ export default function PackDetail() {
 		}
 
 		onLoad();
-	}, []);
+	}, [id]);
 
 	return (
 		pack && (
@@ -40,38 +41,13 @@ export default function PackDetail() {
 				</Helmet>
 				<div>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumbs
-							size="sm"
-							aria-label="breadcrumbs"
-							separator={<ChevronRightRoundedIcon fontSize="small" />}
-							sx={{ pl: 0 }}>
-							<Link
-								underline="none"
-								color="neutral"
-								href="/"
-								aria-label="Home">
-								<HomeRoundedIcon />
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Dashboard
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash/packs"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Packs
-							</Link>
-							<Typography
-								color="primary"
-								sx={{ fontWeight: 500, fontSize: 12 }}>
-								{pack.name}
-							</Typography>
-						</Breadcrumbs>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dash" },
+								{ label: "Packs", href: "/dash/packs" },
+								{ label: pack.name, href: `/dash/packs/${id}` },
+							]}
+						/>
 					</Box>
 
 					<Box
@@ -93,62 +69,23 @@ export default function PackDetail() {
 
 					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
 						<Box sx={{ gridColumn: "span 6" }}>
-							<Card sx={{ flexGrow: "1" }}>
-								<Stack
-									direction="row"
-									spacing={1}
-									sx={{ my: 1 }}>
-									<Stack
-										spacing={2}
-										sx={{ width: "100%" }}>
-										<Stack spacing={1}>
-											<FormLabel>Name</FormLabel>
-											<FormControl sx={{ gap: 2 }}>
-												<Input
-													size="sm"
-													placeholder="Name"
-													value={name}
-													onChange={(e) => setName(e.target.value)}
-												/>
-											</FormControl>
-										</Stack>
-										<Stack spacing={1}>
-											<FormLabel>Description</FormLabel>
-											<FormControl sx={{ gap: 2 }}>
-												<Textarea
-													minRows={2}
-													size="sm"
-													placeholder="Description"
-													value={description}
-													onChange={(e) => setDescription(e.target.value)}
-												/>
-											</FormControl>
-										</Stack>
-									</Stack>
-								</Stack>
-								<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
-									<CardActions sx={{ alignSelf: "flex-end", pt: 2 }}>
-										<Button
-											size="sm"
-											variant="solid"
-											onClick={async () => {
-												const updatedPack = await API.put("api", `/pack/${id}`, {
-													body: {
-														name,
-														description,
-														ownerId: pack.ownerId,
-													},
-												});
-												setPack(updatedPack);
-											}}>
-											Save
-										</Button>
-									</CardActions>
-								</CardOverflow>
-							</Card>
+							<PackCard
+								name={name}
+								description={description}
+								id={id!}
+								pack={pack}
+								setPack={setPack}
+								setName={setName}
+								setDescription={setDescription}
+							/>
 						</Box>
 						<Box sx={{ gridColumn: "span 6" }}>
 							<TaskTable />
+							<Button
+								href={`/dash/packs/${id}/edit`}
+								className="mt-2">
+								Edit
+							</Button>
 						</Box>
 					</Box>
 				</div>

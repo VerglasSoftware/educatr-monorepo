@@ -4,14 +4,16 @@ import { cardio, pulsar } from "ldrs";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
-import { DotWave } from "@uiball/loaders";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import Loading from "../../components/play/Loading";
 import NavbarMain from "../../components/play/Navbar";
 import NotInProgress from "../../components/play/NotInProgress";
+import { PDF417 } from "../../components/play/PDF417";
 import TaskModal from "../../components/play/TaskModal";
 import "./Play.css";
-import { PDF417 } from "../../components/play/PDF417";
+import AnnounceModal from "../../components/play/AnnounceModal";
+import { toast } from "react-toastify";
+import { Auth } from "aws-amplify";
 
 export default function PlayCompetition() {
 	const [competition, setCompetition] = useState<any>();
@@ -24,7 +26,12 @@ export default function PlayCompetition() {
 
 	const [waitingTask, setWaitingTask] = useState<any>();
 
+	const [announceModalOpen, setAnnounceModalOpen] = useState(false);
+	const [announceMessage, setAnnounceMessage] = useState("");
+
 	const [activity, setActivity] = useState<any[]>();
+
+	const [user, setUser] = useState<any>();
 
 	const { compId } = useParams();
 
@@ -36,21 +43,34 @@ export default function PlayCompetition() {
 	});
 
 	useEffect(() => {
-		if (lastMessage !== null) {
+		if (lastMessage) {
 			const data = JSON.parse(lastMessage.data);
-			console.log(data);
-
-			if (data.filter.competitionId && data.filter.competitionId != compId) return;
+			if (data.type !== "COMPETITION:ANNOUNCE" && (!data.filter?.competitionId || data.filter.competitionId !== compId)) return;
 
 			switch (data.type) {
 				case "COMPETITION:STATUS_UPDATE":
-					setCompetition({ ...competition, status: data.body.status });
+					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
 					break;
 				case "TASK:ANSWERED":
 					const newActivity = data.body;
-					setActivity([...(activity?.filter((a) => a.taskId.S != newActivity.taskId) || []), newActivity]);
-					console.log(waitingTask);
-					if (waitingTask) if (newActivity.taskId == waitingTask.SK.S.split("#")[1]) setWaitingTask(null);
+					setActivity([...(activity?.filter((a) => a.taskId.S !== newActivity.taskId) || []), newActivity]);
+					if (waitingTask && newActivity.taskId === waitingTask.SK.S.split("#")[1]) {
+						setWaitingTask(null);
+					}
+					if (user && user.username != newActivity.userId) {
+						if (newActivity.correct) {
+							toast.success(`Someone answered ${newActivity.taskId} correctly, and points have been added to your team.`);
+						} else {
+							toast.error(`Someone answered ${newActivity.taskId} incorrectly, but no points have been taken from your team.`);
+						}
+					}
+					break;
+				case "COMPETITION:SHOW_LEADERBOARD":
+					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
+					break;
+				case "COMPETITION:ANNOUNCE":
+					setAnnounceMessage(data.body.announce);
+					setAnnounceModalOpen(true);
 					break;
 				default:
 					break;
@@ -77,14 +97,24 @@ export default function PlayCompetition() {
 		async function onLoad() {
 			try {
 				const promises = [API.get("api", `/competition/${compId}`, {}).then(setCompetition), API.get("api", `/pack?include=tasks`, {}).then(setPacks), API.get("api", `/competition/${compId}/activity`, {}).then(setActivity)];
-
 				await Promise.allSettled(promises);
 			} catch (e) {
 				console.log(e);
 			}
 		}
 
+		async function fetchUser() {
+			try {
+				const currentUser = await Auth.currentAuthenticatedUser();
+				console.log(currentUser);
+				setUser(currentUser);
+			} catch (error) {
+				console.error("Error fetching user", error);
+			}
+		}
+
 		onLoad();
+		fetchUser();
 	}, []);
 
 	useEffect(() => {
@@ -164,9 +194,7 @@ export default function PlayCompetition() {
 								textColor="common.white">
 								A member of our team will be with you as soon as possible.
 							</Typography>
-
 							<br />
-
 							<PDF417 value={waitingTask.activity && waitingTask.activity.SK.S.split("#")[1]} />
 						</CardContent>
 					</Card>
@@ -180,7 +208,7 @@ export default function PlayCompetition() {
 			<Helmet>
 				<title>{competition.name}</title>
 			</Helmet>
-			<NavbarMain />
+			<NavbarMain competition={competition} />
 			<Box
 				sx={{
 					display: "flex",
@@ -202,7 +230,12 @@ export default function PlayCompetition() {
 							</Typography>
 							<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(5, 1fr)", justifyContent: "center", gap: 2 }}>
 								{pack.tasks.map((task: any) => {
-									const correct = activity.find((a) => (a.taskId.S && a.correct ? a.taskId.S == task.SK.S.split("#")[1] && a.correct.BOOL === true : a.taskId == task.SK.S.split("#")[1] && a.correct === true));
+									const correct = activity.find((a) => (a.taskId && a.correct ? a.taskId == task.SK.split("#")[1] && a.correct === true : a.taskId == task.SK.split("#")[1] && a.correct === true));
+									if (task.prerequisites && task.prerequisites.length > 0) {
+										const prereqs = task.prerequisites.map((p) => p);
+										const completedPrereqs = prereqs.filter((p) => activity.find((a) => a.taskId == p && a.correct === true));
+										if (completedPrereqs.length != prereqs.length) return null;
+									}
 									return (
 										<Link
 											component="button"
@@ -211,7 +244,7 @@ export default function PlayCompetition() {
 												setSelectedTaskPackId(pack.PK.S);
 												setOpen(true);
 											}}
-											id={task.SK.S.split("#")[1]}
+											id={task.SK.split("#")[1]}
 											disabled={correct}>
 											<Card
 												variant="plain"
@@ -227,12 +260,12 @@ export default function PlayCompetition() {
 													<Typography
 														level="title-lg"
 														textColor="common.white">
-														{task.title.S}
+														{task.title}
 													</Typography>
 													<Typography
 														level="body-sm"
 														textColor="common.white">
-														{task.points.N} point{task.points.N != 1 && "s"}
+														{task.points} point{task.points != 1 && "s"}
 													</Typography>
 												</CardContent>
 											</Card>
@@ -255,6 +288,14 @@ export default function PlayCompetition() {
 					API.get("api", `/competition/${compId}/activity`, {}).then(setActivity);
 				}}
 			/>
+
+			{announceModalOpen && (
+				<AnnounceModal
+					open={announceModalOpen}
+					setOpen={setAnnounceModalOpen}
+					announce={announceMessage}
+				/>
+			)}
 		</div>
 	);
 }

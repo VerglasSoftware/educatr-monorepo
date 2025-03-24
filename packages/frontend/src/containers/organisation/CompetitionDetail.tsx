@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { FaPlus } from "react-icons/fa6";
 import { useParams } from "react-router-dom";
+import Breadcrumb from "../../components/dash/breadcrumb";
 import CompetitionPackTable from "../../components/dash/organisations/CompetitionPackTable";
 
 export default function CompetitionDetail() {
@@ -37,7 +38,13 @@ export default function CompetitionDetail() {
 		onLoad();
 	}, []);
 
-	console.log("teams is: " + JSON.stringify(teams));
+	let teamMembers = [];
+
+	for (const member in teams) {
+		teamMembers = teamMembers.concat(teams[member].students);
+	}
+
+	console.log(teamMembers);
 
 	return (
 		competition && (
@@ -47,38 +54,13 @@ export default function CompetitionDetail() {
 				</Helmet>
 				<div>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumbs
-							size="sm"
-							aria-label="breadcrumbs"
-							separator={<ChevronRightRoundedIcon fontSize="small" />}
-							sx={{ pl: 0 }}>
-							<Link
-								underline="none"
-								color="neutral"
-								href="/"
-								aria-label="Home">
-								<HomeRoundedIcon />
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Dashboard
-							</Link>
-							<Link
-								underline="hover"
-								color="neutral"
-								href="/dash"
-								sx={{ fontSize: 12, fontWeight: 500 }}>
-								Competitions
-							</Link>
-							<Typography
-								color="primary"
-								sx={{ fontWeight: 500, fontSize: 12 }}>
-								{competition.name}
-							</Typography>
-						</Breadcrumbs>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dash" },
+								{ label: "Competitions", href: "/dash/competitions" },
+								{ label: competition.name, href: `/dash/competitions/${compId}` },
+							]}
+						/>
 					</Box>
 
 					<Box
@@ -199,8 +181,8 @@ export default function CompetitionDetail() {
 													<Input
 														size="sm"
 														placeholder="Name"
-														defaultValue={team.name.S}
-														onChange={(e) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, name: { S: e.target.value } } : t)))}
+														defaultValue={team.name}
+														onChange={(e) => setTeams(teams.map((t: any) => (t.SK == team.SK ? { ...t, name: e.target.value } : t)))}
 													/>
 												</FormControl>
 											</Stack>
@@ -211,9 +193,11 @@ export default function CompetitionDetail() {
 														multiple
 														placeholder="Members"
 														size="sm"
-														options={students.map((student: any) => {
-															return { label: `${student.given_name} ${student.family_name}`, value: student.PK };
-														})}
+														options={students
+															.filter((student) => !teamMembers.includes(student.PK))
+															.map((student: any) => {
+																return { label: `${student.given_name} ${student.family_name}`, value: student.PK };
+															})}
 														loading={students.length == 0}
 														value={
 															!team.students || !team.students.SS
@@ -223,7 +207,7 @@ export default function CompetitionDetail() {
 																		return { label: `${student?.given_name} ${student?.family_name}`, value: s };
 																	})
 														}
-														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, students: { SS: v.map((s: any) => s.value) } } : t)))}
+														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK == team.SK ? { ...t, students: v.map((s: any) => s.value) } : t)))}
 													/>
 												</FormControl>
 											</Stack>
@@ -236,8 +220,8 @@ export default function CompetitionDetail() {
 												size="sm">
 												<Button
 													onClick={async () => {
-														await API.del("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {});
-														setTeams(teams.filter((t: any) => t.SK.S != team.SK.S));
+														await API.del("api", `/competition/${compId}/team/${team.SK.split("#")[1]}`, {});
+														setTeams(teams.filter((t: any) => t.SK != team.SK));
 													}}>
 													Delete
 												</Button>
@@ -247,10 +231,10 @@ export default function CompetitionDetail() {
 													onClick={async (e) => {
 														const name = e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement?.querySelectorAll("input")[0].value;
 
-														const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {
+														const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.split("#")[1]}`, {
 															body: {
-																name: team.name.S,
-																students: team.students.SS,
+																name: team.name,
+																students: team.students,
 															},
 														});
 

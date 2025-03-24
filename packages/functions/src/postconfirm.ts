@@ -40,7 +40,7 @@ const handler = async (event: PostConfirmationTriggerEvent) => {
 				"#students": "students",
 			},
 			ExpressionAttributeValues: {
-				":student": [pk],
+				":student": new Set([pk]),
 			},
 		};
 

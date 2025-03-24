@@ -1,5 +1,5 @@
 import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, QueryCommand, UpdateCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
@@ -48,16 +48,25 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params: ScanCommandInput = {
 		TableName: Resource.Packs.name,
-		FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+		KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
-			":packId": { S: pk },
-			":skPrefix": { S: "TASK#" },
+			":packId": pk,
+			":skPrefix": "TASK#",
 		},
 	};
 
 	try {
-		const command = new ScanCommand(params);
+		const command = new QueryCommand(params);
 		const result = await client.send(command);
+		// dev code
+		// 		const packs =
+		// 			result.Items?.map((item) => {
+		// 				const sk = item.SK;
+		// 				const id = sk.split("#")[1];
+		// 				return { ...item, id };
+		// 			}) || [];
+
+		// 		return JSON.stringify(packs);
 		return JSON.stringify(itemsToTasks(result.Items));
 	} catch (e) {
 		console.error(e);
@@ -120,6 +129,7 @@ export const create: Handler = Util.handler(async (event) => {
 			points: data.points,
 			content: data.content,
 			answer: data.answer,
+			stdin: data.stdin,
 			verificationType: data.verificationType,
 			answerType: data.answerType,
 			placeholder: data.placeholder,
@@ -167,17 +177,19 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: packId,
 			SK: "TASK#" + taskId,
 		},
-		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites",
+		UpdateExpression: "SET #title = :title, #subtitle = :subtitle, #points = :points, #content = :content, #answer = :answer, #answerChoices = :answerChoices, #verificationType = :verificationType, #answerType = :answerType, #placeholder = :placeholder, #prerequisites = :prerequisites, #stdin = :stdin",
 		ExpressionAttributeNames: {
 			"#title": "title",
 			"#subtitle": "subtitle",
 			"#points": "points",
 			"#content": "content",
 			"#answer": "answer",
+			"#answerChoices": "answerChoices",
 			"#verificationType": "verificationType",
 			"#answerType": "answerType",
 			"#placeholder": "placeholder",
 			"#prerequisites": "prerequisites",
+			"#stdin": "stdin",
 		},
 		ExpressionAttributeValues: {
 			":title": data.title,
@@ -185,10 +197,12 @@ export const update: Handler = Util.handler(async (event) => {
 			":points": data.points,
 			":content": data.content,
 			":answer": data.answer,
+			":answerChoices": data.answerChoices,
 			":verificationType": data.verificationType,
 			":answerType": data.answerType,
 			":placeholder": data.placeholder,
 			":prerequisites": data.prerequisites,
+			":stdin": data.stdin,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};

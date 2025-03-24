@@ -1,6 +1,6 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, BatchGetItemCommand, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DynamoDBDocumentClient, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, QueryCommand, UpdateCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
@@ -122,6 +122,7 @@ export const update: Handler = Util.handler(async (event) => {
 		name: "",
 		status: "",
 		packs: [],
+		showLeaderboard: true,
 	};
 
 	if (event.body != null) {
@@ -134,16 +135,18 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: compId,
 			SK: "DETAILS",
 		},
-		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs",
+		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs, #showLeaderboard = :showLeaderboard",
 		ExpressionAttributeNames: {
 			"#name": "name",
 			"#status": "status",
 			"#packs": "packs",
+			"#showLeaderboard": "showLeaderboard",
 		},
 		ExpressionAttributeValues: {
 			":name": data.name,
 			":status": data.status,
 			":packs": data.packs,
+			":showLeaderboard": data.showLeaderboard || false,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -153,6 +156,7 @@ export const update: Handler = Util.handler(async (event) => {
 		const competition = itemToCompetition(result.Attributes);
 		return JSON.stringify(competition);
 	} catch (e) {
+		console.log(e);
 		throw new Error("Could not update competition details");
 	}
 });
@@ -419,4 +423,59 @@ export const run: Handler = Util.handler(async (event) => {
 		}
 	}
 	return JSON.stringify({ output: "how did we get here" });
+});
+
+export const getLb: Handler = Util.handler(async (event) => {
+	const { compId: pk } = event.pathParameters || {};
+
+	if (!pk) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const params = {
+		TableName: Resource.Competitions.name,
+		KeyConditionExpression: "PK = :pk",
+		ExpressionAttributeValues: {
+			":pk": pk,
+		},
+	};
+
+	try {
+		const result = await client.send(new QueryCommand(params));
+		if (!result.Items || result.Items.length == 0) {
+			throw new Error("Competition not found");
+		}
+
+		const teamLabels = result.Items.filter((item) => item.SK.startsWith("TEAM#")).reduce((acc: any, item, index) => {
+			acc[item.SK.split("TEAM#")[1]] = item.name;
+			return acc;
+		}, {});
+
+		const timeStarted = parseInt(result.Items.find((item) => item.SK === "DETAILS")?.createdAt);
+		const timeNow = Date.now();
+
+		const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
+
+		let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
+		timestamps = timestamps.slice(-100);
+
+		const teamData = [];
+
+		for (const index in timestamps) {
+			const currentTimestamp = new Date(timestamps[index]);
+			const obj: any = { timestamp: currentTimestamp.getTime() };
+
+			for (const key in teamLabels) {
+				const activity = result.Items.filter((item) => item.SK.startsWith("ACTIVITY") && [...result.Items!.find((team) => team.SK == `TEAM#${key}`)!.students].includes(item.userId) && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
+				obj[key] = activity.length;
+			}
+
+			teamData.push(obj);
+		}
+
+		return JSON.stringify({ teamLabels, teamData });
+	} catch (e) {
+		console.log(e);
+		return JSON.stringify({ error: "Could not retrieve competition" });
+	}
 });

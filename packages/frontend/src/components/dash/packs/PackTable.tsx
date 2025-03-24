@@ -1,22 +1,27 @@
-import * as React from "react";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import Avatar from "@mui/joy/Avatar";
 import Box from "@mui/joy/Box";
-import Divider from "@mui/joy/Divider";
-import Table from "@mui/joy/Table";
-import Sheet from "@mui/joy/Sheet";
 import Checkbox from "@mui/joy/Checkbox";
+import Divider from "@mui/joy/Divider";
+import Dropdown from "@mui/joy/Dropdown";
 import IconButton from "@mui/joy/IconButton";
-import Typography from "@mui/joy/Typography";
 import Menu from "@mui/joy/Menu";
 import MenuButton from "@mui/joy/MenuButton";
 import MenuItem from "@mui/joy/MenuItem";
-import Dropdown from "@mui/joy/Dropdown";
-import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
-import { Link } from "@mui/joy";
+import Sheet from "@mui/joy/Sheet";
+import Table from "@mui/joy/Table";
+import Typography from "@mui/joy/Typography";
 import { API } from "aws-amplify";
+import { Fragment, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function RowMenu({ id }: { id: string }) {
+interface PackTableProps {
+	packs: any[];
+}
+interface RowMenuProps {
+	id: string;
+}
+function RowMenu({ id }: RowMenuProps) {
 	const nav = useNavigate();
 
 	return (
@@ -29,17 +34,13 @@ function RowMenu({ id }: { id: string }) {
 			<Menu
 				size="sm"
 				sx={{ minWidth: 140 }}>
-				<MenuItem onClick={() => nav(`/dash/packs/${id}`)}>Edit</MenuItem>
+				<MenuItem onClick={() => nav(`/dash/packs/${id}/edit`)}>Edit</MenuItem>
 				<Divider />
 				<MenuItem
 					color="danger"
 					onClick={async () => {
 						const confirmed = window.confirm("Are you sure you want to delete this pack?");
-
-						if (!confirmed) {
-							return;
-						}
-
+						if (!confirmed) return;
 						try {
 							await API.del("api", `/pack/${id}`, {});
 						} catch (e) {
@@ -53,25 +54,11 @@ function RowMenu({ id }: { id: string }) {
 	);
 }
 
-export default function PackTable() {
-	const [selected, setSelected] = React.useState<readonly string[]>([]);
-	const [packs, setPacks] = React.useState<any[]>([]);
-
-	React.useEffect(() => {
-		async function onLoad() {
-			try {
-				const packs = await API.get("api", "/pack", {});
-				setPacks(packs);
-			} catch (e) {
-				console.log(e);
-			}
-		}
-
-		onLoad();
-	}, []);
+export default function PackTable({ packs }: PackTableProps) {
+	const [selected, setSelected] = useState<readonly string[]>([]);
 
 	return (
-		<React.Fragment>
+		<Fragment>
 			<Sheet
 				className="OrderTableContainer"
 				variant="plain"
@@ -154,6 +141,6 @@ export default function PackTable() {
 					</tbody>
 				</Table>
 			</Sheet>
-		</React.Fragment>
+		</Fragment>
 	);
 }

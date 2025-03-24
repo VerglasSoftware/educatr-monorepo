@@ -1,12 +1,5 @@
 {
 	"yaml.schemas": {
-		"https://www.artillery.io/schema.json": [
-			"file:///Users/dandabs/educatr-monorepo/test/educatr-load-test.yml",
-			"git:/Users/dandabs/educatr-monorepo/test/educatr-load-test.yml?%7B%22path%22%3A%22%2FUsers%2Fdandabs%2Feducatr-monorepo%2Ftest%2Feducatr-load-test.yml%22%2C%22ref%22%3A%222db046bd21134a19f7595a4e2701dd7d3f53e9bd%22%7D",
-			"git:/Users/dandabs/educatr-monorepo/test/educatr-load-test.yml?%7B%22path%22%3A%22%2FUsers%2Fdandabs%2Feducatr-monorepo%2Ftest%2Feducatr-load-test.yml%22%2C%22ref%22%3A%22daede9c9cd7da12c00f7c03e03828a5b4f141261%22%7D",
-			"git:/Users/dandabs/educatr-monorepo/test/asciiart-load-test.yml?%7B%22path%22%3A%22%2FUsers%2Fdandabs%2Feducatr-monorepo%2Ftest%2Fasciiart-load-test.yml%22%2C%22ref%22%3A%2234d2878cf27a9e17c46d1d98085ac4984f8d522d%22%7D",
-			"git:/Users/dandabs/educatr-monorepo/test/asciiart-load-test.yml?%7B%22path%22%3A%22%2FUsers%2Fdandabs%2Feducatr-monorepo%2Ftest%2Fasciiart-load-test.yml%22%2C%22ref%22%3A%222db046bd21134a19f7595a4e2701dd7d3f53e9bd%22%7D",
-			"git:/Users/dandabs/educatr-monorepo/test/educatr-load-test.yml?%7B%22path%22%3A%22%2FUsers%2Fdandabs%2Feducatr-monorepo%2Ftest%2Feducatr-load-test.yml%22%2C%22ref%22%3A%2234d2878cf27a9e17c46d1d98085ac4984f8d522d%22%7D"
-		]
+		"https://www.artillery.io/schema.json": ["file:///Users/dandabs/educatr-monorepo/test/educatr-load-test.yml", "file:///Users/dandabs/educatr-monorepo/test/asciiart-load-test.yml"]
 	}
 }
