@@ -1,5 +1,5 @@
-import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, QueryCommand, UpdateCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, ReturnValue } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommand, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
@@ -20,6 +20,7 @@ export const itemToTask = (item: Record<string, any> | undefined): Task => {
 		points: parseInt(taskDynamo.points.N),
 		content: taskDynamo.content.S,
 		answer: taskDynamo.answer.S,
+		stdin: taskDynamo.stdin.S,
 		answerChoices: taskDynamo.answerChoices.L.map((choice) => ({
 			correct: choice.M.correct.BOOL,
 			id: choice.M.id.S,
@@ -48,25 +49,16 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params: ScanCommandInput = {
 		TableName: Resource.Packs.name,
-		KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+		FilterExpression: "PK = :pk AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
-			":packId": pk,
-			":skPrefix": "TASK#",
+			":pk": { S: pk },
+			":skPrefix": { S: "TASK#" },
 		},
 	};
 
 	try {
 		const command = new QueryCommand(params);
 		const result = await client.send(command);
-		// dev code
-		// 		const packs =
-		// 			result.Items?.map((item) => {
-		// 				const sk = item.SK;
-		// 				const id = sk.split("#")[1];
-		// 				return { ...item, id };
-		// 			}) || [];
-
-		// 		return JSON.stringify(packs);
 		return JSON.stringify(itemsToTasks(result.Items));
 	} catch (e) {
 		console.error(e);
@@ -108,6 +100,7 @@ export const create: Handler = Util.handler(async (event) => {
 		points: 0,
 		content: "",
 		answer: "",
+		stdin: "",
 		answerChoices: [],
 		verificationType: "",
 		answerType: "",
@@ -158,6 +151,7 @@ export const update: Handler = Util.handler(async (event) => {
 		points: 0,
 		content: "",
 		answer: "",
+		stdin: "",
 		answerChoices: [],
 		verificationType: "",
 		answerType: "",

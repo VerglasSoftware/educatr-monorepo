@@ -1,4 +1,4 @@
-import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, DynamoDBClient, QueryCommand, ReturnValue } from "@aws-sdk/client-dynamodb";
 import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
@@ -36,12 +36,6 @@ export const list: Handler = Util.handler(async (event) => {
 
 	const params: ScanCommandInput = {
 		TableName: Resource.Competitions.name,
-
-		// check this
-		// 		KeyConditionExpression: "PK = :orgId AND begins_with(SK, :skPrefix)",
-		// 		ExpressionAttributeValues: {
-		// 			":orgId": pk,
-		// 			":skPrefix": "TEAM#",
 		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
 			":compId": { S: compId },
@@ -52,55 +46,10 @@ export const list: Handler = Util.handler(async (event) => {
 	try {
 		const command = new QueryCommand(params);
 		const result = await client.send(command);
-		// check this
-		// 		const orgs =
-		// 			result.Items?.map((item) => {
-		// 				const sk = item.SK;
-		// 				const id = sk.split("#")[1];
-		// 				return { ...item, students: [...item.students], id };
-		// 			}) || [];
-
-		// 		return JSON.stringify(orgs);
 		return JSON.stringify(itemsToTeams(result.Items));
 	} catch (e) {
 		console.error(e);
 		throw new Error("Could not retrieve teams");
-	}
-});
-
-// check this
-export const create: Handler = Util.handler(async (event) => {
-	const { orgId: pk } = event.pathParameters || {};
-
-	if (!pk) {
-		throw new Error("Missing ID in path parameters");
-	}
-
-	let data = {
-		name: "",
-		students: [],
-	};
-
-	if (event.body != null) {
-		data = JSON.parse(event.body);
-	} else throw new Error("No body provided");
-
-	const params = {
-		TableName: Resource.Competitions.name,
-		Item: {
-			PK: pk,
-			SK: `TEAM#${createId()}`,
-			name: data.name,
-			createdAt: Date.now(),
-		},
-	};
-
-	try {
-		await client.send(new PutCommand(params));
-		return JSON.stringify(params.Item);
-	} catch (e) {
-		console.log(e);
-		throw new Error("Could not create team");
 	}
 });
 

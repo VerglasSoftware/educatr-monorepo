@@ -5,6 +5,7 @@ export interface TaskDynamo {
 	points: { N: string };
 	content: { S: string };
 	answer: { S: string };
+	stdin: { S: string };
 	answerChoices: {
 		L: {
 			M: {
@@ -28,6 +29,7 @@ export interface Task {
 	points: number;
 	content: string;
 	answer: string;
+	stdin: string
 	answerChoices: {
 		correct: boolean;
 		id: string;
@@ -46,6 +48,7 @@ export interface TaskCreateUpdate {
 	points: number;
 	content: string;
 	answer: string;
+	stdin: string;
 	answerChoices: {
 		correct: boolean;
 		id: string;

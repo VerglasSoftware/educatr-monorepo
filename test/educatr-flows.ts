@@ -120,21 +120,6 @@ export async function helloWorld(page: Page, context, events) {
 					} else {
 						await page.locator("input:visible").fill(question.answer.S);
 					}
-					// check this
-					// 					await page.locator("input:visible").fill(
-					// 						question.answerType.S == "CSHARP"
-					// 							? `using System;
-
-					// 	namespace IglooCode {
-					// 		class Program {
-					// 			static void Main(string[] args) {
-					// 				// Write your code below this line
-					// 				Console.WriteLine("${question.answer.S}");
-					// 			}
-					// 		}
-					// 	}`
-					// 							: question.answer.S
-					// 					);
 					await page.waitForTimeout(1000);
 					await page.locator('button:text("Submit"):visible').click();
 					await page.waitForResponse((response) => response.url().includes("/check"), { timeout: 20000 });
