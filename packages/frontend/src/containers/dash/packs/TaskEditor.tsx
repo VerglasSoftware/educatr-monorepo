@@ -1,23 +1,17 @@
 import { html } from "@codemirror/lang-html";
 import { python } from "@codemirror/lang-python";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
-import CheckIcon from "@mui/icons-material/Check";
-import CodeIcon from "@mui/icons-material/Code";
-import DataObjectIcon from "@mui/icons-material/DataObject";
-import EditIcon from "@mui/icons-material/Edit";
-import HelpIcon from "@mui/icons-material/Help";
-import InputIcon from "@mui/icons-material/Input";
+import { ArrowBack, ArrowForward, AssignmentTurnedIn, Check, Code, DataObject, Edit, Help, Input as InputIcon } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControl, FormLabel, Input, Option, Select, Textarea, Typography } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
 import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
 import { useFormik } from "formik";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
-import Breadcrumb from "../../components/dash/breadcrumb";
+import { Pack } from "../../../../../functions/src/types/pack";
+import { Task } from "../../../../../functions/src/types/task";
+import Breadcrumb from "../../../components/dash/breadcrumb";
 import "./TaskEditor.css";
 
 interface AnswerChoice {
@@ -27,14 +21,10 @@ interface AnswerChoice {
 }
 
 export default function TaskEditor() {
-	const [pack, setPack] = useState<any>();
-	const [tasks, setTasks] = useState<any[]>([]);
-	const [task, setTask] = useState<any>();
+	const [pack, setPack] = useState<Pack>();
+	const [tasks, setTasks] = useState<Task[]>([]);
+	const [task, setTask] = useState<Task>();
 	const [possibleVerificationTypes, setPossibleVerificationTypes] = useState<string[]>([]);
-
-	const placeholderOnChange = useCallback((val, viewUpdate) => {
-		formik.setFieldValue("placeholder", val);
-	}, []);
 
 	const { id } = useParams();
 	const formik = useFormik({
@@ -100,8 +90,8 @@ export default function TaskEditor() {
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const pack = await API.get("api", `/pack/${id}`, {});
-				const tasks = await API.get("api", `/pack/${id}/task`, {});
+				const pack: Pack = await API.get("api", `/pack/${id}`, {});
+				const tasks: Task[] = await API.get("api", `/pack/${id}/task`, {});
 				setPack(pack);
 				setTasks(tasks);
 				setTask(tasks[0]);
@@ -137,18 +127,16 @@ export default function TaskEditor() {
 				content: task.content,
 				placeholder: task.placeholder,
 				answer: task.answer,
-				answerChoices: task.answerChoices
-					? task.answerChoices.map((item) => ({
-							id: item.id,
-							name: item.name,
-							correct: item.correct,
-						}))
-					: [],
+				answerChoices: task.answerChoices.map((item) => ({
+					id: item.id,
+					name: item.name,
+					correct: item.correct,
+				})),
 				answerType: task.answerType,
 				verificationType: task.verificationType,
-				prerequisites: task.prerequisites ? task.prerequisites.map((item) => item) : [],
-				points: parseInt(task.points),
-				stdin: task.stdin ? task.stdin : "",
+				prerequisites: task.prerequisites.map((item) => item),
+				points: task.points,
+				stdin: task.stdin,
 			});
 		}
 	}, [tasks]);
@@ -217,21 +205,19 @@ export default function TaskEditor() {
 									content: tasks[index - 1].content,
 									placeholder: tasks[index - 1].placeholder,
 									answer: tasks[index - 1].answer,
-									answerChoices: tasks[index - 1].answerChoices
-										? tasks[index - 1].answerChoices.map((item) => ({
-												id: item.id,
-												name: item.name,
-												correct: item.correct,
-											}))
-										: [],
+									answerChoices: tasks[index - 1].answerChoices.map((item) => ({
+										id: item.id,
+										name: item.name,
+										correct: item.correct,
+									})),
 									answerType: tasks[index - 1].answerType,
 									verificationType: tasks[index - 1].verificationType,
-									prerequisites: tasks[index - 1].prerequisites ? tasks[index - 1].prerequisites.L.map((item) => item) : [],
-									points: parseInt(tasks[index - 1].points),
-									stdin: tasks[index - 1].stdin ? tasks[index - 1].stdin : "",
+									prerequisites: tasks[index - 1].prerequisites.map((item) => item),
+									points: tasks[index - 1].points,
+									stdin: tasks[index - 1].stdin,
 								});
 							}}>
-							<ArrowBackIcon />
+							<ArrowBack />
 						</Button>
 						<Typography
 							level="h3"
@@ -268,21 +254,19 @@ export default function TaskEditor() {
 									content: tasks[index + 1].content,
 									placeholder: tasks[index + 1].placeholder,
 									answer: tasks[index + 1].answer,
-									answerChoices: tasks[index + 1].answerChoices
-										? tasks[index + 1].answerChoices.map((item) => ({
-												id: item.id,
-												name: item.name,
-												correct: item.correct,
-											}))
-										: [],
+									answerChoices: tasks[index + 1].answerChoices.map((item) => ({
+										id: item.id,
+										name: item.name,
+										correct: item.correct,
+									})),
 									answerType: tasks[index + 1].answerType,
 									verificationType: tasks[index + 1].verificationType,
-									prerequisites: tasks[index + 1].prerequisites ? tasks[index + 1].prerequisites.map((item) => item) : [],
-									points: parseInt(tasks[index + 1].points),
-									stdin: tasks[index + 1].stdin ? tasks[index + 1].stdin : "",
+									prerequisites: tasks[index + 1].prerequisites.map((item) => item),
+									points: tasks[index + 1].points,
+									stdin: tasks[index + 1].stdin,
 								});
 							}}>
-							<ArrowForwardIcon />
+							<ArrowForward />
 						</Button>
 					</Box>
 					<form onSubmit={formik.handleSubmit}>
@@ -290,7 +274,7 @@ export default function TaskEditor() {
 							<Box sx={{ gridColumn: "span 3" }}>
 								<Box sx={{ display: "flex", flexDirection: "column", gap: 2, overflow: "auto", height: "calc(100vh - 14rem)" }}>
 									<FormLabel className="flex items-center">
-										<AssignmentTurnedInIcon className="mr-1" />
+										<AssignmentTurnedIn className="mr-1" />
 										Title
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -303,7 +287,7 @@ export default function TaskEditor() {
 										/>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<HelpIcon className="mr-1" />
+										<Help className="mr-1" />
 										Description
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -316,7 +300,7 @@ export default function TaskEditor() {
 										/>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<EditIcon className="mr-1" />
+										<Edit className="mr-1" />
 										Content
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -331,7 +315,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MULTIPLE" && formik.getFieldProps("answerType").value == "MULTIPLE" && (
 										<>
 											<FormLabel className="flex items-center">
-												<AssignmentTurnedInIcon className="mr-1" />
+												<AssignmentTurnedIn className="mr-1" />
 												Answer choices
 											</FormLabel>
 											{formik.values.answerChoices.map((item, index) => (
@@ -381,7 +365,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "MULTIPLE" && (
 										<>
 											<FormLabel className="flex items-center">
-												<AssignmentTurnedInIcon className="mr-1" />
+												<AssignmentTurnedIn className="mr-1" />
 												Answer choices
 											</FormLabel>
 											{formik.values.answerChoices.map((item, index) => (
@@ -422,7 +406,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "COMPARE" && formik.getFieldProps("answerType").value == "TEXT" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CheckIcon className="mr-1" />
+												<Check className="mr-1" />
 												Answer
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -439,7 +423,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "ALGORITHM" && formik.getFieldProps("answerType").value == "PYTHON" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -448,11 +432,13 @@ export default function TaskEditor() {
 													height="50vh"
 													extensions={[python()]}
 													value={formik.values.placeholder}
-													onChange={placeholderOnChange}
+													onChange={(newValue) => {
+														formik.setFieldValue("placeholder", newValue);
+													}}
 												/>
 											</FormControl>
 											<FormLabel className="flex items-center">
-												<CheckIcon className="mr-1" />
+												<Check className="mr-1" />
 												Stdout value
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -482,7 +468,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "PYTHON" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -491,7 +477,9 @@ export default function TaskEditor() {
 													height="50vh"
 													extensions={[python()]}
 													value={formik.values.placeholder}
-													onChange={placeholderOnChange}
+													onChange={(newValue) => {
+														formik.setFieldValue("placeholder", newValue);
+													}}
 												/>
 											</FormControl>
 										</>
@@ -499,7 +487,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "ALGORITHM" && formik.getFieldProps("answerType").value == "CSHARP" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -509,13 +497,12 @@ export default function TaskEditor() {
 													extensions={[csharp()]}
 													value={formik.values.placeholder}
 													onChange={(newValue) => {
-														console.log(newValue);
 														formik.setFieldValue("placeholder", newValue);
 													}}
 												/>
 											</FormControl>
 											<FormLabel className="flex items-center">
-												<CheckIcon className="mr-1" />
+												<Check className="mr-1" />
 												Stdout value
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -545,7 +532,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "CSHARP" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -562,7 +549,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "WEB" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -581,7 +568,7 @@ export default function TaskEditor() {
 							<Box sx={{ gridColumn: "span 1" }}>
 								<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 									<FormLabel className="flex items-center">
-										<DataObjectIcon className="mr-1" />
+										<DataObject className="mr-1" />
 										Answer Type
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -624,7 +611,7 @@ export default function TaskEditor() {
 										</Select>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<CheckIcon className="mr-1" />
+										<Check className="mr-1" />
 										Verification Type
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -649,7 +636,7 @@ export default function TaskEditor() {
 										</Select>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<CheckIcon className="mr-1" />
+										<Check className="mr-1" />
 										Points
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -664,7 +651,7 @@ export default function TaskEditor() {
 										/>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<AssignmentTurnedInIcon className="mr-1" />
+										<AssignmentTurnedIn className="mr-1" />
 										Prerequisites
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>

@@ -4,22 +4,22 @@ import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
-import { Organisation, OrganisationCreateUpdate, OrganisationDynamo } from "./types/organisation";
+import { Organisation, OrganisationCreateUpdate } from "./types/organisation";
 import { itemsToUsers } from "./user";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-const itemToOrganisation = (item: Record<string, any> | undefined): Organisation => {
+export const itemToOrganisation = (item: Record<string, any> | undefined): Organisation => {
 	if (!item) {
 		throw new Error("Item not found");
 	}
-	const packDynamo: OrganisationDynamo = item as unknown as OrganisationDynamo;
+	const isDynamoFormat = (val: any) => typeof val === "object" && val !== null && ("S" in val || "N" in val || "L" in val);
 	return {
-		id: packDynamo.PK.S,
-		name: packDynamo.name.S,
-		logo: packDynamo.logo.S,
-		students: packDynamo.students.L.map((student) => student.S),
-		createdAt: new Date(parseInt(packDynamo.createdAt.N)).toISOString(),
+		id: isDynamoFormat(item.PK) ? item.PK.S : (item.PK as string),
+		name: isDynamoFormat(item.name) ? item.name.S : (item.name as string),
+		logo: isDynamoFormat(item.logo) ? item.logo.S : (item.logo as string),
+		students: isDynamoFormat(item.students) ? item.students.L.map((student: any) => student.S) : item.students,
+		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N as string)).toISOString() : new Date(item.createdAt as string).toISOString(),
 	};
 };
 
@@ -44,20 +44,20 @@ export const list: Handler = Util.handler(async (event) => {
 		const organisations = itemsToOrganisations(result.Items);
 		return JSON.stringify(organisations);
 	} catch (e) {
-		throw new Error("Could not retrieve organiations");
+		throw new Error(`Could not retrieve organisations: ${e}`);
 	}
 });
 
 export const get: Handler = Util.handler(async (event) => {
 	const { orgId } = event.pathParameters || {};
 	if (!orgId) {
-		throw new Error("Missing ID in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
 	const params: GetCommandInput = {
 		TableName: Resource.Organisations.name,
 		Key: {
-			PK: "ORG#" + orgId,
+			PK: orgId,
 			SK: "DETAILS",
 		},
 	};
@@ -65,9 +65,12 @@ export const get: Handler = Util.handler(async (event) => {
 	try {
 		const result = await client.send(new GetCommand(params));
 		const organisation = itemToOrganisation(result.Item);
+		if (!organisation) {
+			throw new Error("Organisation not found");
+		}
 		return JSON.stringify(organisation);
 	} catch (e) {
-		throw new Error("Could not retrieve organisation");
+		throw new Error(`Could not retrieve organisation ${orgId}: ${e}`);
 	}
 });
 
@@ -99,14 +102,14 @@ export const create: Handler = Util.handler(async (event) => {
 		const organisation = itemToOrganisation(result.Attributes);
 		return JSON.stringify(organisation);
 	} catch (e) {
-		throw new Error("Could not create organisation");
+		throw new Error(`Could not create organisation: ${e}`);
 	}
 });
 
 export const update: Handler = Util.handler(async (event) => {
 	const { orgId } = event.pathParameters || {};
 	if (!orgId) {
-		throw new Error("Missing PK in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
 	let data: OrganisationCreateUpdate = {
@@ -122,7 +125,7 @@ export const update: Handler = Util.handler(async (event) => {
 	const params: UpdateCommandInput = {
 		TableName: Resource.Organisations.name,
 		Key: {
-			PK: "ORG#" + orgId,
+			PK: orgId,
 			SK: "DETAILS",
 		},
 		UpdateExpression: "SET #name = :name, #logo = :logo, #students = :students",
@@ -144,35 +147,48 @@ export const update: Handler = Util.handler(async (event) => {
 		const organisation = itemToOrganisation(result.Attributes);
 		return JSON.stringify(organisation);
 	} catch (e) {
-		throw new Error("Could not update organisation details");
+		throw new Error(`Could not update organisation ${orgId}: ${e}`);
 	}
 });
 
 export const del: Handler = Util.handler(async (event) => {
 	const { orgId } = event.pathParameters || {};
 	if (!orgId) {
-		throw new Error("Missing PK in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
-	const params: DeleteCommandInput = {
+	const params: ScanCommandInput = {
 		TableName: Resource.Organisations.name,
-		Key: {
-			PK: orgId,
+		FilterExpression: "PK = :pk",
+		ExpressionAttributeValues: {
+			":pk": { S: orgId },
 		},
 	};
 
 	try {
-		await client.send(new DeleteCommand(params));
-		return JSON.stringify({ message: `Organisation with PK ${orgId} has been deleted` });
+		const result = await client.send(new ScanCommand(params));
+		if (result.Items) {
+			for (const item of result.Items) {
+				const deleteParams: DeleteCommandInput = {
+					TableName: Resource.Organisations.name,
+					Key: {
+						PK: item.PK.S,
+						SK: item.SK.S,
+					},
+				};
+				await client.send(new DeleteCommand(deleteParams));
+			}
+		}
+		return JSON.stringify({ success: true });
 	} catch (e) {
-		return JSON.stringify({ message: `Could not delete organisation with PK ${orgId}` });
+		throw new Error(`Could not delete all SKs for organisation ${orgId}: ${e}`);
 	}
 });
 
 export const listStudents: Handler = Util.handler(async (event) => {
 	const { orgId } = event.pathParameters || {};
 	if (!orgId) {
-		throw new Error("Missing ID in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
 	const params = {
@@ -185,7 +201,11 @@ export const listStudents: Handler = Util.handler(async (event) => {
 
 	try {
 		const result = await client.send(new GetCommand(params));
-		const students = itemToOrganisation(result.Item).students;
+		if (!result.Item) {
+			throw new Error("Organisation not found");
+		}
+		const org = itemToOrganisation(result.Item);
+		const students = org.students;
 
 		const userParams: ScanCommandInput = {
 			TableName: Resource.Users.name,
@@ -197,9 +217,8 @@ export const listStudents: Handler = Util.handler(async (event) => {
 
 		const userResult = await client.send(new ScanCommand(userParams));
 		const users = itemsToUsers(userResult.Items);
-
 		return JSON.stringify(users);
 	} catch (e) {
-		throw new Error("Could not retrieve organisation");
+		throw new Error(`Could not retrieve students for organisation ${orgId}: ${e}`);
 	}
 });

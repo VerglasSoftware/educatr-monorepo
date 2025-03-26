@@ -1,25 +1,24 @@
 import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
-import { itemsToTasks } from "./task";
-import { Pack, PackCreateUpdate, PackDynamo, PackWithTasks } from "./types/pack";
+import { Pack, PackCreateUpdate } from "./types/pack";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-const itemToPack = (item: Record<string, any> | undefined): Pack => {
+export const itemToPack = (item: Record<string, any> | undefined): Pack => {
 	if (!item) {
 		throw new Error("Item not found");
 	}
-	const packDynamo: PackDynamo = item as unknown as PackDynamo;
+	const isDynamoFormat = (val: any) => typeof val === "object" && val !== null && ("S" in val || "N" in val);
 	return {
-		id: packDynamo.PK.S,
-		name: packDynamo.name.S,
-		description: packDynamo.description.S,
-		ownerId: packDynamo.ownerId.S,
-		createdAt: new Date(parseInt(packDynamo.createdAt.N)).toISOString(),
+		id: isDynamoFormat(item.PK) ? item.PK.S : (item.PK as string),
+		name: isDynamoFormat(item.name) ? item.name.S : (item.name as string),
+		description: isDynamoFormat(item.description) ? item.description.S : (item.description as string),
+		ownerId: isDynamoFormat(item.ownerId) ? item.ownerId.S : (item.ownerId as string),
+		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N as string)).toISOString() : new Date(item.createdAt as string).toISOString(),
 	};
 };
 
@@ -31,8 +30,6 @@ const itemsToPacks = (items: Record<string, AttributeValue>[] | undefined): Pack
 };
 
 export const list: Handler = Util.handler(async (event) => {
-	const includeTasks = event.queryStringParameters?.include === "tasks";
-
 	const params: ScanCommandInput = {
 		TableName: Resource.Packs.name,
 		FilterExpression: "SK = :sk",
@@ -42,46 +39,18 @@ export const list: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		const command = new ScanCommand(params);
-		const result = await client.send(command);
+		const result = await client.send(new ScanCommand(params));
 		const packs = itemsToPacks(result.Items);
-
-		if (!includeTasks) {
-			return JSON.stringify(packs);
-		}
-
-		// Fetch tasks for each pack
-		const packsWithTasks = await Promise.all(
-			packs.map(async (pack) => {
-				const tasksParams: ScanCommandInput = {
-					TableName: Resource.Packs.name,
-					KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
-					ExpressionAttributeValues: {
-						":packId": { S: pack.id },
-						":skPrefix": { S: "TASK#" },
-					},
-				};
-
-				const tasksCommand = new QueryCommand(params);
-				const tasksResult = await client.send(tasksCommand);
-				const tasks = itemsToTasks(tasksResult.Items);
-
-				return { ...pack, tasks } as PackWithTasks;
-			})
-		);
-
-		return JSON.stringify(packsWithTasks);
+		return JSON.stringify(packs);
 	} catch (e) {
-		console.error(e);
-		throw new Error("Could not retrieve packs");
+		throw new Error(`Could not retrieve packs: ${e}`);
 	}
 });
 
 export const get: Handler = Util.handler(async (event) => {
-	const includeTasks = event.queryStringParameters?.include === "tasks";
 	const { packId } = event.pathParameters || {};
 	if (!packId) {
-		throw new Error("Missing ID in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
 	const params: GetCommandInput = {
@@ -95,31 +64,16 @@ export const get: Handler = Util.handler(async (event) => {
 	try {
 		const result = await client.send(new GetCommand(params));
 		const pack = itemToPack(result.Item);
-		if (!includeTasks) {
-			return JSON.stringify(pack);
+		if (!pack) {
+			throw new Error("Pack not found");
 		}
-
-		const tasksParams: ScanCommandInput = {
-			TableName: Resource.Packs.name,
-			FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
-			ExpressionAttributeValues: {
-				":packId": { S: packId },
-				":skPrefix": { S: "TASK#" },
-			},
-		};
-
-		const tasksCommand = new ScanCommand(tasksParams);
-		const tasksResult = await client.send(tasksCommand);
-		const tasks = itemsToTasks(tasksResult.Items);
-
-		return JSON.stringify({ ...pack, tasks });
+		return JSON.stringify(pack);
 	} catch (e) {
-		throw new Error("Could not retrieve pack");
+		throw new Error(`Could not retrieve pack ${packId}: ${e}`);
 	}
 });
 
 export const create: Handler = Util.handler(async (event) => {
-	const includeTasks = event.queryStringParameters?.include === "tasks";
 	const data: PackCreateUpdate = {
 		name: "",
 		description: "",
@@ -142,35 +96,18 @@ export const create: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		const result = await client.send(new PutCommand(params));
-		if (!includeTasks) {
-			return JSON.stringify(itemToPack(result.Attributes));
-		}
-
-		const tasksParams: ScanCommandInput = {
-			TableName: Resource.Packs.name,
-			FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
-			ExpressionAttributeValues: {
-				":packId": { S: params.Item!.PK.S },
-				":skPrefix": { S: "TASK#" },
-			},
-		};
-
-		const tasksCommand = new ScanCommand(tasksParams);
-		const tasksResult = await client.send(tasksCommand);
-		const tasks = itemsToTasks(tasksResult.Items);
-
-		return JSON.stringify({ ...itemToPack(result.Attributes), tasks });
+		await client.send(new PutCommand(params));
+		const pack = itemToPack(params.Item);
+		return JSON.stringify(pack);
 	} catch (e) {
-		throw new Error("Could not create pack");
+		throw new Error(`Could not create pack: ${e}`);
 	}
 });
 
 export const update: Handler = Util.handler(async (event) => {
-	const includeTasks = event.queryStringParameters?.include === "tasks";
 	const { packId } = event.pathParameters || {};
 	if (!packId) {
-		throw new Error("Missing PK in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
 	let data: PackCreateUpdate = {
@@ -203,46 +140,42 @@ export const update: Handler = Util.handler(async (event) => {
 	try {
 		const result = await client.send(new UpdateCommand(params));
 		const pack = itemToPack(result.Attributes);
-		if (!includeTasks) {
-			return JSON.stringify(pack);
-		}
-
-		const tasksParams: ScanCommandInput = {
-			TableName: Resource.Packs.name,
-			FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
-			ExpressionAttributeValues: {
-				":packId": { S: packId },
-				":skPrefix": { S: "TASK#" },
-			},
-		};
-
-		const tasksCommand = new ScanCommand(tasksParams);
-		const tasksResult = await client.send(tasksCommand);
-		const tasks = itemsToTasks(tasksResult.Items);
-
-		return JSON.stringify({ ...pack, tasks });
+		return JSON.stringify(pack);
 	} catch (e) {
-		throw new Error("Could not update pack details");
+		throw new Error(`Could not update pack ${packId}: ${e}`);
 	}
 });
 
 export const del: Handler = Util.handler(async (event) => {
 	const { packId } = event.pathParameters || {};
 	if (!packId) {
-		throw new Error("Missing PK in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
-	const params = {
+	const params: ScanCommandInput = {
 		TableName: Resource.Packs.name,
-		Key: {
-			PK: packId,
+		FilterExpression: "PK = :pk",
+		ExpressionAttributeValues: {
+			":pk": { S: packId },
 		},
 	};
 
 	try {
-		await client.send(new DeleteCommand(params));
-		return JSON.stringify({ message: `Pack with PK ${packId} has been deleted` });
-	} catch (error) {
-		return JSON.stringify({ message: `Could not delete pack with PK ${packId}` });
+		const result = await client.send(new ScanCommand(params));
+		if (result.Items) {
+			for (const item of result.Items) {
+				const deleteParams: DeleteCommandInput = {
+					TableName: Resource.Packs.name,
+					Key: {
+						PK: item.PK.S,
+						SK: item.SK.S,
+					},
+				};
+				await client.send(new DeleteCommand(deleteParams));
+			}
+		}
+		return JSON.stringify({ success: true });
+	} catch (e) {
+		throw new Error(`Could not delete all SKs for pack ${packId}: ${e}`);
 	}
 });

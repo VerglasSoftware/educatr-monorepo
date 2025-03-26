@@ -4,7 +4,7 @@ export interface Activity {
 	taskId: string;
 	verifierId: string;
 	status: string;
-	correct: string;
+	correct: boolean;
 	createdAt: string;
 }
 
@@ -15,7 +15,7 @@ export interface ActivityDynamo {
 	taskId: { S: string };
 	verifierId: { S: string };
 	status: { S: string };
-	correct: { S: string };
+	correct: { BOOL: boolean };
 	createdAt: { N: string };
 }
 
@@ -24,5 +24,5 @@ export interface ActivityCreateUpdate {
 	taskId: string;
 	verifierId: string;
 	status: string;
-	correct: string;
+	correct: boolean;
 }

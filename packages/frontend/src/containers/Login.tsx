@@ -10,13 +10,12 @@ import "./Login.css";
 
 export default function Login({ useEmail = false }) {
 	const { isAuthenticated, userHasAuthenticated } = useAppContext();
-
+	const [isLoading, setIsLoading] = useState(false);
 	const [fields, handleFieldChange] = useFormFields({
 		username: "",
 		password: "",
 	});
 
-	const [isLoading, setIsLoading] = useState(false);
 
 	function validateForm() {
 		return fields.username.length > 0 && fields.password.length > 0;
@@ -24,7 +23,6 @@ export default function Login({ useEmail = false }) {
 
 	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-
 		setIsLoading(true);
 
 		try {
@@ -43,7 +41,6 @@ export default function Login({ useEmail = false }) {
 
 	async function handleLogout() {
 		await Auth.signOut();
-
 		userHasAuthenticated(false);
 	}
 
@@ -70,7 +67,6 @@ export default function Login({ useEmail = false }) {
 							onChange={handleFieldChange}
 						/>
 					</Form.Group>
-
 					{isAuthenticated ? (
 						<a
 							href="#"

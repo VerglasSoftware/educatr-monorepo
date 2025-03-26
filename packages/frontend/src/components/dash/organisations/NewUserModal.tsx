@@ -1,24 +1,19 @@
-import * as React from "react";
-import Button from "@mui/joy/Button";
-import FormControl from "@mui/joy/FormControl";
-import FormLabel from "@mui/joy/FormLabel";
-import Input from "@mui/joy/Input";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import DialogTitle from "@mui/joy/DialogTitle";
-import DialogContent from "@mui/joy/DialogContent";
-import Stack from "@mui/joy/Stack";
-import { useNavigate, useParams } from "react-router-dom";
-import { API, Auth } from "aws-amplify";
+import { Button, DialogContent, DialogTitle, FormControl, FormLabel, Input, Modal, ModalDialog, Stack } from "@mui/joy";
+import { Auth } from "aws-amplify";
+import { Dispatch, Fragment, SetStateAction } from "react";
+import { useNavigate } from "react-router-dom";
+import { Organisation } from "../../../../../functions/src/types/organisation";
 
-export default function NewUserModal({ open, setOpen, organisation }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; organisation: any }) {
+interface NewUserModalProps {
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	organisation: Organisation;
+}
+
+export default function NewUserModal({ open, setOpen, organisation }: NewUserModalProps) {
 	const nav = useNavigate();
-	const { orgId } = useParams();
-
-	console.log(organisation);
-
 	return (
-		<React.Fragment>
+		<Fragment>
 			<Modal
 				open={open}
 				onClose={() => setOpen(false)}>
@@ -28,18 +23,21 @@ export default function NewUserModal({ open, setOpen, organisation }: { open: bo
 					<form
 						onSubmit={async (event: React.FormEvent<HTMLFormElement>) => {
 							event.preventDefault();
+							const form = event.currentTarget;
+							const username = (form.elements.namedItem("username") as HTMLInputElement).value;
+							const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+							const givenName = (form.elements.namedItem("givenName") as HTMLInputElement).value;
+							const familyName = (form.elements.namedItem("familyName") as HTMLInputElement).value;
 
-							const user = await Auth.signUp({
-								username: (event.currentTarget.elements[2] as any).value,
-								password: (event.currentTarget.elements[3] as any).value,
+							await Auth.signUp({
+								username,
+								password,
 								attributes: {
-									given_name: (event.currentTarget.elements[0] as any).value,
-									family_name: (event.currentTarget.elements[1] as any).value,
-									"custom:initial": organisation.PK.split("#")[1],
+									given_name: givenName,
+									family_name: familyName,
+									"custom:initial": organisation.id,
 								},
 							});
-							console.log(user);
-
 							nav(0);
 						}}>
 						<Stack spacing={2}>
@@ -77,6 +75,6 @@ export default function NewUserModal({ open, setOpen, organisation }: { open: bo
 					</form>
 				</ModalDialog>
 			</Modal>
-		</React.Fragment>
+		</Fragment>
 	);
 }

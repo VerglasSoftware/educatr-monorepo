@@ -1,19 +1,18 @@
 import { Box, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
-import { API } from "aws-amplify";
+import { API, Auth } from "aws-amplify";
 import { cardio, pulsar } from "ldrs";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import AnnounceModal from "../../components/play/AnnounceModal";
 import Loading from "../../components/play/Loading";
 import NavbarMain from "../../components/play/Navbar";
 import NotInProgress from "../../components/play/NotInProgress";
 import { PDF417 } from "../../components/play/PDF417";
 import TaskModal from "../../components/play/TaskModal";
 import "./Play.css";
-import AnnounceModal from "../../components/play/AnnounceModal";
-import { toast } from "react-toastify";
-import { Auth } from "aws-amplify";
 
 export default function PlayCompetition() {
 	const [competition, setCompetition] = useState<any>();

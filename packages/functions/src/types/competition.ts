@@ -3,6 +3,7 @@ export interface Competition {
 	name: string;
 	status: string;
 	userStartedById: string; // AWS Cognito username // basically who created the competition
+	showLeaderboard: boolean;
 	packs: string[];
 	organisationId: string;
 	createdAt: string;
@@ -13,6 +14,7 @@ export interface CompetitionDynamo {
 	SK: { S: string };
 	name: { S: string };
 	status: { S: string };
+	showLeaderboard: { BOOL: boolean };
 	userStartedById: { S: string };
 	packs: { L: { S: string }[] };
 	organisationId: { S: string };
@@ -22,6 +24,7 @@ export interface CompetitionDynamo {
 export interface CompetitionCreate {
 	name: string;
 	status: string;
+	showLeaderboard: boolean;
 	organisationId: string;
 	packs: string[];
 }
@@ -29,6 +32,7 @@ export interface CompetitionCreate {
 export interface CompetitionUpdate {
 	name: string;
 	status: string;
+	showLeaderboard: boolean;
 	packs: string[];
 }
 

@@ -1,30 +1,36 @@
 import { Button, DialogContent, DialogTitle, FormControl, FormLabel, Input, Modal, ModalDialog, Stack } from "@mui/joy";
 import { API } from "aws-amplify";
 import { Dispatch, FormEvent, Fragment, SetStateAction } from "react";
+import { useParams } from "react-router-dom";
 
-interface NewPackModalProps {
+interface NewCompetitionModalProps {
 	open: boolean;
 	setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-export default function NewPackModal({ open, setOpen }: NewPackModalProps) {
+export default function NewCompetitionModal({ open, setOpen }: NewCompetitionModalProps) {
+	const { orgId } = useParams();
+
 	return (
 		<Fragment>
 			<Modal
 				open={open}
 				onClose={() => setOpen(false)}>
 				<ModalDialog>
-					<DialogTitle>Create new pack</DialogTitle>
-					<DialogContent>Fill in the information of the pack.</DialogContent>
+					<DialogTitle>Create new competition</DialogTitle>
+					<DialogContent>Fill in the information of the competition.</DialogContent>
 					<form
 						onSubmit={async (event: FormEvent<HTMLFormElement>) => {
 							event.preventDefault();
-							await API.post("api", "/pack", {
+							const form = event.currentTarget as HTMLFormElement;
+							const nameInput = form.elements.namedItem("name") as HTMLInputElement;
+							await API.post("api", `/competition`, {
 								body: {
-									name: (event.currentTarget.elements[0] as HTMLInputElement).value,
-									description: (event.currentTarget.elements[1] as HTMLInputElement).value,
+									name: nameInput.value,
+									organisationId: orgId,
 								},
 							});
+
 							setOpen(false);
 						}}>
 						<Stack spacing={2}>
@@ -34,10 +40,6 @@ export default function NewPackModal({ open, setOpen }: NewPackModalProps) {
 									autoFocus
 									required
 								/>
-							</FormControl>
-							<FormControl>
-								<FormLabel>Description</FormLabel>
-								<Input required />
 							</FormControl>
 							<Button type="submit">Create</Button>
 						</Stack>

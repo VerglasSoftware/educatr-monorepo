@@ -1,5 +1,5 @@
 import { Auth } from "aws-amplify";
-import React, { useState } from "react";
+import { FormEvent, useState } from "react";
 import Form from "react-bootstrap/Form";
 import Stack from "react-bootstrap/Stack";
 import { useNavigate } from "react-router-dom";
@@ -8,32 +8,33 @@ import { useFormFields } from "../lib/hooksLib";
 import "./SignupTeacher.css";
 
 export default function SignupTeacher() {
+	const [isLoading, setIsLoading] = useState(false);
 	const [fields, handleFieldChange] = useFormFields({
 		email: "",
+		given_name: "",
+		family_name: "",
 		password: "",
 		confirmPassword: "",
 	});
-
 	const nav = useNavigate();
-	const [isLoading, setIsLoading] = useState(false);
 
 	function validateForm() {
 		return fields.email.length > 0 && fields.password.length > 0 && fields.password === fields.confirmPassword;
 	}
 
-	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-
 		setIsLoading(true);
 
 		try {
 			const r = (Math.random() + 1).toString(36).substring(7);
-
 			await Auth.signUp({
 				username: fields.email.split("@")[0] + "-" + r,
 				password: fields.password,
 				attributes: {
 					email: fields.email,
+					given_name: fields.given_name,
+					family_name: fields.family_name,
 				},
 			});
 
@@ -65,6 +66,26 @@ export default function SignupTeacher() {
 							autoComplete="email"
 						/>
 					</Form.Group>
+					<Form.Group controlId="given_name">
+						<Form.Label>First Name</Form.Label>
+						<Form.Control
+							size="lg"
+							type="text"
+							value={fields.given_name}
+							onChange={handleFieldChange}
+							autoComplete="given-name"
+						/>
+					</Form.Group>
+					<Form.Group controlId="family_name">
+						<Form.Label>Last Name</Form.Label>
+						<Form.Control
+							size="lg"
+							type="text"
+							value={fields.family_name}
+							onChange={handleFieldChange}
+							autoComplete="family-name"
+						/>
+					</Form.Group>
 					<Form.Group controlId="password">
 						<Form.Label>Password</Form.Label>
 						<Form.Control
@@ -85,7 +106,6 @@ export default function SignupTeacher() {
 							autoComplete="new-password"
 						/>
 					</Form.Group>
-
 					<LoaderButton
 						size="lg"
 						type="submit"

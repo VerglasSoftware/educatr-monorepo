@@ -8,12 +8,12 @@ const Callback = () => {
 				// Check if we have the tokens in the URL fragment
 				const hash = window.location.hash;
 				if (hash) {
-					const tokens: any = hash
+					const tokens: { [key: string]: string } = hash
 						.substring(1)
 						.split("&")
-						.reduce((acc: any, item) => {
+						.reduce<Record<string, string>>((acc: Record<string, string>, item: string) => {
 							const [key, value] = item.split("=");
-							acc[key] = decodeURIComponent(value);
+							acc[key] = decodeURIComponent(value ?? "");
 							return acc;
 						}, {});
 

@@ -1,63 +1,25 @@
-import * as React from "react";
-import Avatar from "@mui/joy/Avatar";
-import Box from "@mui/joy/Box";
-import Divider from "@mui/joy/Divider";
-import Table from "@mui/joy/Table";
-import Sheet from "@mui/joy/Sheet";
-import Checkbox from "@mui/joy/Checkbox";
-import IconButton from "@mui/joy/IconButton";
-import Typography from "@mui/joy/Typography";
-import Menu from "@mui/joy/Menu";
-import MenuButton from "@mui/joy/MenuButton";
-import MenuItem from "@mui/joy/MenuItem";
-import Dropdown from "@mui/joy/Dropdown";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import { Box, Button, Checkbox, Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Option, Select, Sheet, Table, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
-import { useParams } from "react-router-dom";
-import { Button, Option, Select } from "@mui/joy";
+import { Fragment, useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
+import { useParams } from "react-router-dom";
+import { Competition } from "../../../../../functions/src/types/competition";
+import { Pack } from "../../../../../functions/src/types/pack";
 
-function RowMenu({ compId, packId, competition, packs, setPacks }: { compId: string; packId: string; competition: any; packs: any; setPacks: any }) {
-	return (
-		<Dropdown>
-			<MenuButton
-				slots={{ root: IconButton }}
-				slotProps={{ root: { variant: "plain", color: "neutral", size: "sm" } }}>
-				<MoreHorizRoundedIcon />
-			</MenuButton>
-			<Menu
-				size="sm"
-				sx={{ minWidth: 140 }}>
-				<Divider />
-				<MenuItem
-					color="danger"
-					onClick={async () => {
-						const updatedCompetition = await API.put("api", `/competition/${compId}`, {
-							body: {
-								name: competition.name,
-								status: competition.status || "",
-								packs: packs.filter((p: any) => p !== packId),
-							},
-						});
-
-						setPacks(updatedCompetition.packs);
-					}}>
-					Remove
-				</MenuItem>
-			</Menu>
-		</Dropdown>
-	);
+interface CompetitionPackTableProps {
+	competition: Competition;
 }
 
-export default function CompetitionPackTable({ competition }: { competition: any }) {
-	const [selected, setSelected] = React.useState<readonly string[]>([]);
-	const [packs, setPacks] = React.useState<any[]>([]);
-	const [availablePacks, setAvailablePacks] = React.useState<any[]>([]);
-	const [selectedPack, setSelectedPack] = React.useState<string>("");
+export default function CompetitionPackTable({ competition }: CompetitionPackTableProps) {
+	const [selected, setSelected] = useState<readonly string[]>([]);
+	const [packs, setPacks] = useState<string[]>([]);
+	const [availablePacks, setAvailablePacks] = useState<Pack[]>([]);
+	const [selectedPack, setSelectedPack] = useState<string>("");
 
 	const { compId } = useParams();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		async function onLoad() {
 			try {
 				const availablePacks = await API.get("api", `/pack`, {});
@@ -71,10 +33,8 @@ export default function CompetitionPackTable({ competition }: { competition: any
 		onLoad();
 	}, []);
 
-	console.log(competition.packs);
-
 	return (
-		<React.Fragment>
+		<Fragment>
 			<Box
 				sx={{
 					display: "flex",
@@ -93,12 +53,12 @@ export default function CompetitionPackTable({ competition }: { competition: any
 					sx={{ flexGrow: 1 }}>
 					<Option value="">Select one</Option>
 					{availablePacks
-						.filter((pack) => !packs.includes(pack.PK.S))
+						.filter((pack) => !packs.includes(pack.id))
 						.map((pack) => (
 							<Option
-								key={pack.PK.S}
-								value={pack.PK.S}>
-								{pack.name.S}
+								key={pack.id}
+								value={pack.id}>
+								{pack.name}
 							</Option>
 						))}
 				</Select>
@@ -152,7 +112,7 @@ export default function CompetitionPackTable({ competition }: { competition: any
 									indeterminate={selected.length > 0 && selected.length !== packs.length}
 									checked={selected.length === packs.length}
 									onChange={(event) => {
-										setSelected(event.target.checked ? packs.map((row) => row.id) : []);
+										setSelected(event.target.checked ? packs.map((row) => row) : []);
 									}}
 									color={selected.length > 0 || selected.length === packs.length ? "primary" : undefined}
 									sx={{ verticalAlign: "text-bottom" }}
@@ -165,34 +125,54 @@ export default function CompetitionPackTable({ competition }: { competition: any
 					</thead>
 					<tbody>
 						{[...packs].map((row) => (
-							<tr key={row.id}>
+							<tr key={row}>
 								<td style={{ textAlign: "center", width: 120 }}>
 									<Checkbox
 										size="sm"
-										checked={selected.includes(row.id)}
-										color={selected.includes(row.id) ? "primary" : undefined}
+										checked={selected.includes(row)}
+										color={selected.includes(row) ? "primary" : undefined}
 										onChange={(event) => {
-											setSelected((ids) => (event.target.checked ? ids.concat(row.id) : ids.filter((itemId) => itemId !== row.id)));
+											setSelected((ids) => (event.target.checked ? ids.concat(row) : ids.filter((itemId) => itemId !== row)));
 										}}
 										slotProps={{ checkbox: { sx: { textAlign: "left" } } }}
 										sx={{ verticalAlign: "text-bottom" }}
 									/>
 								</td>
 								<td>
-									<Typography level="body-xs">{availablePacks.find((pack) => pack.PK.S == row).name.S}</Typography>
+									<Typography level="body-xs">{availablePacks.find((pack) => pack.id == row).name}</Typography>
 								</td>
 								<td>
-									<Typography level="body-xs">{availablePacks.find((pack) => pack.PK.S == row).description.S}</Typography>
+									<Typography level="body-xs">{availablePacks.find((pack) => pack.id == row).description}</Typography>
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										<RowMenu
-											packId={row}
-											compId={compId!}
-											competition={competition}
-											packs={packs}
-											setPacks={setPacks}
-										/>
+										<Dropdown>
+											<MenuButton
+												slots={{ root: IconButton }}
+												slotProps={{ root: { variant: "plain", color: "neutral", size: "sm" } }}>
+												<MoreHorizRoundedIcon />
+											</MenuButton>
+											<Menu
+												size="sm"
+												sx={{ minWidth: 140 }}>
+												<Divider />
+												<MenuItem
+													color="danger"
+													onClick={async () => {
+														const updatedCompetition = await API.put("api", `/competition/${compId}`, {
+															body: {
+																name: competition.name,
+																status: competition.status || "",
+																packs: packs.filter((p) => p !== row),
+															},
+														});
+
+														setPacks(updatedCompetition.packs);
+													}}>
+													Remove
+												</MenuItem>
+											</Menu>
+										</Dropdown>
 									</Box>
 								</td>
 							</tr>
@@ -200,6 +180,6 @@ export default function CompetitionPackTable({ competition }: { competition: any
 					</tbody>
 				</Table>
 			</Sheet>
-		</React.Fragment>
+		</Fragment>
 	);
 }

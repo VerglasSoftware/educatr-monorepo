@@ -1,21 +1,26 @@
-import { Box, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Stack, Typography } from "@mui/joy";
+import { Box, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
+import { Class } from "../../../../functions/src/types/class";
+import { Organisation } from "../../../../functions/src/types/organisation";
 import Breadcrumb from "../../components/dash/breadcrumb";
+import ClassCard from "../../components/dash/organisations/ClassCard";
 import "./ClassDetail.css";
 
 export default function ClassDetail() {
-	const [clazz, setClass] = useState<any>();
-
-	const [name, setName] = useState<any>("");
-
 	const { orgId, classId } = useParams();
+
+	const [org, setOrg] = useState<Organisation>();
+	const [clazz, setClass] = useState<Class>();
+	const [name, setName] = useState<string>("");
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
+				const org = await API.get("api", `/organisation/${orgId}`, {});
+				setOrg(org);
 				const clazz = await API.get("api", `/organisation/${orgId}/class/${classId}`, {});
 				setClass(clazz);
 				setName(clazz.name);
@@ -28,6 +33,7 @@ export default function ClassDetail() {
 	}, []);
 
 	return (
+		org &&
 		clazz && (
 			<div className="Home">
 				<Helmet>
@@ -38,8 +44,9 @@ export default function ClassDetail() {
 						<Breadcrumb
 							items={[
 								{ label: "Dashboard", href: "/dash" },
-								{ label: "Classes", href: "/dash/classes" },
-								{ label: clazz.name, href: `/dash/classes/${classId}` },
+								{ label: org.name, href: `/dash/${orgId}` },
+								{ label: "Classes", href: `/dash/${orgId}/classes` },
+								{ label: clazz.name, href: `/dash/${orgId}/classes/${classId}` },
 							]}
 						/>
 					</Box>
@@ -63,46 +70,13 @@ export default function ClassDetail() {
 
 					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
 						<Box sx={{ gridColumn: "span 6" }}>
-							<Card sx={{ flexGrow: "1" }}>
-								<Stack
-									direction="row"
-									spacing={1}
-									sx={{ my: 1 }}>
-									<Stack
-										spacing={2}
-										sx={{ width: "100%" }}>
-										<Stack spacing={1}>
-											<FormLabel>Name</FormLabel>
-											<FormControl sx={{ gap: 2 }}>
-												<Input
-													size="sm"
-													placeholder="Name"
-													value={name}
-													onChange={(e) => setName(e.target.value)}
-												/>
-											</FormControl>
-										</Stack>
-									</Stack>
-								</Stack>
-								<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
-									<CardActions sx={{ alignSelf: "flex-end", pt: 2 }}>
-										<Button
-											size="sm"
-											variant="solid"
-											onClick={async () => {
-												const updatedClass = await API.put("api", `/organisation/${orgId}/class/${classId}`, {
-													body: {
-														name,
-														students: clazz.students || [],
-													},
-												});
-												setClass(updatedClass);
-											}}>
-											Save
-										</Button>
-									</CardActions>
-								</CardOverflow>
-							</Card>
+							<ClassCard
+								orgId={orgId}
+								name={name}
+								setName={setName}
+								clazz={clazz}
+								setClass={setClass}
+							/>
 						</Box>
 					</Box>
 				</div>

@@ -1,15 +1,18 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { AttributeValue, BatchGetItemCommand, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, QueryCommand, UpdateCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
-import { Handler } from "aws-lambda";
+import { APIGatewayProxyEvent, Handler } from "aws-lambda";
 import axios, { AxiosResponse } from "axios";
 import { Resource } from "sst";
-import { itemToActivity } from "./activity";
+import { itemsToActivities, itemToActivity } from "./activity";
 import { itemToTask } from "./task";
+import { itemsToTeams } from "./team";
 import { Activity } from "./types/activity";
-import { Competition, CompetitionCheck, CompetitionCreate, CompetitionDynamo, CompetitionRun, CompetitionUpdate, Judge0CreateSubmissionResponse, Judge0GetSubmissionResponse } from "./types/competition";
+import { Competition, CompetitionCheck, CompetitionCreate, CompetitionRun, CompetitionUpdate, Judge0CreateSubmissionResponse, Judge0GetSubmissionResponse } from "./types/competition";
+import { Task } from "./types/task";
+import { Team } from "./types/team";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -17,15 +20,17 @@ const itemToCompetition = (item: Record<string, any> | undefined): Competition =
 	if (!item) {
 		throw new Error("Item not found");
 	}
-	const packDynamo: CompetitionDynamo = item as unknown as CompetitionDynamo;
+	const isDynamoFormat = (val: any) => typeof val === "object" && val !== null && ("S" in val || "N" in val || "BOOL" in val || "L" in val);
+
 	return {
-		id: packDynamo.PK.S,
-		name: packDynamo.name.S,
-		status: packDynamo.status.S,
-		userStartedById: packDynamo.userStartedById.S,
-		organisationId: packDynamo.organisationId.S,
-		packs: packDynamo.packs.L.map((pack) => pack.S),
-		createdAt: new Date(parseInt(packDynamo.createdAt.N)).toISOString(),
+		id: isDynamoFormat(item.PK) ? item.PK.S : item.PK,
+		name: isDynamoFormat(item.name) ? item.name.S : item.name,
+		status: isDynamoFormat(item.status) ? item.status.S : item.status,
+		showLeaderboard: isDynamoFormat(item.showLeaderboard) ? item.showLeaderboard.BOOL : item.showLeaderboard,
+		userStartedById: isDynamoFormat(item.userStartedById) ? item.userStartedById.S : item.userStartedById,
+		organisationId: isDynamoFormat(item.organisationId) ? item.organisationId.S : item.organisationId,
+		packs: isDynamoFormat(item.packs) ? item.packs.L.map((pack: any) => pack.S) : item.packs,
+		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
 	};
 };
 
@@ -50,7 +55,7 @@ export const list: Handler = Util.handler(async (event) => {
 		const competitions = itemsToCompetitions(result.Items);
 		return JSON.stringify(competitions);
 	} catch (e) {
-		throw new Error("Could not retrieve competition");
+		throw new Error(`Could not retrieve competitions: ${e}`);
 	}
 });
 
@@ -70,17 +75,21 @@ export const get: Handler = Util.handler(async (event) => {
 
 	try {
 		const result = await client.send(new GetCommand(params));
+		if (!result.Item) {
+			throw new Error("Item not found.");
+		}
 		const competition = itemToCompetition(result.Item);
 		return JSON.stringify(competition);
 	} catch (e) {
-		throw new Error("Could not retrieve competition");
+		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
 	}
 });
 
-export const create: Handler = Util.handler(async (event) => {
+export const create: Handler = Util.handler(async (event: APIGatewayProxyEvent) => {
 	const data: CompetitionCreate = {
 		name: "",
-		status: "",
+		status: "NOT_STARTED",
+		showLeaderboard: false,
 		organisationId: "",
 		packs: [],
 	};
@@ -95,7 +104,8 @@ export const create: Handler = Util.handler(async (event) => {
 			PK: createId(),
 			SK: "DETAILS",
 			name: data.name,
-			status: data.status || "NOT_STARTED",
+			status: data.status,
+			showLeaderboard: data.showLeaderboard,
 			userStartedById: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 			organisationId: data.organisationId,
 			packs: data.packs,
@@ -104,25 +114,25 @@ export const create: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		const result = await client.send(new PutCommand(params));
-		const competition = itemToCompetition(result.Attributes);
+		await client.send(new PutCommand(params));
+		const competition = itemToCompetition(params.Item);
 		return JSON.stringify(competition);
 	} catch (e) {
-		throw new Error("Could not create competition");
+		throw new Error(`Could not create competition: ${e}`);
 	}
 });
 
 export const update: Handler = Util.handler(async (event) => {
 	const { compId } = event.pathParameters || {};
 	if (!compId) {
-		throw new Error("Missing pk in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
 	const data: CompetitionUpdate = {
 		name: "",
 		status: "",
 		packs: [],
-		showLeaderboard: true,
+		showLeaderboard: false,
 	};
 
 	if (event.body != null) {
@@ -146,7 +156,7 @@ export const update: Handler = Util.handler(async (event) => {
 			":name": data.name,
 			":status": data.status,
 			":packs": data.packs,
-			":showLeaderboard": data.showLeaderboard || false,
+			":showLeaderboard": data.showLeaderboard,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
@@ -156,29 +166,41 @@ export const update: Handler = Util.handler(async (event) => {
 		const competition = itemToCompetition(result.Attributes);
 		return JSON.stringify(competition);
 	} catch (e) {
-		console.log(e);
-		throw new Error("Could not update competition details");
+		throw new Error(`Could not update competition ${compId}: ${e}`);
 	}
 });
 
 export const del: Handler = Util.handler(async (event) => {
 	const { compId } = event.pathParameters || {};
 	if (!compId) {
-		throw new Error("Missing pk in path parameters");
+		throw new Error("Missing id in path parameters");
 	}
 
-	const params: DeleteCommandInput = {
+	const params: ScanCommandInput = {
 		TableName: Resource.Competitions.name,
-		Key: {
-			PK: compId,
+		FilterExpression: "PK = :pk",
+		ExpressionAttributeValues: {
+			":pk": { S: compId },
 		},
 	};
 
 	try {
-		await client.send(new DeleteCommand(params));
-		return JSON.stringify({ message: `Competition with PK ${compId} has been deleted` });
+		const result = await client.send(new ScanCommand(params));
+		if (result.Items) {
+			for (const item of result.Items) {
+				const deleteParams: DeleteCommandInput = {
+					TableName: Resource.Competitions.name,
+					Key: {
+						PK: item.PK.S,
+						SK: item.SK.S,
+					},
+				};
+				await client.send(new DeleteCommand(deleteParams));
+			}
+		}
+		return JSON.stringify({ success: true });
 	} catch (e) {
-		throw new Error(`Could not delete competition with PK ${compId}`);
+		throw new Error(`Could not delete all SKs for competition ${compId}: ${e}`);
 	}
 });
 
@@ -208,12 +230,15 @@ export const check: Handler = Util.handler(async (event) => {
 		},
 	};
 
-	var task;
+	let task: Task;
 	try {
-		const result = await client.send(new GetCommand(params));
-		task = itemToTask(result.Item);
+		const taskResult = await client.send(new GetCommand(params));
+		if (!taskResult.Item) {
+			throw new Error(`Task ${data.taskId} not found in pack ${data.packId}`);
+		}
+		task = itemToTask(taskResult.Item);
 	} catch (e) {
-		throw new Error("Could not retrieve competition");
+		throw new Error(`Could not retrieve task ${data.taskId} in pack ${data.packId}: ${e}`);
 	}
 
 	async function returnAnswer(result: boolean): Promise<string> {
@@ -222,7 +247,7 @@ export const check: Handler = Util.handler(async (event) => {
 			TableName: Resource.Competitions.name,
 			Item: {
 				PK: compId,
-				SK: "ACTIVITY#" + createId(),
+				SK: `ACTIVITY#${createId()}`,
 				userId: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 				packId: data.packId,
 				taskId: data.taskId,
@@ -231,12 +256,12 @@ export const check: Handler = Util.handler(async (event) => {
 			},
 		};
 
-		var activity: Activity;
+		let activity: Activity;
 		try {
-			const result = await client.send(new PutCommand(params));
-			activity = itemToActivity(result.Attributes);
+			await client.send(new PutCommand(params));
+			activity = itemToActivity(params.Item);
 		} catch (e) {
-			throw new Error("Could not create activity");
+			throw new Error(`Could not create activity: ${e}`);
 		}
 
 		// send to all connected clients
@@ -249,7 +274,7 @@ export const check: Handler = Util.handler(async (event) => {
 		try {
 			connections = await client.send(new ScanCommand(socketParams));
 		} catch (e) {
-			throw new Error("Could not retrieve connections");
+			throw new Error(`Could not retrieve connections: ${e}`);
 		}
 
 		const apiG = new ApiGatewayManagementApi({
@@ -295,7 +320,7 @@ export const check: Handler = Util.handler(async (event) => {
 			const possibleAnswers = task.answerChoices;
 			const correctAnswer = possibleAnswers.find((answer) => answer.correct);
 			if (!correctAnswer) {
-				throw new Error("Correct answer not found");
+				throw new Error(`No correct answer found in task ${data.taskId} in pack ${data.packId}`);
 			}
 			if (data.answer == correctAnswer.name) {
 				// change this to id?
@@ -311,7 +336,7 @@ export const check: Handler = Util.handler(async (event) => {
 
 			const languageId = languageMap[task.answerType as keyof typeof languageMap];
 			if (!languageId) {
-				throw new Error("Answer type not supported");
+				throw new Error(`Answer type ${task.answerType} not supported`);
 			}
 
 			var result: AxiosResponse<Judge0CreateSubmissionResponse>;
@@ -348,7 +373,7 @@ export const check: Handler = Util.handler(async (event) => {
 				TableName: Resource.Competitions.name,
 				Item: {
 					PK: compId,
-					SK: "ACTIVITY#" + createId(),
+					SK: `ACTIVITY#${createId()}`,
 					status: "WAITING",
 					userId: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 					packId: data.packId,
@@ -360,13 +385,13 @@ export const check: Handler = Util.handler(async (event) => {
 			try {
 				await client.send(new PutCommand(params));
 			} catch (e) {
-				throw new Error("Could not create activity");
+				throw new Error(`Could not create activity: ${e}`);
 			}
 			return JSON.stringify({ manual: true });
 		default:
-			throw new Error("Verification type not supported");
+			throw new Error(`Verification type ${task.verificationType} not supported`);
 	}
-	return JSON.stringify({ output: "how did we get here" });
+	return JSON.stringify({ error: "how did we get here" });
 });
 
 export const run: Handler = Util.handler(async (event) => {
@@ -392,7 +417,7 @@ export const run: Handler = Util.handler(async (event) => {
 
 	const languageId = languageMap[data.language as keyof typeof languageMap];
 	if (!languageId) {
-		throw new Error("Answer type not supported");
+		throw new Error(`Language ${data.language} not supported`);
 	}
 
 	var result: AxiosResponse<Judge0CreateSubmissionResponse>;
@@ -403,7 +428,7 @@ export const run: Handler = Util.handler(async (event) => {
 			stdin: data.stdin,
 		});
 	} catch (e) {
-		throw new Error("Could not run submission");
+		throw new Error(`Could not create submission: ${e}`);
 	}
 	if (result.status == 201) {
 		const submissionId = result.data.token;
@@ -426,56 +451,87 @@ export const run: Handler = Util.handler(async (event) => {
 });
 
 export const getLb: Handler = Util.handler(async (event) => {
-	const { compId: pk } = event.pathParameters || {};
-
-	if (!pk) {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
 		throw new Error("Missing id in path parameters");
 	}
 
-	const params = {
+	const competitionParams: GetCommandInput = {
 		TableName: Resource.Competitions.name,
-		KeyConditionExpression: "PK = :pk",
-		ExpressionAttributeValues: {
-			":pk": pk,
+		Key: {
+			PK: compId,
+			SK: "DETAILS",
 		},
 	};
 
+	const teamParams: ScanCommandInput = {
+		TableName: Resource.Competitions.name,
+		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":skPrefix": { S: "TEAM#" },
+		},
+	};
+
+	const activityParams: ScanCommandInput = {
+		TableName: Resource.Competitions.name,
+		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":skPrefix": { S: "ACTIVITY#" },
+		},
+	};
+
+	let competition: Competition;
+	let teams: Team[];
+	let activities: Activity[];
 	try {
-		const result = await client.send(new QueryCommand(params));
-		if (!result.Items || result.Items.length == 0) {
+		const result = await client.send(new GetCommand(competitionParams));
+		if (!result.Item) {
 			throw new Error("Competition not found");
 		}
-
-		const teamLabels = result.Items.filter((item) => item.SK.startsWith("TEAM#")).reduce((acc: any, item, index) => {
-			acc[item.SK.split("TEAM#")[1]] = item.name;
-			return acc;
-		}, {});
-
-		const timeStarted = parseInt(result.Items.find((item) => item.SK === "DETAILS")?.createdAt);
-		const timeNow = Date.now();
-
-		const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
-
-		let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
-		timestamps = timestamps.slice(-100);
-
-		const teamData = [];
-
-		for (const index in timestamps) {
-			const currentTimestamp = new Date(timestamps[index]);
-			const obj: any = { timestamp: currentTimestamp.getTime() };
-
-			for (const key in teamLabels) {
-				const activity = result.Items.filter((item) => item.SK.startsWith("ACTIVITY") && [...result.Items!.find((team) => team.SK == `TEAM#${key}`)!.students].includes(item.userId) && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
-				obj[key] = activity.length;
-			}
-
-			teamData.push(obj);
-		}
-
-		return JSON.stringify({ teamLabels, teamData });
+		competition = itemToCompetition(result.Item);
 	} catch (e) {
-		console.log(e);
-		return JSON.stringify({ error: "Could not retrieve competition" });
+		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
 	}
+	try {
+		const result = await client.send(new ScanCommand(teamParams));
+		teams = itemsToTeams(result.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+	}
+	try {
+		const result = await client.send(new ScanCommand(activityParams));
+		activities = itemsToActivities(result.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+	}
+
+	const teamLabels = teams.reduce((acc: any, item, index) => {
+		acc[item.id] = item.name;
+		return acc;
+	}, {});
+
+	const timeStarted = parseInt(competition.createdAt);
+	const timeNow = Date.now();
+
+	const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
+
+	let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
+	timestamps = timestamps.slice(-100);
+
+	const teamData = [];
+
+	for (const index in timestamps) {
+		const currentTimestamp = new Date(timestamps[index]);
+		const obj: any = { timestamp: currentTimestamp.getTime() };
+
+		for (const key in teamLabels) {
+			const activity = activities.filter((item) => item.userId == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
+			obj[key] = activity.length;
+		}
+		teamData.push(obj);
+	}
+
+	return JSON.stringify({ teamLabels, teamData });
 });

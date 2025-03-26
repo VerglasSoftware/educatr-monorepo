@@ -29,7 +29,7 @@ export interface Task {
 	points: number;
 	content: string;
 	answer: string;
-	stdin: string
+	stdin: string;
 	answerChoices: {
 		correct: boolean;
 		id: string;
@@ -58,4 +58,18 @@ export interface TaskCreateUpdate {
 	answerType: string;
 	placeholder: string;
 	prerequisites: string[];
+}
+
+export enum VerificationType {
+	MANUAL = "MANUAL",
+	COMPARE = "COMPARE",
+	MULTIPLE = "MULTIPLE",
+	ALGORITHM = "ALGORITHM",
+}
+
+export enum AnswerType {
+	TEXT = "TEXT",
+	MULTIPLE = "MULTIPLE",
+	PYTHON = "PYTHON",
+	CSHARP = "CSHARP",
 }

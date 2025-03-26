@@ -4,20 +4,20 @@ import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
-import { Class, ClassCreateUpdate, ClassDynamo } from "./types/class";
+import { Class, ClassCreateUpdate } from "./types/class";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-const itemToClass = (item: Record<string, any> | undefined): Class => {
+export const itemToClass = (item: Record<string, any> | undefined): Class => {
 	if (!item) {
 		throw new Error("Item not found");
 	}
-	const packDynamo: ClassDynamo = item as unknown as ClassDynamo;
+	const isDynamoFormat = (val: any) => typeof val === "object" && val !== null && ("S" in val || "N" in val || "L" in val);
 	return {
-		id: packDynamo.SK.S.split("#")[1],
-		name: packDynamo.name.S,
-		students: packDynamo.students.L.map((student) => student.S),
-		createdAt: new Date(parseInt(packDynamo.createdAt.N)).toISOString(),
+		id: isDynamoFormat(item.SK) ? item.SK.S.split("#")[1] : item.SK.split("#")[1],
+		name: isDynamoFormat(item.name) ? item.name.S : item.name,
+		students: isDynamoFormat(item.students) ? item.students.L.map((student: any) => student.S) : item.students,
+		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
 	};
 };
 
@@ -31,7 +31,7 @@ const itemsToClasses = (items: Record<string, AttributeValue>[] | undefined): Cl
 export const list: Handler = Util.handler(async (event) => {
 	const { orgId } = event.pathParameters || {};
 	if (!orgId) {
-		throw new Error("Missing id in path parameters");
+		throw new Error("Missing organisation id in path parameters");
 	}
 
 	const params: ScanCommandInput = {
@@ -49,37 +49,43 @@ export const list: Handler = Util.handler(async (event) => {
 		return JSON.stringify(classes);
 	} catch (e) {
 		console.error(e);
-		throw new Error("Could not retrieve classes");
+		throw new Error(`Could not retrieve classes for organisation ${orgId}: ${e}`);
 	}
 });
 
 export const get: Handler = Util.handler(async (event) => {
 	const { orgId, classId } = event.pathParameters || {};
-	if (!orgId || !classId) {
-		throw new Error("Missing id in path parameters");
+	if (!orgId) {
+		throw new Error("Missing organisation id in path parameters");
+	}
+	if (!classId) {
+		throw new Error("Missing class id in path parameters");
 	}
 
 	const params: GetCommandInput = {
 		TableName: Resource.Organisations.name,
 		Key: {
 			PK: orgId,
-			SK: "CLASS#" + classId,
+			SK: `CLASS#${classId}`,
 		},
 	};
 
 	try {
 		const result = await client.send(new GetCommand(params));
 		const clazz = itemToClass(result.Item);
+		if (!clazz) {
+			throw new Error("Class not found");
+		}
 		return JSON.stringify(clazz);
 	} catch (e) {
-		throw new Error("Could not retrieve class:" + e);
+		throw new Error(`Could not retrieve class ${classId} from organisation ${orgId}: ${e}`);
 	}
 });
 
 export const create: Handler = Util.handler(async (event) => {
 	const { orgId } = event.pathParameters || {};
 	if (!orgId) {
-		throw new Error("Missing id in path parameters");
+		throw new Error("Missing organisation id in path parameters");
 	}
 
 	let data: ClassCreateUpdate = {
@@ -95,7 +101,7 @@ export const create: Handler = Util.handler(async (event) => {
 		TableName: Resource.Organisations.name,
 		Item: {
 			PK: orgId,
-			SK: "CLASS#" + createId(),
+			SK: `CLASS#${createId()}`,
 			name: data.name,
 			students: data.students,
 			createdAt: Date.now(),
@@ -103,18 +109,21 @@ export const create: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		const item = await client.send(new PutCommand(params));
-		const clazz = itemToClass(item.Attributes);
+		await client.send(new PutCommand(params));
+		const clazz = itemToClass(params.Item);
 		return JSON.stringify(clazz);
 	} catch (e) {
-		throw new Error("Could not create class");
+		throw new Error(`Could not create class in organisation ${orgId}: ${e}`);
 	}
 });
 
 export const update: Handler = Util.handler(async (event) => {
 	const { orgId, classId } = event.pathParameters || {};
-	if (!orgId || !classId) {
-		throw new Error("Missing pk or sk in path parameters");
+	if (!orgId) {
+		throw new Error("Missing organisation id in path parameters");
+	}
+	if (!classId) {
+		throw new Error("Missing class id in path parameters");
 	}
 
 	let data: ClassCreateUpdate = {
@@ -130,7 +139,7 @@ export const update: Handler = Util.handler(async (event) => {
 		TableName: Resource.Organisations.name,
 		Key: {
 			PK: orgId,
-			SK: "CLASS#" + classId,
+			SK: `CLASS#${classId}`,
 		},
 		UpdateExpression: "SET #name = :name, #students = :students",
 		ExpressionAttributeNames: {
@@ -149,28 +158,31 @@ export const update: Handler = Util.handler(async (event) => {
 		const clazz = itemToClass(result.Attributes);
 		return JSON.stringify(clazz);
 	} catch (e) {
-		throw new Error(`Could not update class ${classId} in org ${orgId}`);
+		throw new Error(`Could not update class ${classId} in organisation ${orgId}: ${e}`);
 	}
 });
 
 export const del: Handler = Util.handler(async (event) => {
 	const { orgId, classId } = event.pathParameters || {};
-	if (!orgId || !classId) {
-		throw new Error("Missing pk in path parameters");
+	if (!orgId) {
+		throw new Error("Missing organisation id in path parameters");
+	}
+	if (!classId) {
+		throw new Error("Missing class id in path parameters");
 	}
 
 	const params = {
 		TableName: Resource.Organisations.name,
 		Key: {
 			PK: orgId,
-			SK: "CLASS#" + classId,
+			SK: `CLASS#${classId}`,
 		},
 	};
 
 	try {
 		await client.send(new DeleteCommand(params));
-		return JSON.stringify({ message: `CLASS with SK ${classId} under org with PK ${orgId} has been deleted` });
+		return JSON.stringify({ success: true });
 	} catch (e) {
-		throw new Error(`Could not delete class with SK ${classId} from org ${orgId}`);
+		throw new Error(`Could not delete class ${classId} in organisation ${orgId}: ${e}`);
 	}
 });

@@ -24,7 +24,7 @@ const handler = async (event: PostConfirmationTriggerEvent) => {
 	try {
 		await client.send(new PutCommand(params));
 	} catch (e) {
-		throw new Error("Could not create user");
+		throw new Error(`Could not create user: ${e}`);
 	}
 
 	if (event.request.userAttributes["custom:initial"]) {
@@ -32,7 +32,7 @@ const handler = async (event: PostConfirmationTriggerEvent) => {
 		const params: UpdateCommandInput = {
 			TableName: Resource.Organisations.name,
 			Key: {
-				PK: "ORG#" + orgId,
+				PK: orgId,
 				SK: "DETAILS",
 			},
 			UpdateExpression: "ADD #students :student",
@@ -47,7 +47,7 @@ const handler = async (event: PostConfirmationTriggerEvent) => {
 		try {
 			await client.send(new UpdateCommand(params));
 		} catch (e) {
-			throw new Error("Could not add user to organisation");
+			throw new Error(`Could not add user to organisation: ${e}`);
 		}
 	}
 
