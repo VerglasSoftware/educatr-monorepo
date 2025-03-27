@@ -42,7 +42,7 @@ export default function TaskEditor() {
 			stdin: "",
 		},
 		onSubmit: async (values) => {
-			const newTask = await API.put("api", `/pack/${id}/task/${task.id}`, {
+			const newTask: Task = await API.put("api", `/pack/${id}/task/${task.id}`, {
 				body: {
 					title: values.title,
 					subtitle: values.subtitle,
@@ -57,28 +57,8 @@ export default function TaskEditor() {
 					stdin: values.stdin,
 				},
 			});
-			// doing this becuase the repsonse of the put request doesnt have the S's and N's dynamodb types.
-			const updatedTasks = tasks.map((t) => {
-				if (t.id == newTask.SK.split("#")[1]) {
-					return {
-						...t,
-						title: newTask.title,
-						subtitle: newTask.subtitle,
-						content: newTask.content,
-						placeholder: newTask.placeholder,
-						answer: newTask.answer,
-						answerChoices: newTask.answerChoices.map((item) => ({ id: item.id, name: item.name, correct: item.correct })),
-						answerType: newTask.answerType,
-						verificationType: newTask.verificationType,
-						prerequisites: newTask.prerequisites,
-						points: newTask.points,
-						stdin: newTask.stdin,
-					};
-				}
-				return t;
-			});
-			setTasks(updatedTasks);
-			setTask(updatedTasks.find((t) => t.id === task.id));
+			setTasks(tasks.map((t) => (t.id === task.id ? newTask : t)));
+			setTask(newTask);
 			formik.resetForm({ values });
 		},
 	});
@@ -361,6 +341,40 @@ export default function TaskEditor() {
 									const newTasks = tasks.filter((t) => t.id !== task.id);
 									setTasks(newTasks);
 									setTask(newTasks[index - 1]);
+									switch (tasks[index - 1].answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: tasks[index - 1].title,
+										subtitle: tasks[index - 1].subtitle,
+										content: tasks[index - 1].content,
+										placeholder: tasks[index - 1].placeholder,
+										answer: tasks[index - 1].answer,
+										answerChoices: tasks[index - 1].answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: tasks[index - 1].answerType,
+										verificationType: tasks[index - 1].verificationType,
+										prerequisites: tasks[index - 1].prerequisites.map((item) => item),
+										points: tasks[index - 1].points,
+										stdin: tasks[index - 1].stdin,
+									});
 								}}>
 								<Delete />
 							</Button>
@@ -386,6 +400,40 @@ export default function TaskEditor() {
 
 									setTasks([...tasks, newtask]);
 									setTask(newtask);
+									switch (newtask.answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: newtask.title,
+										subtitle: newtask.subtitle,
+										content: newtask.content,
+										placeholder: newtask.placeholder,
+										answer: newtask.answer,
+										answerChoices: newtask.answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: newtask.answerType,
+										verificationType: newtask.verificationType,
+										prerequisites: newtask.prerequisites.map((item) => item),
+										points: newtask.points,
+										stdin: newtask.stdin,
+									});
 								}}>
 								<Add />
 							</Button>

@@ -23,7 +23,7 @@ export const itemToTask = (item: Record<string, any> | undefined): Task => {
 		stdin: isDynamoFormat(item.stdin) ? item.stdin.S : item.stdin,
 		answerChoices: isDynamoFormat(item.answerChoices)
 			? item.answerChoices.L.map((choice: any) => ({
-					correct: choice.M.correct.BOOL,
+					correct: choice.M.correct ? choice.M.correct.BOOL : undefined,
 					id: choice.M.id.S,
 					name: choice.M.name.S,
 				}))
