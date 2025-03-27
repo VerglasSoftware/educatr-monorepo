@@ -9,6 +9,7 @@ import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { Pack } from "../../../../../functions/src/types/pack";
 import { Task } from "../../../../../functions/src/types/task";
 import Breadcrumb from "../../../components/dash/breadcrumb";
@@ -59,6 +60,9 @@ export default function TaskEditor() {
 			});
 			setTasks(tasks.map((t) => (t.id === task.id ? newTask : t)));
 			setTask(newTask);
+			toast.success("Task saved successfully!", {
+				theme: "light",
+			});
 			formik.resetForm({ values });
 		},
 	});
