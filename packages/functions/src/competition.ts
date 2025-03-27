@@ -306,7 +306,7 @@ export const check: Handler = Util.handler(async (event) => {
 		};
 
 		await Promise.all(connections.Items!.map(postToConnection));
-		return JSON.stringify({ result });
+		return JSON.stringify({ result, activity });
 	}
 
 	switch (task.verificationType) {
@@ -387,7 +387,7 @@ export const check: Handler = Util.handler(async (event) => {
 			} catch (e) {
 				throw new Error(`Could not create activity: ${e}`);
 			}
-			return JSON.stringify({ manual: true });
+			return JSON.stringify({ manual: true, activity: itemToActivity(params.Item) });
 		default:
 			throw new Error(`Verification type ${task.verificationType} not supported`);
 	}
