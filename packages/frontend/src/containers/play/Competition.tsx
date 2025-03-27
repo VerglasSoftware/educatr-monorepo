@@ -53,6 +53,7 @@ export default function PlayCompetition() {
 		},
 	});
 
+	console.log(packs);
 	useEffect(() => {
 		if (lastMessage) {
 			const data = JSON.parse(lastMessage.data);

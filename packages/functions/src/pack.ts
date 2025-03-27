@@ -57,9 +57,7 @@ export const list: Handler = Util.handler(async (event) => {
 						":skPrefix": { S: "TASK#" },
 					},
 				};
-
-				const tasksCommand = new ScanCommand(params);
-				const tasksResult = await client.send(tasksCommand);
+				const tasksResult = await client.send(new ScanCommand(tasksParams));
 				const tasks = itemsToTasks(tasksResult.Items);
 
 				return { ...pack, tasks } as PackWithTasks;
@@ -106,8 +104,7 @@ export const get: Handler = Util.handler(async (event) => {
 			},
 		};
 
-		const tasksCommand = new ScanCommand(tasksParams);
-		const tasksResult = await client.send(tasksCommand);
+		const tasksResult = await client.send(new ScanCommand(tasksParams));
 		const tasks = itemsToTasks(tasksResult.Items);
 
 		return JSON.stringify({ ...pack, tasks });
