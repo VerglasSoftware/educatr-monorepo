@@ -2,6 +2,7 @@ export interface Activity {
 	id: string;
 	userId: string;
 	taskId: string;
+	packId: string;
 	verifierId: string;
 	status: string;
 	correct: boolean;
@@ -13,6 +14,7 @@ export interface ActivityDynamo {
 	SK: { S: string };
 	userId: { S: string };
 	taskId: { S: string };
+	packId: { S: string };
 	verifierId: { S: string };
 	status: { S: string };
 	correct: { BOOL: boolean };
@@ -22,6 +24,7 @@ export interface ActivityDynamo {
 export interface ActivityCreateUpdate {
 	userId: string;
 	taskId: string;
+	packId: string;
 	verifierId: string;
 	status: string;
 	correct: boolean;

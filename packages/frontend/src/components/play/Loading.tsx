@@ -1,7 +1,14 @@
 import { Box, Card, CardContent, Typography } from "@mui/joy";
 import { DotWave } from "@uiball/loaders";
 
-export default function Loading({ competition, packs, activity, webhookStatus }) {
+interface LoadingProps {
+	competition: boolean;
+	packs: boolean;
+	activity: boolean;
+	webhookStatus: string;
+}
+
+export default function Loading({ competition, packs, activity, webhookStatus }: LoadingProps) {
 	return (
 		<Box
 			sx={{

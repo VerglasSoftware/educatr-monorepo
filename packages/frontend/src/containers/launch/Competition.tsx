@@ -6,19 +6,30 @@ import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { Activity } from "../../../../functions/src/types/activity";
+import { Competition } from "../../../../functions/src/types/competition";
+import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
+import { Task } from "../../../../functions/src/types/task";
 import NavbarMain from "../../components/launch/Navbar";
 import LeaderboardChart from "../../components/play/LeaderboardChart";
 import "../play/Play.css";
 
+interface SelectedTask {
+	id: string;
+	task: Task;
+	pack: Pack;
+	activity: Activity;
+}
+
 export default function LaunchCompetition() {
-	const [competition, setCompetition] = useState<any>();
-	const [packs, setPacks] = useState<any[]>();
+	const [competition, setCompetition] = useState<Competition>();
+	const [packs, setPacks] = useState<PackWithTasks[]>();
 
 	const [startButtonLoading, setStartButtonLoading] = useState(false);
 	const [pauseButtonLoading, setPauseButtonLoading] = useState(false);
 	const [resumeButtonLoading, setResumeButtonLoading] = useState(false);
 	const [endButtonLoading, setEndButtonLoading] = useState(false);
-	const [webhookStatus, setWebhookStatus] = useState<any>("Default");
+	const [webhookStatus, setWebhookStatus] = useState<string>("Default");
 
 	const videoRef = useRef<HTMLVideoElement | null>(null);
 	const [scanButtonLoading, setScanButtonLoading] = useState(false);
@@ -27,9 +38,9 @@ export default function LaunchCompetition() {
 
 	const [openLeaderboard, setOpenLeaderboard] = useState(false);
 
-	const [announce, setAnnounce] = useState<any>();
+	const [announce, setAnnounce] = useState<string>();
 
-	const [selectedTask, setSelectedTask] = useState<any>();
+	const [selectedTask, setSelectedTask] = useState<SelectedTask>();
 
 	const { compId } = useParams();
 
@@ -76,14 +87,14 @@ export default function LaunchCompetition() {
 
 	async function approveTask() {
 		setApproveButtonLoading(true);
-		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split("#")[1]}/approve`, {});
+		await API.post("api", `/competition/${compId}/activity/${selectedTask.id}/approve`, {});
 		setApproveButtonLoading(false);
 		setSelectedTask(null);
 	}
 
 	async function rejectTask() {
 		setRejectButtonLoading(true);
-		await API.post("api", `/competition/${compId}/activity/${selectedTask.SK.split("#")[1]}/reject`, {});
+		await API.post("api", `/competition/${compId}/activity/${selectedTask.id}/reject`, {});
 		setRejectButtonLoading(false);
 		setSelectedTask(null);
 	}
@@ -115,10 +126,10 @@ export default function LaunchCompetition() {
 
 			const activity = await API.get("api", `/competition/${compId}/activity/${result.getText()}`, {});
 			console.log(packs);
-			const pack = { tasks: undefined, ...packs!.find((p) => p.tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId)) };
+			const pack = { tasks: undefined, ...packs!.find((p) => p.tasks.find((t) => t.id == activity.taskId)) };
 			console.log(pack);
 			setSelectedTask({
-				task: packs!.find((p) => p.tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId)).tasks.find((t: any) => t.SK.S.split("#")[1] == activity.taskId),
+				task: packs!.find((p) => p.tasks.find((t) => t.id == activity.taskId)).tasks.find((t) => t.id == activity.taskId),
 				pack,
 				...activity,
 			});
@@ -472,13 +483,13 @@ export default function LaunchCompetition() {
 										level="h4"
 										component="h3"
 										textColor="common.white">
-										{selectedTask.pack.name && selectedTask.pack.name.S} | {selectedTask.task.title && selectedTask.task.title.S}
+										{selectedTask.pack.name} | {selectedTask.task.title}
 									</Typography>
 
 									<Typography
 										level="body-md"
 										textColor="common.white">
-										{selectedTask.task.content && selectedTask.task.content.S}
+										{selectedTask.task.content}
 									</Typography>
 
 									<ButtonGroup
@@ -602,7 +613,7 @@ export default function LaunchCompetition() {
 										backgroundColor: "white",
 										width: "100%",
 									}}>
-									<LeaderboardChart competitionId={competition.PK} />
+									<LeaderboardChart competitionId={competition.id} />
 								</Box>
 							)}
 							<Button
@@ -626,7 +637,7 @@ export default function LaunchCompetition() {
 						top: 0,
 						zIndex: 999,
 					}}>
-					<LeaderboardChart competitionId={competition.PK} />
+					<LeaderboardChart competitionId={competition.id} />
 				</Box>
 			)}
 		</div>

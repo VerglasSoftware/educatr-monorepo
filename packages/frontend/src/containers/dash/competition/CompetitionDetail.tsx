@@ -65,7 +65,8 @@ export default function CompetitionDetail() {
 	return (
 		competition &&
 		teams &&
-		organisations && (
+		organisations &&
+		students && (
 			<div className="Home">
 				<Helmet>
 					<title>{competition.name} - Competitions</title>
@@ -263,18 +264,19 @@ export default function CompetitionDetail() {
 												<Button
 													variant="solid"
 													color="primary"
-													// onClick={async (e) => {
-													// 	const name = e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement?.querySelectorAll("input")[0].value;
-													// 	const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.split("#")[1]}`, {
-													// 		body: {
-													// 			name: team.name,
-													// 			students: team.students,
-													// 		},
-													// 	});
-
-													// 	//setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? updatedTeam : t)));
-													// }}>
-												>
+													onClick={async () => {
+														try {
+															const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.id}`, {
+																body: {
+																	name: team.name,
+																	students: team.students,
+																},
+															});
+															setTeams(teams.map((t) => (t.id === team.id ? updatedTeam : t)));
+														} catch (error) {
+															console.error("Error updating team:", error);
+														}
+													}}>
 													Save
 												</Button>
 											</ButtonGroup>

@@ -1,3 +1,5 @@
+import { Task } from "./task";
+
 export interface PackDynamo {
 	PK: { S: string };
 	SK: { S: string };
@@ -13,6 +15,10 @@ export interface Pack {
 	description: string;
 	ownerId: string; // AWS Cognito username
 	createdAt: string;
+}
+
+export interface PackWithTasks extends Pack {
+	tasks: Task[];
 }
 
 export interface PackCreateUpdate {

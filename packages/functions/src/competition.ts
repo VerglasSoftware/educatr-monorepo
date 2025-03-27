@@ -281,7 +281,7 @@ export const check: Handler = Util.handler(async (event) => {
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
 
-		const postToConnection = async function ({ id }: any) {
+		const postToConnection = async function ({ id }: Record<string, AttributeValue>) {
 			try {
 				await apiG.postToConnection({
 					ConnectionId: id.S,
@@ -293,8 +293,8 @@ export const check: Handler = Util.handler(async (event) => {
 						body: activity,
 					}),
 				});
-			} catch (e: any) {
-				if (e.statusCode === 410) {
+			} catch (e) {
+				if ((e as { statusCode?: number }).statusCode === 410) {
 					// Remove stale connections
 					const deleteParams: DeleteCommandInput = {
 						TableName: Resource.SocketConnections.name,
@@ -507,7 +507,7 @@ export const getLb: Handler = Util.handler(async (event) => {
 		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
 	}
 
-	const teamLabels = teams.reduce((acc: any, item, index) => {
+	const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
 		acc[item.id] = item.name;
 		return acc;
 	}, {});
@@ -524,7 +524,7 @@ export const getLb: Handler = Util.handler(async (event) => {
 
 	for (const index in timestamps) {
 		const currentTimestamp = new Date(timestamps[index]);
-		const obj: any = { timestamp: currentTimestamp.getTime() };
+		const obj: { timestamp: number; [key: string]: number } = { timestamp: currentTimestamp.getTime() };
 
 		for (const key in teamLabels) {
 			const activity = activities.filter((item) => item.userId == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true);

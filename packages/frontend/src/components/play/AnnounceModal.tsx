@@ -1,6 +1,13 @@
-import { Modal, ModalDialog, DialogTitle, DialogContent, Button, Typography, Box } from "@mui/joy";
+import { Box, Button, DialogContent, Modal, ModalDialog, Typography } from "@mui/joy";
+import { Dispatch, SetStateAction } from "react";
 
-export default function AnnounceModal({ open, setOpen, announce }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; announce: string }) {
+interface AnnounceModalProps {
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	announce: string;
+}
+
+export default function AnnounceModal({ open, setOpen, announce }: AnnounceModalProps) {
 	return (
 		<Modal
 			open={open}

@@ -1,23 +1,24 @@
 import { html } from "@codemirror/lang-html";
 import { python } from "@codemirror/lang-python";
-import { Divider, Radio, RadioGroup, Textarea } from "@mui/joy";
-import Button from "@mui/joy/Button";
-import DialogContent from "@mui/joy/DialogContent";
-import DialogTitle from "@mui/joy/DialogTitle";
-import FormControl from "@mui/joy/FormControl";
-import FormLabel from "@mui/joy/FormLabel";
-import Input from "@mui/joy/Input";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import Stack from "@mui/joy/Stack";
+import { Button, DialogContent, DialogTitle, Divider, FormControl, FormLabel, Input, Modal, ModalDialog, Radio, RadioGroup, Stack, Textarea } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
 import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
-import { Fragment, useEffect, useState } from "react";
+import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
+import { Competition } from "../../../../functions/src/types/competition";
+import { Task } from "../../../../functions/src/types/task";
 
-export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string; refreshManual: any }) {
+interface TaskModalProps {
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	competition: Competition;
+	task: Task;
+	packId: string;
+}
+
+export default function TaskModal({ open, setOpen, competition, task, packId }: TaskModalProps) {
 	const [answer, setAnswer] = useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 	const [stdin, setStdin] = useState<string>("");
@@ -27,10 +28,10 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 	async function submitTask() {
 		setSubmitTaskLoading(true);
 		try {
-			const result = await API.post("api", `/competition/${competition.PK}/check`, {
+			const result = await API.post("api", `/competition/${competition.id}/check`, {
 				body: {
 					packId: packId,
-					taskId: task.SK.split("#")[1],
+					taskId: task.id,
 					answer: answer,
 					stdin: task.stdin,
 				},
@@ -94,10 +95,10 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											name="radio-buttons-group"
 											value={answer}
 											onChange={(e) => setAnswer(e.currentTarget.value)}>
-											{JSON.parse(task.answer).map((answer: any) => (
+											{task.answerChoices.map((answer) => (
 												<Radio
-													value={answer.text}
-													label={answer.text}
+													value={answer.name}
+													label={answer.name}
 												/>
 											))}
 										</RadioGroup>
@@ -125,7 +126,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											onClick={async () => {
 												setRunLoading(true);
 												try {
-													const result = await API.post("api", `/competition/${competition.PK}/run`, {
+													const result = await API.post("api", `/competition/${competition.id}/run`, {
 														body: {
 															language: task.answerType,
 															code: answer,
@@ -135,6 +136,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 													setRunLoading(false);
 													setStdout(result.output);
 												} catch (e) {
+													console.log(e);
 													setRunLoading(false);
 													setStdout("An error occurred when running your code.");
 												}

@@ -21,6 +21,7 @@ export const itemToActivity = (item: Record<string, any> | undefined): Activity 
 		id: isDynamoFormat(item.SK) ? item.SK.S.split("#")[1] : item.SK.split("#")[1],
 		userId: isDynamoFormat(item.userId) ? item.userId.S : item.userId,
 		taskId: isDynamoFormat(item.taskId) ? item.taskId.S : item.taskId,
+		packId: isDynamoFormat(item.packId) ? item.packId.S : item.packId,
 		verifierId: isDynamoFormat(item.verifierId) ? item.verifierId.S : item.verifierId,
 		status: isDynamoFormat(item.status) ? item.status.S : item.status,
 		correct: isDynamoFormat(item.correct) ? item.correct.BOOL : item.correct,
@@ -58,9 +59,10 @@ export const list: Handler = Util.handler(async (event) => {
 		if (!teamResult.Items || teamResult.Count === 0) {
 			throw new Error(`User ${event.requestContext.authorizer!.jwt.claims["cognito:username"]} is not part of a team in competition ${compId}`);
 		}
+
 		team = itemToTeam(teamResult.Items[0]);
 	} catch (e) {
-		throw new Error(`Could not retrieve team for user ${event.requestContext.authorizer!.jwt.claims["cognito:username"]} in competition ${compId}`);
+		throw new Error(`Could not retrieve team for user ${event.requestContext.authorizer!.jwt.claims["cognito:username"]} in competition ${compId}: ${e}`);
 	}
 
 	// Query the Competitions table to find all activities for this user in the team
@@ -126,6 +128,7 @@ export const create: Handler = Util.handler(async (event) => {
 	const data: ActivityCreateUpdate = {
 		userId: "",
 		taskId: "",
+		packId: "",
 		verifierId: "",
 		status: "",
 		correct: false,
@@ -142,6 +145,7 @@ export const create: Handler = Util.handler(async (event) => {
 			SK: `ACTIVITY#${createId()}`,
 			userId: data.userId,
 			taskId: data.taskId,
+			packId: data.packId,
 			verifierId: data.verifierId,
 			status: data.status,
 			correct: data.correct,
@@ -170,6 +174,7 @@ export const update: Handler = Util.handler(async (event) => {
 	const data: ActivityCreateUpdate = {
 		userId: "",
 		taskId: "",
+		packId: "",
 		verifierId: "",
 		status: "",
 		correct: false,
@@ -187,10 +192,11 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: compId,
 			SK: `ACTIVITY#${activityId}`,
 		},
-		UpdateExpression: "SET #userId = :userId, #taskId = :taskId, #verifierId = :verifierId, #status = :status, #correct = :correct",
+		UpdateExpression: "SET #userId = :userId, #taskId = :taskId, #packId = :packId, #verifierId = :verifierId, #status = :status, #correct = :correct",
 		ExpressionAttributeNames: {
 			"#userId": "userId",
 			"#taskId": "taskId",
+			"#packId": "packId",
 			"#verifierId": "verifierId",
 			"#status": "status",
 			"#correct": "correct",
@@ -198,6 +204,7 @@ export const update: Handler = Util.handler(async (event) => {
 		ExpressionAttributeValues: {
 			":userId": data.userId,
 			":taskId": data.taskId,
+			":packId": data.packId,
 			":verifierId": data.verifierId,
 			":status": data.status,
 			":correct": data.correct,

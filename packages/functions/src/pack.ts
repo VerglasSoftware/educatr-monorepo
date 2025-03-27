@@ -4,7 +4,8 @@ import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
-import { Pack, PackCreateUpdate } from "./types/pack";
+import { itemsToTasks } from "./task";
+import { Pack, PackCreateUpdate, PackWithTasks } from "./types/pack";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -30,6 +31,7 @@ const itemsToPacks = (items: Record<string, AttributeValue>[] | undefined): Pack
 };
 
 export const list: Handler = Util.handler(async (event) => {
+	const includeTasks = event.queryStringParameters?.include === "tasks";
 	const params: ScanCommandInput = {
 		TableName: Resource.Packs.name,
 		FilterExpression: "SK = :sk",
@@ -41,13 +43,37 @@ export const list: Handler = Util.handler(async (event) => {
 	try {
 		const result = await client.send(new ScanCommand(params));
 		const packs = itemsToPacks(result.Items);
-		return JSON.stringify(packs);
+		if (!includeTasks) {
+			return JSON.stringify(packs);
+		}
+
+		const packsWithTasks = await Promise.all(
+			packs.map(async (pack) => {
+				const tasksParams: ScanCommandInput = {
+					TableName: Resource.Packs.name,
+					FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					ExpressionAttributeValues: {
+						":packId": { S: pack.id },
+						":skPrefix": { S: "TASK#" },
+					},
+				};
+
+				const tasksCommand = new ScanCommand(params);
+				const tasksResult = await client.send(tasksCommand);
+				const tasks = itemsToTasks(tasksResult.Items);
+
+				return { ...pack, tasks } as PackWithTasks;
+			})
+		);
+
+		return JSON.stringify(packsWithTasks);
 	} catch (e) {
 		throw new Error(`Could not retrieve packs: ${e}`);
 	}
 });
 
 export const get: Handler = Util.handler(async (event) => {
+	const includeTasks = event.queryStringParameters?.include === "tasks";
 	const { packId } = event.pathParameters || {};
 	if (!packId) {
 		throw new Error("Missing id in path parameters");
@@ -67,7 +93,24 @@ export const get: Handler = Util.handler(async (event) => {
 		if (!pack) {
 			throw new Error("Pack not found");
 		}
-		return JSON.stringify(pack);
+		if (!includeTasks) {
+			return JSON.stringify(pack);
+		}
+
+		const tasksParams: ScanCommandInput = {
+			TableName: Resource.Packs.name,
+			FilterExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":packId": { S: packId },
+				":skPrefix": { S: "TASK#" },
+			},
+		};
+
+		const tasksCommand = new ScanCommand(tasksParams);
+		const tasksResult = await client.send(tasksCommand);
+		const tasks = itemsToTasks(tasksResult.Items);
+
+		return JSON.stringify({ ...pack, tasks });
 	} catch (e) {
 		throw new Error(`Could not retrieve pack ${packId}: ${e}`);
 	}

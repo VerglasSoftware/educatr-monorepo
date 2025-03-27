@@ -6,6 +6,11 @@ import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { Activity } from "../../../../functions/src/types/activity";
+import { Competition } from "../../../../functions/src/types/competition";
+import { PackWithTasks } from "../../../../functions/src/types/pack";
+import { Task } from "../../../../functions/src/types/task";
+import { User } from "../../../../functions/src/types/user";
 import AnnounceModal from "../../components/play/AnnounceModal";
 import Loading from "../../components/play/Loading";
 import NavbarMain from "../../components/play/Navbar";
@@ -14,27 +19,34 @@ import { PDF417 } from "../../components/play/PDF417";
 import TaskModal from "../../components/play/TaskModal";
 import "./Play.css";
 
+interface WaitingTask {
+	id: string;
+	title: string;
+	pack: PackWithTasks;
+	activity: Activity;
+}
+
 export default function PlayCompetition() {
-	const [competition, setCompetition] = useState<any>();
-	const [packs, setPacks] = useState<any[]>();
-	const [webhookStatus, setWebhookStatus] = useState<any>("Default");
+	const [competition, setCompetition] = useState<Competition>();
+	const [packs, setPacks] = useState<PackWithTasks[]>();
+	const [webhookStatus, setWebhookStatus] = useState<string>("Default");
 
-	const [selectedTask, setSelectedTask] = useState<any>();
-	const [selectedTaskPackId, setSelectedTaskPackId] = useState<string>("");
-	const [open, setOpen] = useState<any>();
+	const [selectedTaskPackId, setSelectedTaskPackId] = useState<string>();
+	const [selectedTask, setSelectedTask] = useState<Task>();
+	const [open, setOpen] = useState(false);
 
-	const [waitingTask, setWaitingTask] = useState<any>();
+	const [waitingTask, setWaitingTask] = useState<WaitingTask>();
 
 	const [announceModalOpen, setAnnounceModalOpen] = useState(false);
 	const [announceMessage, setAnnounceMessage] = useState("");
 
-	const [activity, setActivity] = useState<any[]>();
+	const [activities, setActivities] = useState<Activity[]>();
 
-	const [user, setUser] = useState<any>();
+	const [user, setUser] = useState<User>();
 
 	const { compId } = useParams();
 
-	const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI, {
+	const { lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI, {
 		shouldReconnect: () => true,
 		onReconnectStop: () => {
 			window.location.reload();
@@ -50,13 +62,13 @@ export default function PlayCompetition() {
 				case "COMPETITION:STATUS_UPDATE":
 					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
 					break;
-				case "TASK:ANSWERED":
-					const newActivity = data.body;
-					setActivity([...(activity?.filter((a) => a.taskId.S !== newActivity.taskId) || []), newActivity]);
-					if (waitingTask && newActivity.taskId === waitingTask.SK.S.split("#")[1]) {
+				case "TASK:ANSWERED": {
+					const newActivity: Activity = data.body;
+					setActivities([...(activities?.filter((a) => a.taskId !== newActivity.taskId) || []), newActivity]);
+					if (waitingTask && newActivity.taskId === waitingTask.id) {
 						setWaitingTask(null);
 					}
-					if (user && user.username != newActivity.userId) {
+					if (user && user.nickname != newActivity.userId) {
 						if (newActivity.correct) {
 							toast.success(`Someone answered ${newActivity.taskId} correctly, and points have been added to your team.`);
 						} else {
@@ -64,6 +76,7 @@ export default function PlayCompetition() {
 						}
 					}
 					break;
+				}
 				case "COMPETITION:SHOW_LEADERBOARD":
 					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
 					break;
@@ -95,7 +108,7 @@ export default function PlayCompetition() {
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const promises = [API.get("api", `/competition/${compId}`, {}).then(setCompetition), API.get("api", `/pack?include=tasks`, {}).then(setPacks), API.get("api", `/competition/${compId}/activity`, {}).then(setActivity)];
+				const promises = [API.get("api", `/competition/${compId}`, {}).then(setCompetition), API.get("api", `/pack?include=tasks`, {}).then(setPacks), API.get("api", `/competition/${compId}/activity`, {}).then(setActivities)];
 				await Promise.allSettled(promises);
 			} catch (e) {
 				console.log(e);
@@ -117,30 +130,28 @@ export default function PlayCompetition() {
 	}, []);
 
 	useEffect(() => {
-		if (activity != null)
-			if (packs != null)
-				for (const t in activity) {
-					const task = activity[t];
-					if (task.status)
-						if (task.status.S == "WAITING") {
-							const pack: any = packs.find((p) => p.PK.S == task.packId.S);
-							const task2: any = pack.tasks.find((t: any) => t.SK.S.split("#")[1] == task.taskId.S);
-							setWaitingTask({
-								pack: { tasks: undefined, ...pack },
-								activity: activity[t],
-								...task2,
-							});
-						}
-				}
-	}, [activity, packs]);
+		if (activities == null) return;
+		if (packs == null) return;
+		activities.forEach((activity) => {
+			if (activity.status == "WAITING") {
+				const pack = packs.find((p) => p.id == activity.packId);
+				const task2 = pack.tasks.find((t) => t.id == activity.taskId);
+				setWaitingTask({
+					pack: { tasks: undefined, ...pack },
+					activity: activity,
+					...task2,
+				});
+			}
+		});
+	}, [activities, packs]);
 
-	if (!competition || !packs || webhookStatus != "Open" || !activity) {
+	if (!competition || !packs || webhookStatus != "Open" || !activities) {
 		return (
 			<Loading
 				competition={!!competition}
 				packs={!!packs}
-				activity={!!activity}
-				webhookStatus={!!webhookStatus}
+				activity={!!activities}
+				webhookStatus={webhookStatus}
 			/>
 		);
 	}
@@ -181,7 +192,7 @@ export default function PlayCompetition() {
 								level="h1"
 								textColor="common.white"
 								sx={{ mt: 2 }}>
-								{waitingTask.pack.name.S.toUpperCase()} | {waitingTask.title.S.toUpperCase()}
+								{waitingTask.pack.name.toUpperCase()} | {waitingTask.title.toUpperCase()}
 							</Typography>
 							<Typography
 								level="body-sm"
@@ -194,7 +205,7 @@ export default function PlayCompetition() {
 								A member of our team will be with you as soon as possible.
 							</Typography>
 							<br />
-							<PDF417 value={waitingTask.activity && waitingTask.activity.SK.S.split("#")[1]} />
+							<PDF417 value={waitingTask.activity && waitingTask.activity.id} />
 						</CardContent>
 					</Card>
 				</Box>
@@ -219,20 +230,20 @@ export default function PlayCompetition() {
 				<Stack
 					spacing={2}
 					sx={{ width: "100%" }}>
-					{packs.map((pack: any) => (
+					{packs.map((pack) => (
 						<>
 							<Typography
 								level="h2"
 								component="h1"
 								textColor="common.white">
-								{pack.name.S}
+								{pack.name}
 							</Typography>
 							<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(5, 1fr)", justifyContent: "center", gap: 2 }}>
-								{pack.tasks.map((task: any) => {
-									const correct = activity.find((a) => (a.taskId && a.correct ? a.taskId == task.SK.split("#")[1] && a.correct === true : a.taskId == task.SK.split("#")[1] && a.correct === true));
+								{pack.tasks.map((task) => {
+									const correct = !!activities.find((a) => a.taskId === task.id && a.correct === true);
 									if (task.prerequisites && task.prerequisites.length > 0) {
 										const prereqs = task.prerequisites.map((p) => p);
-										const completedPrereqs = prereqs.filter((p) => activity.find((a) => a.taskId == p && a.correct === true));
+										const completedPrereqs = prereqs.filter((p) => activities.find((a) => a.taskId == p && a.correct === true));
 										if (completedPrereqs.length != prereqs.length) return null;
 									}
 									return (
@@ -240,10 +251,10 @@ export default function PlayCompetition() {
 											component="button"
 											onClick={() => {
 												setSelectedTask(task);
-												setSelectedTaskPackId(pack.PK.S);
+												setSelectedTaskPackId(pack.id);
 												setOpen(true);
 											}}
-											id={task.SK.split("#")[1]}
+											id={task.id}
 											disabled={correct}>
 											<Card
 												variant="plain"
@@ -283,9 +294,9 @@ export default function PlayCompetition() {
 				competition={competition}
 				task={selectedTask}
 				packId={selectedTaskPackId}
-				refreshManual={() => {
-					API.get("api", `/competition/${compId}/activity`, {}).then(setActivity);
-				}}
+				// refreshManual={() => {
+				// 	API.get("api", `/competition/${compId}/activity`, {}).then(setActivities);
+				// }}
 			/>
 
 			{announceModalOpen && (
