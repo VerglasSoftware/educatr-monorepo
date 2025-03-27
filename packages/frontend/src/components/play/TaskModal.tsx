@@ -45,9 +45,8 @@ export default function TaskModal({ open, setOpen, competition, task, packId, se
 				},
 			});
 			setSubmitTaskLoading(false);
-
+			setActivities((activities) => [...activities, result.activity]);
 			if (result.manual === true) {
-				setActivities((activities) => [...activities, result.activity]);
 				return toast.info(`${task.title} has been submitted for manual verification.`);
 			}
 

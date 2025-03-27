@@ -358,11 +358,12 @@ export const check: Handler = Util.handler(async (event) => {
 					await new Promise((resolve) => setTimeout(resolve, 1000));
 				} while (status.data.status.id < 3);
 				if (status.data.status.id == 3) {
-					if (status.data.stdout.trim() === task.answer.trim()) {
-						return await returnAnswer(true);
-					} else {
+					const answerLines = status.data.stdout.trim().split("\n");
+					const outputLines = task.answer.trim().split("\\n");
+					if (answerLines.length !== outputLines.length || !answerLines.every((line, index) => line.trim() === outputLines[index].trim())) {
 						return await returnAnswer(false);
 					}
+					return await returnAnswer(true);
 				} else {
 					return await returnAnswer(false);
 				}
