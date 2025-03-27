@@ -7,6 +7,7 @@ import { API } from "aws-amplify";
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
+import { Activity } from "../../../../functions/src/types/activity";
 import { Competition } from "../../../../functions/src/types/competition";
 import { Task } from "../../../../functions/src/types/task";
 
@@ -16,9 +17,16 @@ interface TaskModalProps {
 	competition: Competition;
 	task: Task;
 	packId: string;
+	setActivities: Dispatch<SetStateAction<Activity[]>>;
 }
 
-export default function TaskModal({ open, setOpen, competition, task, packId }: TaskModalProps) {
+interface CheckResponse {
+	result?: boolean;
+	manual?: boolean;
+	activity: Activity;
+}
+
+export default function TaskModal({ open, setOpen, competition, task, packId, setActivities }: TaskModalProps) {
 	const [answer, setAnswer] = useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 	const [stdin, setStdin] = useState<string>("");
@@ -28,7 +36,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 	async function submitTask() {
 		setSubmitTaskLoading(true);
 		try {
-			const result = await API.post("api", `/competition/${competition.id}/check`, {
+			const result: CheckResponse = await API.post("api", `/competition/${competition.id}/check`, {
 				body: {
 					packId: packId,
 					taskId: task.id,
@@ -39,6 +47,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId }: 
 			setSubmitTaskLoading(false);
 
 			if (result.manual === true) {
+				setActivities((activities) => [...activities, result.activity]);
 				return toast.info(`${task.title} has been submitted for manual verification.`);
 			}
 

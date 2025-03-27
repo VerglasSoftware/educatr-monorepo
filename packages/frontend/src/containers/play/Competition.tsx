@@ -53,7 +53,6 @@ export default function PlayCompetition() {
 		},
 	});
 
-	console.log(packs);
 	useEffect(() => {
 		if (lastMessage) {
 			const data = JSON.parse(lastMessage.data);
@@ -295,6 +294,7 @@ export default function PlayCompetition() {
 				competition={competition}
 				task={selectedTask}
 				packId={selectedTaskPackId}
+				setActivities={setActivities}
 				// refreshManual={() => {
 				// 	API.get("api", `/competition/${compId}/activity`, {}).then(setActivities);
 				// }}

@@ -1,6 +1,6 @@
 import { html } from "@codemirror/lang-html";
 import { python } from "@codemirror/lang-python";
-import { ArrowBack, ArrowForward, AssignmentTurnedIn, Check, Code, DataObject, Edit, Help, Input as InputIcon } from "@mui/icons-material";
+import { Add, ArrowBack, ArrowForward, AssignmentTurnedIn, Check, Code, DataObject, Delete, Edit, Help, Input as InputIcon } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControl, FormLabel, Input, Option, Select, Textarea, Typography } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
 import CodeMirror from "@uiw/react-codemirror";
@@ -141,6 +141,77 @@ export default function TaskEditor() {
 		}
 	}, [tasks]);
 
+	if (pack && tasks.length === 0) {
+		return (
+			<div className="Home">
+				<Helmet>
+					<title>{pack.name} - Task Editor</title>
+				</Helmet>
+				<div>
+					<Box sx={{ display: "flex", alignItems: "center" }}>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dash" },
+								{ label: "Packs", href: "/dash/packs" },
+								{ label: pack.name, href: `/dash/packs/${id}` },
+								{ label: "Editor", href: `/dash/packs/${id}/edit` },
+							]}
+						/>
+					</Box>
+					<Box
+						sx={{
+							display: "flex",
+							mb: 1,
+							gap: 1,
+							flexDirection: { xs: "column", sm: "row" },
+							alignItems: { xs: "start", sm: "center" },
+							flexWrap: "wrap",
+							justifyContent: "space-between",
+						}}>
+						<Typography
+							level="h2"
+							component="h1">
+							{pack.name}
+						</Typography>
+					</Box>
+					<Box sx={{ display: "flex", justifyContent: "center", marginBottom: 2 }}>
+						<Typography
+							level="h3"
+							component="h2"
+							sx={{ my: 0 }}>
+							No tasks found.
+						</Typography>
+					</Box>
+					<Box sx={{ display: "flex", justifyContent: "center" }}>
+						<Button
+							onClick={async () => {
+								const newtask: Task = await API.post("api", `/pack/${id}/task`, {
+									body: {
+										title: "New Task",
+										subtitle: "",
+										content: "",
+										placeholder: "",
+										answer: "",
+										answerChoices: [],
+										answerType: "TEXT",
+										verificationType: "MANUAL",
+										prerequisites: [],
+										points: 0,
+										stdin: "",
+									},
+								});
+
+								setTasks([...tasks, newtask]);
+								setTask(newtask);
+							}}>
+							Add a task
+						</Button>
+					</Box>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		pack &&
 		tasks && (
@@ -175,99 +246,150 @@ export default function TaskEditor() {
 							{pack.name}
 						</Typography>
 					</Box>
-					<Box sx={{ display: "flex", justifyContent: "center" }}>
-						<Button
-							variant="plain"
-							disabled={tasks[0].id == task.id}
-							onClick={() => {
-								const index = tasks.findIndex((t) => t.id == task.id);
-								setTask(tasks[index - 1]);
-								switch (tasks[index - 1].answerType) {
-									case "PYTHON":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "CSHARP":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "WEB":
-										setPossibleVerificationTypes(["MANUAL"]);
-										break;
-									case "MULTIPLE":
-										setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
-										break;
-									case "TEXT":
-										setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
-										break;
-								}
-								formik.setValues({
-									title: tasks[index - 1].title,
-									subtitle: tasks[index - 1].subtitle,
-									content: tasks[index - 1].content,
-									placeholder: tasks[index - 1].placeholder,
-									answer: tasks[index - 1].answer,
-									answerChoices: tasks[index - 1].answerChoices.map((item) => ({
-										id: item.id,
-										name: item.name,
-										correct: item.correct,
-									})),
-									answerType: tasks[index - 1].answerType,
-									verificationType: tasks[index - 1].verificationType,
-									prerequisites: tasks[index - 1].prerequisites.map((item) => item),
-									points: tasks[index - 1].points,
-									stdin: tasks[index - 1].stdin,
-								});
-							}}>
-							<ArrowBack />
-						</Button>
-						<Typography
-							level="h3"
-							component="h2"
-							sx={{ my: 0 }}>
-							{task.title}
-						</Typography>
-						<Button
-							variant="plain"
-							disabled={tasks[tasks.length - 1].id == task.id}
-							onClick={() => {
-								const index = tasks.findIndex((t) => t.id == task.id);
-								setTask(tasks[index + 1]);
-								switch (tasks[index + 1].answerType) {
-									case "PYTHON":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "CSHARP":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "WEB":
-										setPossibleVerificationTypes(["MANUAL"]);
-										break;
-									case "MULTIPLE":
-										setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
-										break;
-									case "TEXT":
-										setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
-										break;
-								}
-								formik.setValues({
-									title: tasks[index + 1].title,
-									subtitle: tasks[index + 1].subtitle,
-									content: tasks[index + 1].content,
-									placeholder: tasks[index + 1].placeholder,
-									answer: tasks[index + 1].answer,
-									answerChoices: tasks[index + 1].answerChoices.map((item) => ({
-										id: item.id,
-										name: item.name,
-										correct: item.correct,
-									})),
-									answerType: tasks[index + 1].answerType,
-									verificationType: tasks[index + 1].verificationType,
-									prerequisites: tasks[index + 1].prerequisites.map((item) => item),
-									points: tasks[index + 1].points,
-									stdin: tasks[index + 1].stdin,
-								});
-							}}>
-							<ArrowForward />
-						</Button>
+					<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+						{/* Left Spacer to keep arrows in the center */}
+						<Box sx={{ width: "100px" }} />
+
+						{/* Centered Navigation */}
+						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+							<Button
+								variant="plain"
+								disabled={tasks[0].id == task.id}
+								onClick={() => {
+									const index = tasks.findIndex((t) => t.id == task.id);
+									setTask(tasks[index - 1]);
+									switch (tasks[index - 1].answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: tasks[index - 1].title,
+										subtitle: tasks[index - 1].subtitle,
+										content: tasks[index - 1].content,
+										placeholder: tasks[index - 1].placeholder,
+										answer: tasks[index - 1].answer,
+										answerChoices: tasks[index - 1].answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: tasks[index - 1].answerType,
+										verificationType: tasks[index - 1].verificationType,
+										prerequisites: tasks[index - 1].prerequisites.map((item) => item),
+										points: tasks[index - 1].points,
+										stdin: tasks[index - 1].stdin,
+									});
+								}}>
+								<ArrowBack />
+							</Button>
+
+							<Typography
+								level="h3"
+								component="h2"
+								sx={{ my: 0 }}>
+								{task.title}
+							</Typography>
+
+							<Button
+								variant="plain"
+								disabled={tasks[tasks.length - 1].id == task.id}
+								onClick={() => {
+									const index = tasks.findIndex((t) => t.id == task.id);
+									setTask(tasks[index + 1]);
+									switch (tasks[index + 1].answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: tasks[index + 1].title,
+										subtitle: tasks[index + 1].subtitle,
+										content: tasks[index + 1].content,
+										placeholder: tasks[index + 1].placeholder,
+										answer: tasks[index + 1].answer,
+										answerChoices: tasks[index + 1].answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: tasks[index + 1].answerType,
+										verificationType: tasks[index + 1].verificationType,
+										prerequisites: tasks[index + 1].prerequisites.map((item) => item),
+										points: tasks[index + 1].points,
+										stdin: tasks[index + 1].stdin,
+									});
+								}}>
+								<ArrowForward />
+							</Button>
+						</Box>
+
+						{/* Right-aligned Buttons */}
+						<Box sx={{ display: "flex", gap: 1 }}>
+							<Button
+								variant="plain"
+								color="danger"
+								onClick={() => {
+									const confirmed = window.confirm("Are you sure you want to delete this task?");
+									if (!confirmed) return;
+									API.del("api", `/pack/${id}/task/${task.id}`, {});
+									const index = tasks.findIndex((t) => t.id == task.id);
+									const newTasks = tasks.filter((t) => t.id !== task.id);
+									setTasks(newTasks);
+									setTask(newTasks[index - 1]);
+								}}>
+								<Delete />
+							</Button>
+							<Button
+								variant="plain"
+								color="success"
+								onClick={async () => {
+									const newtask: Task = await API.post("api", `/pack/${id}/task`, {
+										body: {
+											title: "New Task",
+											subtitle: "",
+											content: "",
+											placeholder: "",
+											answer: "",
+											answerChoices: [],
+											answerType: "TEXT",
+											verificationType: "MANUAL",
+											prerequisites: [],
+											points: 0,
+											stdin: "",
+										},
+									});
+
+									setTasks([...tasks, newtask]);
+									setTask(newtask);
+								}}>
+								<Add />
+							</Button>
+						</Box>
 					</Box>
 					<form onSubmit={formik.handleSubmit}>
 						<Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>

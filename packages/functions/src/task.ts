@@ -130,6 +130,7 @@ export const create: Handler = Util.handler(async (event) => {
 			points: data.points,
 			content: data.content,
 			answer: data.answer,
+			answerChoices: data.answerChoices,
 			stdin: data.stdin,
 			verificationType: data.verificationType,
 			answerType: data.answerType,
