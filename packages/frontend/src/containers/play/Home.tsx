@@ -62,7 +62,7 @@ export default function PlayHome() {
 						<Stack
 							direction="column"
 							spacing={1}
-							sx={{ marginTop: 1, width: "100%" }}>
+							sx={{ marginTop: 1, width: "100%", maxHeight: "50vh", overflowY: "auto" }}>
 							{competitions.map((competition) => (
 								<Card
 									variant="plain"
