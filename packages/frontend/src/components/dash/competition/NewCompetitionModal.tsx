@@ -1,7 +1,7 @@
-import { Button, DialogContent, DialogTitle, FormControl, FormLabel, Input, Modal, ModalDialog, Stack } from "@mui/joy";
+import { Button, DialogContent, DialogTitle, FormControl, FormLabel, Input, Modal, ModalDialog, Option, Select, Stack } from "@mui/joy";
 import { API } from "aws-amplify";
-import { Dispatch, FormEvent, Fragment, SetStateAction } from "react";
-import { useParams } from "react-router-dom";
+import { Dispatch, FormEvent, Fragment, SetStateAction, useEffect, useState } from "react";
+import { Organisation } from "../../../../../functions/src/types/organisation";
 
 interface NewCompetitionModalProps {
 	open: boolean;
@@ -9,7 +9,20 @@ interface NewCompetitionModalProps {
 }
 
 export default function NewCompetitionModal({ open, setOpen }: NewCompetitionModalProps) {
-	const { orgId } = useParams();
+	const [organisations, setOrganisations] = useState<Organisation[]>();
+
+	useEffect(() => {
+		async function onLoad() {
+			try {
+				const organisations = await API.get("api", `/organisation`, {});
+				setOrganisations(organisations);
+			} catch (e) {
+				console.log(e);
+			}
+		}
+
+		onLoad();
+	});
 
 	return (
 		<Fragment>
@@ -22,12 +35,12 @@ export default function NewCompetitionModal({ open, setOpen }: NewCompetitionMod
 					<form
 						onSubmit={async (event: FormEvent<HTMLFormElement>) => {
 							event.preventDefault();
-							const form = event.currentTarget as HTMLFormElement;
-							const nameInput = form.elements.namedItem("name") as HTMLInputElement;
+							const formData = new FormData(event.currentTarget);
+							const formJson = Object.fromEntries(formData.entries());
 							await API.post("api", `/competition`, {
 								body: {
-									name: nameInput.value,
-									organisationId: orgId,
+									name: formJson.name,
+									organisationId: formJson.organisation,
 								},
 							});
 
@@ -39,7 +52,19 @@ export default function NewCompetitionModal({ open, setOpen }: NewCompetitionMod
 								<Input
 									autoFocus
 									required
+									name="name"
 								/>
+							</FormControl>
+							<FormControl>
+								<FormLabel>Organisation</FormLabel>
+								<Select
+									name="organisation"
+									required
+									placeholder="Organisation">
+									{organisations?.map((organisation) => {
+										return <Option value={organisation.id}>{organisation.name}</Option>;
+									})}
+								</Select>
 							</FormControl>
 							<Button type="submit">Create</Button>
 						</Stack>

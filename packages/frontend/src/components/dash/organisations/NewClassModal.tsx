@@ -37,6 +37,7 @@ export default function NewClassModal({ open, setOpen }: NewClassModalProps) {
 								<Input
 									autoFocus
 									required
+									name="name"
 								/>
 							</FormControl>
 							<Button type="submit">Create</Button>
