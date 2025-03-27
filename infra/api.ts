@@ -77,21 +77,21 @@ api.route(
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"GET /organisation/{id}",
+	"GET /organisation/{orgId}",
 	{
 		handler: "packages/functions/src/organisation.get",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"PUT /organisation/{id}",
+	"PUT /organisation/{orgId}",
 	{
 		handler: "packages/functions/src/organisation.update",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"DELETE /organisation/{id}",
+	"DELETE /organisation/{orgId}",
 	{
 		handler: "packages/functions/src/organisation.del",
 	},
@@ -99,7 +99,7 @@ api.route(
 );
 
 api.route(
-	"GET /organisation/{id}/students",
+	"GET /organisation/{orgId}/students",
 	{
 		handler: "packages/functions/src/organisation.listStudents",
 	},
@@ -229,35 +229,35 @@ api.route(
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"GET /competition/{id}",
+	"GET /competition/{compId}",
 	{
 		handler: "packages/functions/src/competition.get",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"PUT /competition/{id}",
+	"PUT /competition/{compId}",
 	{
 		handler: "packages/functions/src/competition.update",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"DELETE /competition/{id}",
+	"DELETE /competition/{compId}",
 	{
 		handler: "packages/functions/src/competition.del",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"POST /competition/{id}/check",
+	"POST /competition/{compId}/check",
 	{
 		handler: "packages/functions/src/competition.check",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"POST /competition/{id}/run",
+	"POST /competition/{compId}/run",
 	{
 		handler: "packages/functions/src/competition.run",
 	},
@@ -315,35 +315,35 @@ api.route(
 );
 
 api.route(
-	"GET /competition/{orgId}/team",
+	"GET /competition/{compId}/team",
 	{
 		handler: "packages/functions/src/team.list",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"POST /competition/{orgId}/team",
+	"POST /competition/{compId}/team",
 	{
 		handler: "packages/functions/src/team.create",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"GET /competition/{orgId}/team/{teamId}",
+	"GET /competition/{compId}/team/{teamId}",
 	{
 		handler: "packages/functions/src/team.get",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"PUT /competition/{orgId}/team/{teamId}",
+	"PUT /competition/{compId}/team/{teamId}",
 	{
 		handler: "packages/functions/src/team.update",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
 api.route(
-	"DELETE /competition/{orgId}/team/{teamId}",
+	"DELETE /competition/{compId}/team/{teamId}",
 	{
 		handler: "packages/functions/src/team.del",
 	},

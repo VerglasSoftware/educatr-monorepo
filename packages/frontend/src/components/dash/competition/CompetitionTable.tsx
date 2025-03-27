@@ -1,30 +1,26 @@
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
-import { Box, Button, Checkbox, Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Sheet, Table, Typography } from "@mui/joy";
+import { Box, Checkbox, Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Sheet, Table, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
-import { Fragment, useEffect, useState } from "react";
-import { FaPlus } from "react-icons/fa6";
-import { useParams } from "react-router-dom";
-import { Organisation } from "../../../../../functions/src/types/organisation";
-import { User } from "../../../../../functions/src/types/user";
-import NewUserModal from "./NewUserModal";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Fragment } from "react/jsx-runtime";
+import { Competition } from "../../../../../functions/src/types/competition";
 
-interface OrganisationStudentTableProps {
-	organisation: Organisation;
+interface CompetitionTableProps {
+	selected: readonly string[];
+	setSelected: Dispatch<SetStateAction<readonly string[]>>;
 }
 
-export default function OrganisationStudentTable({ organisation }: OrganisationStudentTableProps) {
-	const [selected, setSelected] = useState<readonly string[]>([]);
-	const [students, setStudents] = useState<User[]>([]);
+export default function CompetitionTable({ selected, setSelected }: CompetitionTableProps) {
+	const nav = useNavigate();
 
-	const [open, setOpen] = useState(false);
-
-	const { id } = useParams();
+	const [competition, setCompetitions] = useState<Competition[]>([]);
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const students = await API.get("api", `/organisation/${id}/students`, {});
-				setStudents(students);
+				const competition = await API.get("api", `/competition`, {});
+				setCompetitions(competition);
 			} catch (e) {
 				console.log(e);
 			}
@@ -35,27 +31,6 @@ export default function OrganisationStudentTable({ organisation }: OrganisationS
 
 	return (
 		<Fragment>
-			<Box
-				sx={{
-					display: "flex",
-					mb: 1,
-					gap: 1,
-					flexDirection: { xs: "column", sm: "row" },
-					alignItems: { xs: "start", sm: "center" },
-					flexWrap: "wrap",
-					justifyContent: "space-between",
-				}}>
-				<Button
-					color="primary"
-					startDecorator={<FaPlus />}
-					size="sm"
-					onClick={async () => {
-						setOpen(true);
-					}}>
-					Add
-				</Button>
-			</Box>
-
 			<Sheet
 				className="OrderTableContainer"
 				variant="plain"
@@ -83,22 +58,21 @@ export default function OrganisationStudentTable({ organisation }: OrganisationS
 							<th style={{ width: 48, textAlign: "center", padding: "12px 6px" }}>
 								<Checkbox
 									size="sm"
-									indeterminate={selected.length > 0 && selected.length !== students.length}
-									checked={selected.length === students.length}
+									indeterminate={selected.length > 0 && selected.length !== competition.length}
+									checked={selected.length === competition.length}
 									onChange={(event) => {
-										setSelected(event.target.checked ? students.map((row) => row.id) : []);
+										setSelected(event.target.checked ? competition.map((row) => row.id) : []);
 									}}
-									color={selected.length > 0 || selected.length === students.length ? "primary" : undefined}
+									color={selected.length > 0 || selected.length === competition.length ? "primary" : undefined}
 									sx={{ verticalAlign: "text-bottom" }}
 								/>
 							</th>
 							<th style={{ width: 140, padding: "12px 6px" }}>Name</th>
-							<th style={{ width: 140, padding: "12px 6px" }}>Description</th>
 							<th style={{ width: 140, padding: "12px 6px" }}> </th>
 						</tr>
 					</thead>
 					<tbody>
-						{[...students].map((row) => (
+						{[...competition].map((row) => (
 							<tr key={row.id}>
 								<td style={{ textAlign: "center", width: 120 }}>
 									<Checkbox
@@ -113,12 +87,7 @@ export default function OrganisationStudentTable({ organisation }: OrganisationS
 									/>
 								</td>
 								<td>
-									<Typography level="body-xs">
-										{row.given_name} {row.family_name}
-									</Typography>
-								</td>
-								<td>
-									<Typography level="body-xs">{row.nickname}</Typography>
+									<Typography level="body-xs">{row.name}</Typography>
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
@@ -131,20 +100,20 @@ export default function OrganisationStudentTable({ organisation }: OrganisationS
 											<Menu
 												size="sm"
 												sx={{ minWidth: 140 }}>
+												<MenuItem onClick={() => nav(`/dash/competitions/${row.id}`)}>View</MenuItem>
 												<Divider />
 												<MenuItem
 													color="danger"
 													onClick={async () => {
-														await API.put("api", `/organisation/${organisation.id}`, {
-															body: {
-																...organisation,
-																students: organisation.students.filter((studentId: string) => studentId !== row.id),
-															},
-														});
-														const students = await API.get("api", `/organisation/${organisation.id}/students`, {});
-														setStudents(students);
+														const confirmed = window.confirm("Are you sure you want to delete this competition?");
+														if (!confirmed) return;
+														try {
+															await API.del("api", `/competition/${row.id}`, {});
+														} catch (e) {
+															console.log(e);
+														}
 													}}>
-													Remove
+													Delete
 												</MenuItem>
 											</Menu>
 										</Dropdown>
@@ -155,11 +124,6 @@ export default function OrganisationStudentTable({ organisation }: OrganisationS
 					</tbody>
 				</Table>
 			</Sheet>
-			<NewUserModal
-				open={open}
-				setOpen={setOpen}
-				organisation={organisation}
-			/>
 		</Fragment>
 	);
 }

@@ -1,7 +1,8 @@
-import { Page } from "playwright";
 import { expect } from "@playwright/test";
-import * as fs from "node:fs";
 import "dotenv/config";
+import * as fs from "node:fs";
+import { Page } from "playwright";
+import { TaskDynamo } from "../packages/functions/src/types/task";
 import { getCredsAndLockFile, releaseCreds } from "./credManager";
 
 export async function helloWorld(page: Page, context, events) {
@@ -47,12 +48,12 @@ export async function helloWorld(page: Page, context, events) {
 	await expect(page.getByText("Logic Gates")).toBeVisible({ timeout: 200000 });
 
 	// Question login
-	const sampleQuestions = JSON.parse(fs.readFileSync("test/sample.json", "utf8"));
+	const sampleQuestions: TaskDynamo[] = JSON.parse(fs.readFileSync("test/sample.json", "utf8"));
 
 	const randomisedSampleQuestions = sampleQuestions.sort(() => Math.random() - 0.5);
 	for (const i in randomisedSampleQuestions) {
 		try {
-			const question: any = randomisedSampleQuestions[i];
+			const question = randomisedSampleQuestions[i];
 
 			if (!["TEXT", "PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
 			if (!["COMPARE"].includes(question.verificationType.S)) continue; // only allow automatic compare verification

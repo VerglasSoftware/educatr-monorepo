@@ -1,19 +1,17 @@
-import * as fs from "node:fs";
 import csv from "csv-parser";
-import lockfile from "proper-lockfile";
-import path from "path";
+import { createReadStream, writeFileSync } from "node:fs";
+import { lock } from "proper-lockfile";
 
-// Helper function to lock the file and read/write safely
 export async function lockAndUpdateCreds(): Promise<string | null> {
-	// Try acquiring a lock
-	const release = await lockfile.lock("test/creds.csv", { retries: 5, retryWait: 1000 });
+	// Lock the file to prevent concurrent access
+	const release = await lock("test/creds.csv", { retries: 5, retryWait: 1000 });
 
 	try {
-		// Return a Promise to handle async file reading and writing
+		// Get credentials from the CSV file
 		const creds = await new Promise<{ username: string; inuse: string }[]>((resolve, reject) => {
 			const creds: { username: string; inuse: string }[] = [];
 
-			fs.createReadStream("test/creds.csv")
+			createReadStream("test/creds.csv")
 				.pipe(csv())
 				.on("data", (row) => creds.push(row))
 				.on("end", () => resolve(creds)) // Resolving after the 'end' event
@@ -24,29 +22,26 @@ export async function lockAndUpdateCreds(): Promise<string | null> {
 		const availableCreds = creds.find((cred) => cred.inuse === "no");
 
 		if (availableCreds) {
-			// Set 'inuse' to 'yes'
 			availableCreds.inuse = "yes";
 
 			// Write the updated credentials back to the CSV file
 			const updatedData = ["username,inuse", ...creds.map((cred) => `${cred.username},${cred.inuse}`)].join("\n");
-			fs.writeFileSync("test/creds.csv", updatedData);
+			writeFileSync("test/creds.csv", updatedData);
 			console.log("Credentials updated for username:", availableCreds.username);
-
-			return availableCreds.username; // Return the username
+			return availableCreds.username;
 		} else {
 			console.log("No available credentials.");
-			return null; // No available credentials
+			return null;
 		}
 	} catch (err) {
 		console.error("Error during file operation:", err);
-		return null; // Return null in case of error
+		return null;
 	} finally {
 		// Release the lock after processing
 		release();
 	}
 }
 
-// Keep trying to lock the file and get credentials
 export async function getCredsAndLockFile(): Promise<string | null> {
 	let locked = true;
 
@@ -54,12 +49,12 @@ export async function getCredsAndLockFile(): Promise<string | null> {
 		try {
 			const username = await lockAndUpdateCreds();
 			if (username) {
-				return username; // If username is found, return it
+				return username;
 			} else {
 				console.log("Waiting for available credentials...");
 			}
 
-			locked = false; // Exit loop if successful
+			locked = false; // Exit loop
 		} catch (err) {
 			console.log("File is locked, retrying...");
 			await new Promise((resolve) => setTimeout(resolve, 1000)); // Retry after 1 second
@@ -69,17 +64,16 @@ export async function getCredsAndLockFile(): Promise<string | null> {
 	return null; // Return null if no username is found
 }
 
-// Method to release credentials by setting 'inuse' to 'no' for a given username
 export async function releaseCreds(username: string): Promise<boolean> {
-	// Try acquiring a lock
-	const release = await lockfile.lock("test/creds.csv", { retries: 5, retryWait: 1000 });
+	// Lock the file to prevent concurrent access
+	const release = await lock("test/creds.csv", { retries: 5, retryWait: 1000 });
 
 	try {
-		// Return a Promise to handle async file reading and writing
+		// Get credentials from the CSV file
 		const creds = await new Promise<{ username: string; inuse: string }[]>((resolve, reject) => {
 			const creds: { username: string; inuse: string }[] = [];
 
-			fs.createReadStream("test/creds.csv")
+			createReadStream("test/creds.csv")
 				.pipe(csv())
 				.on("data", (row) => creds.push(row))
 				.on("end", () => resolve(creds)) // Resolving after the 'end' event
@@ -90,21 +84,20 @@ export async function releaseCreds(username: string): Promise<boolean> {
 		const userCred = creds.find((cred) => cred.username === username);
 
 		if (userCred) {
-			// Set 'inuse' to 'no'
 			userCred.inuse = "no";
 
 			// Write the updated credentials back to the CSV file
 			const updatedData = ["username,inuse", ...creds.map((cred) => `${cred.username},${cred.inuse}`)].join("\n");
-			fs.writeFileSync("test/creds.csv", updatedData);
+			writeFileSync("test/creds.csv", updatedData);
 			console.log(`Credentials released for username: ${username}`);
-			return true; // Successfully released credentials
+			return true;
 		} else {
 			console.log(`Username not found: ${username}`);
-			return false; // Username not found in the file
+			return false;
 		}
 	} catch (err) {
 		console.error("Error during file operation:", err);
-		return false; // Return false in case of error
+		return false;
 	} finally {
 		// Release the lock after processing
 		release();

@@ -1,5 +1,5 @@
-import "./Home.css";
 import { Helmet } from "react-helmet";
+import "./Home.css";
 
 export default function Home() {
 	return (

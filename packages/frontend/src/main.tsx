@@ -1,4 +1,4 @@
-import { Amplify, API, Auth } from "aws-amplify";
+import { Amplify, Auth } from "aws-amplify";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

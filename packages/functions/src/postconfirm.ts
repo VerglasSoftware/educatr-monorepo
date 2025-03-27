@@ -1,17 +1,13 @@
-import { Callback, Context, Handler, PostConfirmationTriggerEvent, PreSignUpTriggerEvent } from "aws-lambda";
-import { Resource } from "sst";
-import { createId } from "@paralleldrive/cuid2";
-import { DynamoDBDocumentClient, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, PutCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { PostConfirmationTriggerEvent } from "aws-lambda";
+import { Resource } from "sst";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-const handler = async (event: PostConfirmationTriggerEvent, context: Context, callback: Callback) => {
-	console.log(event);
-
+const handler = async (event: PostConfirmationTriggerEvent) => {
 	const pk = event.userName;
-
-	const params = {
+	const params: PutCommandInput = {
 		TableName: Resource.Users.name,
 		Item: {
 			PK: pk,
@@ -28,18 +24,15 @@ const handler = async (event: PostConfirmationTriggerEvent, context: Context, ca
 	try {
 		await client.send(new PutCommand(params));
 	} catch (e) {
-		throw new Error("Could not create user");
+		throw new Error(`Could not create user: ${e}`);
 	}
-
-	console.log(event.request.userAttributes);
 
 	if (event.request.userAttributes["custom:initial"]) {
 		const orgId = event.request.userAttributes["custom:initial"];
-
-		const params = {
+		const params: UpdateCommandInput = {
 			TableName: Resource.Organisations.name,
 			Key: {
-				PK: `ORG#${orgId}`,
+				PK: orgId,
 				SK: "DETAILS",
 			},
 			UpdateExpression: "ADD #students :student",
@@ -54,8 +47,7 @@ const handler = async (event: PostConfirmationTriggerEvent, context: Context, ca
 		try {
 			await client.send(new UpdateCommand(params));
 		} catch (e) {
-			console.log(e);
-			throw new Error("Could not add user to organisation");
+			throw new Error(`Could not add user to organisation: ${e}`);
 		}
 	}
 

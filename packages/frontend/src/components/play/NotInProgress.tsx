@@ -1,6 +1,11 @@
 import { Box, Card, CardContent, Typography } from "@mui/joy";
+import { Competition } from "../../../../functions/src/types/competition";
 
-export default function NotInProgress({ competition }) {
+interface NotInProgressProps {
+	competition: Competition;
+}
+
+export default function NotInProgress({ competition }: NotInProgressProps) {
 	return (
 		<Box
 			sx={{

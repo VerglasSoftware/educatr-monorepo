@@ -1,15 +1,14 @@
-import { LineChart } from "@mui/x-charts/LineChart";
-import DialogContent from "@mui/joy/DialogContent";
-import DialogTitle from "@mui/joy/DialogTitle";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import { Fragment } from "react";
-import Box from "@mui/material/Box";
-import { useEffect, useState } from "react";
-import { API } from "aws-amplify";
+import { Box, DialogContent, DialogTitle, Modal, ModalDialog } from "@mui/joy";
+import { Dispatch, Fragment, SetStateAction } from "react";
 import LeaderboardChart from "./LeaderboardChart";
 
-export default function LeaderboardModal({ open, setOpen, competitionId }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competitionId: string }) {
+interface LeaderboardModalProps {
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	competitionId: string;
+}
+
+export default function LeaderboardModal({ open, setOpen, competitionId }: LeaderboardModalProps) {
 	return (
 		<Fragment>
 			<Modal

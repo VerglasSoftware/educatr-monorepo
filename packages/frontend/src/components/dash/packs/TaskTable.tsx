@@ -1,70 +1,17 @@
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
-import Box from "@mui/joy/Box";
-import Checkbox from "@mui/joy/Checkbox";
-import Dropdown from "@mui/joy/Dropdown";
-import IconButton from "@mui/joy/IconButton";
-import Menu from "@mui/joy/Menu";
-import MenuButton from "@mui/joy/MenuButton";
-import MenuItem from "@mui/joy/MenuItem";
-import Sheet from "@mui/joy/Sheet";
-import Table from "@mui/joy/Table";
-import Typography from "@mui/joy/Typography";
+import { Box, Checkbox, Dropdown, IconButton, Menu, MenuButton, MenuItem, Sheet, Table, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Task } from "../../../../../functions/src/types/task";
 
-interface RowMenuProps {
-	packId: string;
-	taskId: string;
+interface TaskTableProps {
+	tasks: Task[];
 }
 
-function RowMenu({ packId, taskId }: RowMenuProps) {
-	return (
-		<Dropdown>
-			<MenuButton
-				slots={{ root: IconButton }}
-				slotProps={{ root: { variant: "plain", color: "neutral", size: "sm" } }}>
-				<MoreHorizRoundedIcon />
-			</MenuButton>
-			<Menu
-				size="sm"
-				sx={{ minWidth: 140 }}>
-				<MenuItem
-					color="danger"
-					onClick={async () => {
-						const confirmed = window.confirm("Are you sure you want to delete this task?");
-						if (!confirmed) return;
-						try {
-							await API.del("api", `/pack/${packId}/task/${taskId}`, {});
-						} catch (e) {
-							console.log(e);
-						}
-					}}>
-					Delete
-				</MenuItem>
-			</Menu>
-		</Dropdown>
-	);
-}
-
-export default function TaskTable() {
+export default function TaskTable({ tasks }: TaskTableProps) {
 	const [selected, setSelected] = useState<readonly string[]>([]);
-	const [tasks, setTasks] = useState<any[]>([]);
-
 	const { id } = useParams();
-
-	useEffect(() => {
-		async function onLoad() {
-			try {
-				const tasks = await API.get("api", `/pack/${id}/task`, {});
-				setTasks(tasks);
-			} catch (e) {
-				console.log(e);
-			}
-		}
-
-		onLoad();
-	}, [id]);
 
 	return (
 		<Fragment>
@@ -132,10 +79,30 @@ export default function TaskTable() {
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										<RowMenu
-											taskId={row.id}
-											packId={id}
-										/>
+										<Dropdown>
+											<MenuButton
+												slots={{ root: IconButton }}
+												slotProps={{ root: { variant: "plain", color: "neutral", size: "sm" } }}>
+												<MoreHorizRoundedIcon />
+											</MenuButton>
+											<Menu
+												size="sm"
+												sx={{ minWidth: 140 }}>
+												<MenuItem
+													color="danger"
+													onClick={async () => {
+														const confirmed = window.confirm("Are you sure you want to delete this task?");
+														if (!confirmed) return;
+														try {
+															await API.del("api", `/pack/${id}/task/${row.id}`, {});
+														} catch (e) {
+															console.log(e);
+														}
+													}}>
+													Delete
+												</MenuItem>
+											</Menu>
+										</Dropdown>
 									</Box>
 								</td>
 							</tr>

@@ -3,24 +3,27 @@ import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
-import Breadcrumb from "../../components/dash/breadcrumb";
-import PackCard from "../../components/dash/packs/PackCard";
-import TaskTable from "../../components/dash/packs/TaskTable";
+import { Pack } from "../../../../../functions/src/types/pack";
+import { Task } from "../../../../../functions/src/types/task";
+import Breadcrumb from "../../../components/dash/breadcrumb";
+import PackCard from "../../../components/dash/packs/PackCard";
+import TaskTable from "../../../components/dash/packs/TaskTable";
 import "./PackDetail.css";
 
 export default function PackDetail() {
-	const [pack, setPack] = useState<any>();
-
+	const [pack, setPack] = useState<Pack>();
+	const [tasks, setTasks] = useState<Task[]>();
 	const [name, setName] = useState<string>("");
 	const [description, setDescription] = useState<string>("");
-
 	const { id } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const pack = await API.get("api", `/pack/${id}`, {});
+				const pack: Pack = await API.get("api", `/pack/${id}`, {});
+				const tasks: Task[] = await API.get("api", `/pack/${id}/task`, {});
 				setPack(pack);
+				setTasks(tasks);
 				setName(pack.name);
 				setDescription(pack.description);
 			} catch (e) {
@@ -68,19 +71,19 @@ export default function PackDetail() {
 					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
 						<Box sx={{ gridColumn: "span 6" }}>
 							<PackCard
+								id={id}
 								name={name}
 								description={description}
-								id={id!}
-								pack={pack}
-								setPack={setPack}
 								setName={setName}
 								setDescription={setDescription}
+								setPack={setPack}
 							/>
 						</Box>
 						<Box sx={{ gridColumn: "span 6" }}>
-							<TaskTable />
+							<TaskTable tasks={tasks} />
 							<Button
 								href={`/dash/packs/${id}/edit`}
+								component="a"
 								className="mt-2">
 								Edit
 							</Button>

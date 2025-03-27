@@ -1,22 +1,20 @@
-import * as React from "react";
-import Button from "@mui/joy/Button";
-import FormControl from "@mui/joy/FormControl";
-import FormLabel from "@mui/joy/FormLabel";
-import Input from "@mui/joy/Input";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import DialogTitle from "@mui/joy/DialogTitle";
-import DialogContent from "@mui/joy/DialogContent";
-import Stack from "@mui/joy/Stack";
-import { useNavigate, useParams } from "react-router-dom";
+import { Button, DialogContent, DialogTitle, FormControl, FormLabel, Input, Modal, ModalDialog, Stack } from "@mui/joy";
 import { API } from "aws-amplify";
+import { Fragment } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Class } from "../../../../../functions/src/types/class";
 
-export default function NewClassModal({ open, setOpen }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
+interface NewClassModalProps {
+	open: boolean;
+	setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function NewClassModal({ open, setOpen }: NewClassModalProps) {
 	const nav = useNavigate();
 	const { orgId } = useParams();
 
 	return (
-		<React.Fragment>
+		<Fragment>
 			<Modal
 				open={open}
 				onClose={() => setOpen(false)}>
@@ -26,16 +24,12 @@ export default function NewClassModal({ open, setOpen }: { open: boolean; setOpe
 					<form
 						onSubmit={async (event: React.FormEvent<HTMLFormElement>) => {
 							event.preventDefault();
-
-							const clazz = await API.post("api", `/organisation/${orgId}/class`, {
+							const clazz: Class = await API.post("api", `/organisation/${orgId}/class`, {
 								body: {
-									name: (event.currentTarget.elements[0] as any).value,
+									name: (event.currentTarget.elements.namedItem("name") as HTMLInputElement).value,
 								},
 							});
-
-							console.log(clazz);
-
-							nav(`/dash/${orgId}/classes/${clazz.SK.split("#")[1]}`);
+							nav(`/dash/${orgId}/classes/${clazz.id}`);
 						}}>
 						<Stack spacing={2}>
 							<FormControl>
@@ -50,6 +44,6 @@ export default function NewClassModal({ open, setOpen }: { open: boolean; setOpe
 					</form>
 				</ModalDialog>
 			</Modal>
-		</React.Fragment>
+		</Fragment>
 	);
 }
