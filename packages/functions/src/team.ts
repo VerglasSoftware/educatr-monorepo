@@ -16,7 +16,7 @@ export const itemToTeam = (item: Record<string, any> | undefined): Team => {
 	return {
 		id: isDynamoFormat(item.SK) ? item.SK.S.split("#")[1] : item.SK.split("#")[1],
 		name: isDynamoFormat(item.name) ? item.name.S : item.name,
-		students: isDynamoFormat(item.students) ? item.students.L.map((student: any) => student.S) : item.students,
+		students: isDynamoFormat(item.students) ? item.students.SS.map((student: any) => student) : item.students,
 		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
 	};
 };
@@ -102,7 +102,7 @@ export const create: Handler = Util.handler(async (event) => {
 			PK: compId,
 			SK: `TEAM#${createId()}`,
 			name: data.name,
-			students: data.students,
+			students: new Set<string>(data.students),
 			createdAt: Date.now(),
 		},
 	};
