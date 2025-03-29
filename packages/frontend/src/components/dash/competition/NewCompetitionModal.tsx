@@ -22,7 +22,7 @@ export default function NewCompetitionModal({ open, setOpen }: NewCompetitionMod
 		}
 
 		onLoad();
-	});
+	}, []);
 
 	return (
 		<Fragment>
