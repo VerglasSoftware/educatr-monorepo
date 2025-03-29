@@ -32,7 +32,6 @@ export const itemToTask = (item: Record<string, any> | undefined): Task => {
 		answerType: isDynamoFormat(item.answerType) ? item.answerType.S : item.answerType,
 		placeholder: isDynamoFormat(item.placeholder) ? item.placeholder.S : item.placeholder,
 		prerequisites: isDynamoFormat(item.prerequisites) ? item.prerequisites.L.map((prerequisite: any) => prerequisite.S) : item.prerequisites,
-		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
 	};
 };
 
@@ -136,7 +135,6 @@ export const create: Handler = Util.handler(async (event) => {
 			answerType: data.answerType,
 			placeholder: data.placeholder,
 			prerequisites: data.prerequisites,
-			createdAt: Date.now(),
 		},
 	};
 

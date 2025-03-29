@@ -19,7 +19,6 @@ export interface TaskDynamo {
 	answerType: { S: string };
 	placeholder: { S: string };
 	prerequisites: { L: { S: string }[] };
-	createdAt: { N: string };
 }
 
 export interface Task {
@@ -39,7 +38,6 @@ export interface Task {
 	answerType: string;
 	placeholder: string;
 	prerequisites: string[];
-	createdAt: string;
 }
 
 export interface TaskCreateUpdate {
