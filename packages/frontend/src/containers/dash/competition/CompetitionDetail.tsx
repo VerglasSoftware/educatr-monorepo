@@ -47,7 +47,7 @@ export default function CompetitionDetail() {
 		async function fetchStudents() {
 			try {
 				console.log("Fetching students...");
-				const students = await API.get("api", `/organisation/${competition.organisationId}/student`, {});
+				const students = await API.get("api", `/organisation/${competition.organisationId}/students`, {});
 				setStudents(students);
 			} catch (e) {
 				console.error("Error fetching students:", e);
