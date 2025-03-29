@@ -68,13 +68,13 @@ export const list: Handler = Util.handler(async (event) => {
 
 	// Query the Competitions table to find all activities for this user in the team
 	// Dynamically create FilterExpression for each userId
-	const userIdConditions = Array.from(team.students).map((_, index) => `userId = :userId${index}`).join(" OR ");
+	const userIdConditions = team.students.map((_, index) => `userId = :userId${index}`).join(" OR ");
 
 	const activityParams: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
 		KeyConditionExpression: "PK = :compId AND begins_with(SK, :activityPrefix)",
 		FilterExpression: `(${userIdConditions})`,
-		ExpressionAttributeValues: Array.from(team.students).reduce(
+		ExpressionAttributeValues: team.students.reduce(
 			(acc: { [key: string]: { S: string } }, id, index) => {
 				acc[`:userId${index}`] = { S: id };
 				return acc;
