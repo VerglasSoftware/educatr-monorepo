@@ -287,7 +287,7 @@ export const importTasks: Handler = Util.handler(async (event) => {
 				PK: task.PK.S,
 				SK: task.SK.S,
 				createdAt: parseInt(task.createdAt.N),
-				prerequites: [],
+				prerequisites: [],
 				stdin: "",
 			},
 		};
