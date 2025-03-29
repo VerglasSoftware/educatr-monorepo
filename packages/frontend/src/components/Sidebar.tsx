@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { FaBox } from "react-icons/fa";
 import { FaGear, FaPeopleGroup, FaTrophy } from "react-icons/fa6";
 import { useLocation } from "react-router-dom";
+import { Organisation } from "../../../functions/src/types/organisation";
 import "./LoaderButton.css";
 
-export default function Sidebar({ className = "", disabled = false, isLoading = false, ...props }) {
-	const [organisations, setOrganisations] = useState<any[]>([]);
+export default function Sidebar() {
+	const [organisations, setOrganisations] = useState<Organisation[]>([]);
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const organisations = await API.get("api", "/organisation", {});
+				const organisations: Organisation[] = await API.get("api", "/organisation", {});
 				setOrganisations(organisations);
 			} catch (e) {
 				console.log(e);
@@ -28,7 +29,6 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 		<Box
 			component="nav"
 			className="Navigation"
-			{...props}
 			sx={[
 				{
 					p: 2,
@@ -60,26 +60,26 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 						</ListItem>
 					</List>
 				</ListItem>
+				<ListItem>
+					<ListItemButton
+						selected={location.pathname === `/dash/competitions`}
+						component="a"
+						href={`/dash/competitions`}>
+						<ListItemDecorator>
+							<FaTrophy fontSize="small" />
+						</ListItemDecorator>
+						<ListItemContent>Competitions</ListItemContent>
+					</ListItemButton>
+				</ListItem>
 				{organisations.map((org) => (
 					<ListItem nested>
-						<ListSubheader sx={{ letterSpacing: "2px", fontWeight: "800" }}>Owned by {org.name.S}</ListSubheader>
+						<ListSubheader sx={{ letterSpacing: "2px", fontWeight: "800" }}>Owned by {org.name}</ListSubheader>
 						<List aria-labelledby="nav-list-browse">
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S.split("#")[1]}/competitions`}
+									selected={location.pathname === `/dash/${org.id}/classes`}
 									component="a"
-									href={`/dash/${org.PK.S.split("#")[1]}/competitions`}>
-									<ListItemDecorator>
-										<FaTrophy fontSize="small" />
-									</ListItemDecorator>
-									<ListItemContent>Competitions</ListItemContent>
-								</ListItemButton>
-							</ListItem>
-							<ListItem>
-								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S.split("#")[1]}/classes`}
-									component="a"
-									href={`/dash/${org.PK.S.split("#")[1]}/classes`}>
+									href={`/dash/${org.id}/classes`}>
 									<ListItemDecorator>
 										<FaPeopleGroup fontSize="small" />
 									</ListItemDecorator>
@@ -88,9 +88,9 @@ export default function Sidebar({ className = "", disabled = false, isLoading = 
 							</ListItem>
 							<ListItem>
 								<ListItemButton
-									selected={location.pathname === `/dash/${org.PK.S.split("#")[1]}`}
+									selected={location.pathname === `/dash/${org.id}`}
 									component="a"
-									href={`/dash/${org.PK.S.split("#")[1]}`}>
+									href={`/dash/${org.id}`}>
 									<ListItemDecorator>
 										<FaGear fontSize="small" />
 									</ListItemDecorator>

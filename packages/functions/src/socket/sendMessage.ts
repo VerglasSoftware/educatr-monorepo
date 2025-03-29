@@ -1,35 +1,60 @@
-import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
+import { ApiGatewayManagementApi, PostToConnectionCommandInput } from "@aws-sdk/client-apigatewaymanagementapi";
 import { Util } from "@educatr/core/util";
 import { Handler } from "aws-lambda";
-import { DynamoDB } from "aws-sdk";
+import { AttributeValue, DeleteItemInput, DocumentClient, ScanInput } from "aws-sdk/clients/dynamodb";
 import { Resource } from "sst";
+import { Activity } from "../types/activity";
 
-const dynamoDb = new DynamoDB.DocumentClient();
+const dynamoDb = new DocumentClient();
+
+export const itemsToConnections = (items: Record<string, AttributeValue>[] | undefined): { id: string }[] => {
+	if (!items) {
+		throw new Error("Items not found");
+	}
+	return items.map((item: Record<string, any> | undefined) => {
+		if (!item) {
+			throw new Error("Item not found");
+		}
+		return {
+			id: item.id.S,
+		};
+	});
+};
 
 export const main: Handler = Util.handler(async (event) => {
-	console.log("data: " + event.body);
-	const messageData = JSON.parse(event.body!).data;
+	const messageData: Activity = JSON.parse(event.body!).data;
 	const { stage, domainName } = event.requestContext;
 
-	const connections = await dynamoDb.scan({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }).promise();
+	const socketParams: ScanInput = {
+		TableName: Resource.SocketConnections.name,
+		ProjectionExpression: "id",
+	};
+	const connectionsResult = await dynamoDb.scan(socketParams).promise();
+	const connections = itemsToConnections(connectionsResult.Items);
 
 	const apiG = new ApiGatewayManagementApi({
 		endpoint: `https://${domainName}/${stage}`,
 	});
 
-	const postToConnection = async function ({ id }: any) {
+	const postToConnection = async function ({ id }: { id: string }) {
 		try {
-			await apiG.postToConnection({ ConnectionId: id, Data: messageData });
+			const postParams: PostToConnectionCommandInput = {
+				ConnectionId: id,
+				Data: new TextEncoder().encode(JSON.stringify(messageData)),
+			};
+			await apiG.postToConnection(postParams);
 		} catch (e: any) {
-			console.log(e.statusCode);
 			if (e.statusCode === 410) {
 				// Remove stale connections
-				await dynamoDb.delete({ TableName: Resource.SocketConnections.name, Key: { id } }).promise();
+				const deleteParams: DeleteItemInput = {
+					TableName: Resource.SocketConnections.name,
+					Key: { id: { S: id } },
+				};
+				await dynamoDb.delete(deleteParams).promise();
 			}
 		}
 	};
 
-	await Promise.all(connections.Items!.map(postToConnection));
-
+	await Promise.all(connections.map(postToConnection));
 	return "Message sent";
 });

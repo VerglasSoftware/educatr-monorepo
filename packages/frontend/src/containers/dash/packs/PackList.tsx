@@ -4,46 +4,41 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { FaPlus } from "react-icons/fa6";
 import { IoTrashBin } from "react-icons/io5";
-import { useParams } from "react-router-dom";
-import { Organisation } from "../../../../functions/src/types/organisation";
-import Breadcrumb from "../../components/dash/breadcrumb";
-import ClassTable from "../../components/dash/organisations/ClassTable";
-import NewClassModal from "../../components/dash/organisations/NewClassModal";
-import "./ClassList.css";
+import { Pack } from "../../../../../functions/src/types/pack";
+import Breadcrumb from "../../../components/dash/breadcrumb";
+import NewPackModal from "../../../components/dash/packs/NewPackModal";
+import PackTable from "../../../components/dash/packs/PackTable";
+import "./PackList.css";
 
-export default function ClassList() {
-	const { orgId } = useParams();
-
-	const [open, setOpen] = useState(false);
+export default function PackList() {
+	const [packs, setPacks] = useState<Pack[]>();
 	const [selected, setSelected] = useState<readonly string[]>([]);
-	const [org, setOrg] = useState<Organisation>();
+	const [open, setOpen] = useState(false);
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const org = await API.get("api", `/organisation/${orgId}`, {});
-				setOrg(org);
+				const packs = await API.get("api", `/pack`, {});
+				setPacks(packs);
 			} catch (e) {
 				console.log(e);
 			}
 		}
-
 		onLoad();
 	}, []);
 
 	return (
-		org && (
+		packs && (
 			<div className="Home">
 				<Helmet>
-					<title>Classes</title>
+					<title>Packs</title>
 				</Helmet>
 				<div>
 					<Box sx={{ display: "flex", alignItems: "center" }}>
 						<Breadcrumb
 							items={[
 								{ label: "Dashboard", href: "/dash" },
-								{ label: org.name, href: `/dash/${orgId}` },
-								{ label: "Classes", href: `/dash/${orgId}/classes` },
+								{ label: "Packs", href: "/dash/packs" },
 							]}
 						/>
 					</Box>
@@ -60,19 +55,20 @@ export default function ClassList() {
 						<Typography
 							level="h2"
 							component="h1">
-							Classes
+							Packs
 						</Typography>
 						<Box sx={{ display: "flex", gap: 1 }}>
 							<Button
 								color="danger"
 								size="sm"
+								disabled={selected.length === 0}
 								onClick={async () => {
-									const confirmed = window.confirm(`Are you sure you want to delete ${selected.length} class(es)?`);
+									const confirmed = window.confirm(`Are you sure you want to delete ${selected.length} pack(s)?`);
 									if (!confirmed) return;
 									try {
 										await Promise.all(
 											selected.map(async (id) => {
-												await API.del("api", `/organisation/${orgId}/class/${id}`, {});
+												await API.del("api", `/pack/${id}`, {});
 											})
 										);
 									} catch (e) {
@@ -86,16 +82,17 @@ export default function ClassList() {
 								startDecorator={<FaPlus />}
 								size="sm"
 								onClick={() => setOpen(true)}>
-								New class
+								New pack
 							</Button>
 						</Box>
 					</Box>
-					<ClassTable
+					<PackTable
+						packs={packs}
 						selected={selected}
 						setSelected={setSelected}
 					/>
 				</div>
-				<NewClassModal
+				<NewPackModal
 					open={open}
 					setOpen={setOpen}
 				/>

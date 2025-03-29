@@ -1,15 +1,19 @@
 import { LineChart } from "@mui/x-charts/LineChart";
-import DialogContent from "@mui/joy/DialogContent";
-import DialogTitle from "@mui/joy/DialogTitle";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import { Fragment } from "react";
-import Box from "@mui/material/Box";
-import { useEffect, useState } from "react";
 import { API } from "aws-amplify";
+import { useEffect, useState } from "react";
 
-export default function LeaderboardChart({ competitionId }: { competitionId: string }) {
-	const [leaderboardData, setLeaderboardData] = useState<any>();
+interface LeaderboardChartProps {
+	competitionId: string;
+}
+
+export default function LeaderboardChart({ competitionId }: LeaderboardChartProps) {
+	const [leaderboardData, setLeaderboardData] = useState<{
+		teamLabels: Record<string, string>;
+		teamData: {
+			[key: string]: number;
+			timestamp: number;
+		}[];
+	}>();
 
 	useEffect(() => {
 		async function onLoad() {

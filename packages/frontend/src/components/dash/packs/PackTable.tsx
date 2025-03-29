@@ -1,61 +1,18 @@
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
-import Avatar from "@mui/joy/Avatar";
-import Box from "@mui/joy/Box";
-import Checkbox from "@mui/joy/Checkbox";
-import Divider from "@mui/joy/Divider";
-import Dropdown from "@mui/joy/Dropdown";
-import IconButton from "@mui/joy/IconButton";
-import Menu from "@mui/joy/Menu";
-import MenuButton from "@mui/joy/MenuButton";
-import MenuItem from "@mui/joy/MenuItem";
-import Sheet from "@mui/joy/Sheet";
-import Table from "@mui/joy/Table";
-import Typography from "@mui/joy/Typography";
+import { Avatar, Box, Checkbox, Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Sheet, Table, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
-import { Fragment, useState } from "react";
+import { Dispatch, Fragment, SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
+import { Pack } from "../../../../../functions/src/types/pack";
 
 interface PackTableProps {
-	packs: any[];
+	packs: Pack[];
+	selected: readonly string[];
+	setSelected: Dispatch<SetStateAction<readonly string[]>>;
 }
-interface RowMenuProps {
-	id: string;
-}
-function RowMenu({ id }: RowMenuProps) {
+
+export default function PackTable({ packs, selected, setSelected }: PackTableProps) {
 	const nav = useNavigate();
-
-	return (
-		<Dropdown>
-			<MenuButton
-				slots={{ root: IconButton }}
-				slotProps={{ root: { variant: "plain", color: "neutral", size: "sm" } }}>
-				<MoreHorizRoundedIcon />
-			</MenuButton>
-			<Menu
-				size="sm"
-				sx={{ minWidth: 140 }}>
-				<MenuItem onClick={() => nav(`/dash/packs/${id}/edit`)}>Edit</MenuItem>
-				<Divider />
-				<MenuItem
-					color="danger"
-					onClick={async () => {
-						const confirmed = window.confirm("Are you sure you want to delete this pack?");
-						if (!confirmed) return;
-						try {
-							await API.del("api", `/pack/${id}`, {});
-						} catch (e) {
-							console.log(e);
-						}
-					}}>
-					Delete
-				</MenuItem>
-			</Menu>
-		</Dropdown>
-	);
-}
-
-export default function PackTable({ packs }: PackTableProps) {
-	const [selected, setSelected] = useState<readonly string[]>([]);
 
 	return (
 		<Fragment>
@@ -117,23 +74,48 @@ export default function PackTable({ packs }: PackTableProps) {
 									/>
 								</td>
 								<td>
-									<Typography level="body-xs">{row.name.S}</Typography>
+									<Typography level="body-xs">{row.name}</Typography>
 								</td>
 								<td>
-									<Typography level="body-xs">{row.description.S}</Typography>
+									<Typography level="body-xs">{row.description}</Typography>
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										<Avatar size="sm">{row.ownerId.S[0]}</Avatar>
+										<Avatar size="sm">{row.ownerId[0]}</Avatar>
 										<div>
-											<Typography level="body-xs">{row.ownerId.S}</Typography>
-											<Typography level="body-xs">{row.ownerId.S}</Typography>
+											<Typography level="body-xs">{row.ownerId}</Typography>
 										</div>
 									</Box>
 								</td>
 								<td>
 									<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-										<RowMenu id={row.PK.S} />
+										<Dropdown>
+											<MenuButton
+												slots={{ root: IconButton }}
+												slotProps={{ root: { variant: "plain", color: "neutral", size: "sm" } }}>
+												<MoreHorizRoundedIcon />
+											</MenuButton>
+											<Menu
+												size="sm"
+												sx={{ minWidth: 140 }}>
+												<MenuItem onClick={() => nav(`/dash/packs/${row.id}`)}>View</MenuItem>
+												<MenuItem onClick={() => nav(`/dash/packs/${row.id}/edit`)}>Open Editor</MenuItem>
+												<Divider />
+												<MenuItem
+													color="danger"
+													onClick={async () => {
+														const confirmed = window.confirm("Are you sure you want to delete this pack?");
+														if (!confirmed) return;
+														try {
+															await API.del("api", `/pack/${row.id}`, {});
+														} catch (e) {
+															console.log(e);
+														}
+													}}>
+													Delete
+												</MenuItem>
+											</Menu>
+										</Dropdown>
 									</Box>
 								</td>
 							</tr>

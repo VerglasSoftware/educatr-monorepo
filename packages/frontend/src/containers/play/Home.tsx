@@ -2,11 +2,12 @@ import { Box, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
+import { Competition } from "../../../../functions/src/types/competition";
 import "./Home.css";
 import "./Play.css";
 
 export default function PlayHome() {
-	const [competitions, setCompetitions] = useState<any[]>([]);
+	const [competitions, setCompetitions] = useState<Competition[]>([]);
 
 	useEffect(() => {
 		async function onLoad() {
@@ -61,25 +62,25 @@ export default function PlayHome() {
 						<Stack
 							direction="column"
 							spacing={1}
-							sx={{ marginTop: 1, width: "100%" }}>
+							sx={{ marginTop: 1, width: "100%", maxHeight: "50vh", overflowY: "auto" }}>
 							{competitions.map((competition) => (
 								<Card
 									variant="plain"
 									sx={{ display: "flex", gap: 2, backgroundColor: "rgb(0 0 0 / 0.3)" }}>
 									<Link
 										overlay
-										href={`/play/${competition.PK.S}`}
+										href={`/play/${competition.id}`}
 										underline="none"
 										sx={{ display: "flex", flexDirection: "column", alignItems: "start" }}>
 										<Typography
 											level="title-lg"
 											textColor="common.white">
-											{competition.name.S}
+											{competition.name}
 										</Typography>
 										<Typography
 											level="body-sm"
 											textColor="common.white">
-											{competition.createdAt.N}
+											{new Date(competition.createdAt).toLocaleString()}
 										</Typography>
 									</Link>
 								</Card>

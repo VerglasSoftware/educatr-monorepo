@@ -1,16 +1,48 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
-import { Handler } from "aws-lambda";
-import axios from "axios";
+import { APIGatewayProxyEvent, Handler } from "aws-lambda";
+import axios, { AxiosResponse } from "axios";
 import { Resource } from "sst";
+import { itemsToActivities, itemToActivity } from "./activity";
+import { itemToTask } from "./task";
+import { itemsToTeams } from "./team";
+import { Activity } from "./types/activity";
+import { Competition, CompetitionCheck, CompetitionCreate, CompetitionRun, CompetitionUpdate, Judge0CreateSubmissionResponse, Judge0GetSubmissionResponse } from "./types/competition";
+import { Task } from "./types/task";
+import { Team } from "./types/team";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
+const itemToCompetition = (item: Record<string, any> | undefined): Competition => {
+	if (!item) {
+		throw new Error("Item not found");
+	}
+	const isDynamoFormat = (val: any) => typeof val === "object" && val !== null && ("S" in val || "N" in val || "BOOL" in val || "L" in val);
+
+	return {
+		id: isDynamoFormat(item.PK) ? item.PK.S : item.PK,
+		name: isDynamoFormat(item.name) ? item.name.S : item.name,
+		status: isDynamoFormat(item.status) ? item.status.S : item.status,
+		showLeaderboard: isDynamoFormat(item.showLeaderboard) ? item.showLeaderboard.BOOL : item.showLeaderboard,
+		userStartedById: isDynamoFormat(item.userStartedById) ? item.userStartedById.S : item.userStartedById,
+		organisationId: isDynamoFormat(item.organisationId) ? item.organisationId.S : item.organisationId,
+		packs: isDynamoFormat(item.packs) ? item.packs.L.map((pack: any) => pack.S) : item.packs,
+		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
+	};
+};
+
+const itemsToCompetitions = (items: Record<string, AttributeValue>[] | undefined): Competition[] => {
+	if (!items) {
+		throw new Error("Items not found");
+	}
+	return items.map(itemToCompetition);
+};
+
 export const list: Handler = Util.handler(async (event) => {
-	const params = {
+	const params: ScanCommandInput = {
 		TableName: Resource.Competitions.name,
 		FilterExpression: "SK = :sk",
 		ExpressionAttributeValues: {
@@ -19,58 +51,24 @@ export const list: Handler = Util.handler(async (event) => {
 	};
 
 	try {
-		const command = new ScanCommand(params);
-		const result = await client.send(command);
-		return JSON.stringify(result.Items);
+		const result = await client.send(new ScanCommand(params));
+		const competitions = itemsToCompetitions(result.Items);
+		return JSON.stringify(competitions);
 	} catch (e) {
-		throw new Error("Could not retrieve competition");
-	}
-});
-
-export const create: Handler = Util.handler(async (event) => {
-	let data = {
-		name: "",
-		status: "",
-		organisationId: "",
-		packs: [],
-	};
-
-	if (event.body != null) {
-		data = JSON.parse(event.body);
-	} else throw new Error("No body provided");
-
-	const params = {
-		TableName: Resource.Competitions.name,
-		Item: {
-			PK: createId(),
-			SK: "DETAILS",
-			name: data.name,
-			status: data.status || "NOT_STARTED",
-			userStartedById: event.requestContext.authorizer!.jwt.claims["cognito:username"],
-			organisationId: data.organisationId,
-			createdAt: Date.now(),
-		},
-	};
-
-	try {
-		const result = await client.send(new PutCommand(params));
-		return JSON.stringify(result.Attributes);
-	} catch (e) {
-		throw new Error("Could not create competition");
+		throw new Error(`Could not retrieve competitions: ${e}`);
 	}
 });
 
 export const get: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
-
-	if (!pk) {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
 		throw new Error("Missing id in path parameters");
 	}
 
-	const params = {
+	const params: GetCommandInput = {
 		TableName: Resource.Competitions.name,
 		Key: {
-			PK: pk,
+			PK: compId,
 			SK: "DETAILS",
 		},
 	};
@@ -78,75 +76,73 @@ export const get: Handler = Util.handler(async (event) => {
 	try {
 		const result = await client.send(new GetCommand(params));
 		if (!result.Item) {
-			throw new Error("Pack not found");
+			throw new Error("Item not found.");
 		}
-		return JSON.stringify(result.Item);
+		const competition = itemToCompetition(result.Item);
+		return JSON.stringify(competition);
 	} catch (e) {
-		throw new Error("Could not retrieve competition");
+		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
 	}
 });
 
-export const del: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
+export const create: Handler = Util.handler(async (event: APIGatewayProxyEvent) => {
+	const data: CompetitionCreate = {
+		name: "",
+		status: "NOT_STARTED",
+		showLeaderboard: false,
+		organisationId: "",
+		packs: [],
+	};
 
-	if (!pk) {
-		throw new Error("Missing pk in path parameters");
-	}
+	if (event.body != null) {
+		Object.assign(data, JSON.parse(event.body));
+	} else throw new Error("No body provided");
 
-	const queryParams = {
+	const params: PutCommandInput = {
 		TableName: Resource.Competitions.name,
-		KeyConditionExpression: "PK = :pk",
-		ExpressionAttributeValues: {
-			":pk": pk,
+		Item: {
+			PK: createId(),
+			SK: "DETAILS",
+			name: data.name,
+			status: data.status,
+			showLeaderboard: data.showLeaderboard,
+			userStartedById: event.requestContext.authorizer!.jwt.claims["cognito:username"],
+			organisationId: data.organisationId,
+			packs: data.packs,
+			createdAt: Date.now(),
 		},
 	};
 
 	try {
-		const queryCommand = new QueryCommand(queryParams);
-		const queryResult = await client.send(queryCommand);
-		const itemsToDelete = queryResult.Items || [];
-
-		for (const item of itemsToDelete) {
-			const deleteParams = {
-				TableName: Resource.Competitions.name,
-				Key: {
-					PK: item.PK,
-					SK: item.SK,
-				},
-			};
-			await client.send(new DeleteCommand(deleteParams));
-		}
-
-		return JSON.stringify({ message: "All items under the specified PK have been deleted", pk });
+		await client.send(new PutCommand(params));
+		const competition = itemToCompetition(params.Item);
+		return JSON.stringify(competition);
 	} catch (e) {
-		throw new Error("Could not delete competition");
+		throw new Error(`Could not create competition: ${e}`);
 	}
 });
 
 export const update: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
-
-	if (!pk) {
-		throw new Error("Missing pk in path parameters");
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
 	}
 
-	let data = {
+	const data: CompetitionUpdate = {
 		name: "",
 		status: "",
 		packs: [],
-		showLeaderboard: true,
+		showLeaderboard: false,
 	};
 
 	if (event.body != null) {
-		data = JSON.parse(event.body);
-	} else {
-		throw new Error("No body provided");
-	}
+		Object.assign(data, JSON.parse(event.body));
+	} else throw new Error("No body provided");
 
-	const params = {
+	const params: UpdateCommandInput = {
 		TableName: Resource.Competitions.name,
 		Key: {
-			PK: pk,
+			PK: compId,
 			SK: "DETAILS",
 		},
 		UpdateExpression: "SET #name = :name, #status = :status, #packs = :packs, #showLeaderboard = :showLeaderboard",
@@ -167,20 +163,54 @@ export const update: Handler = Util.handler(async (event) => {
 
 	try {
 		const result = await client.send(new UpdateCommand(params));
-		return JSON.stringify(result.Attributes);
+		const competition = itemToCompetition(result.Attributes);
+		return JSON.stringify(competition);
 	} catch (e) {
-		throw new Error("Could not update competition details");
+		throw new Error(`Could not update competition ${compId}: ${e}`);
+	}
+});
+
+export const del: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const params: ScanCommandInput = {
+		TableName: Resource.Competitions.name,
+		FilterExpression: "PK = :pk",
+		ExpressionAttributeValues: {
+			":pk": { S: compId },
+		},
+	};
+
+	try {
+		const result = await client.send(new ScanCommand(params));
+		if (result.Items) {
+			for (const item of result.Items) {
+				const deleteParams: DeleteCommandInput = {
+					TableName: Resource.Competitions.name,
+					Key: {
+						PK: item.PK.S,
+						SK: item.SK.S,
+					},
+				};
+				await client.send(new DeleteCommand(deleteParams));
+			}
+		}
+		return JSON.stringify({ success: true });
+	} catch (e) {
+		throw new Error(`Could not delete all SKs for competition ${compId}: ${e}`);
 	}
 });
 
 export const check: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
-
-	if (!pk) {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
 		throw new Error("Missing id in path parameters");
 	}
 
-	let data = {
+	const data: CompetitionCheck = {
 		packId: "",
 		taskId: "",
 		answer: "",
@@ -188,13 +218,11 @@ export const check: Handler = Util.handler(async (event) => {
 	};
 
 	if (event.body != null) {
-		data = JSON.parse(event.body);
-	} else {
-		throw new Error("No body provided");
-	}
+		Object.assign(data, JSON.parse(event.body));
+	} else throw new Error("No body provided");
 
 	// get the task
-	const params = {
+	const params: GetCommandInput = {
 		TableName: Resource.Packs.name,
 		Key: {
 			PK: data.packId,
@@ -202,24 +230,24 @@ export const check: Handler = Util.handler(async (event) => {
 		},
 	};
 
-	var task;
+	let task: Task;
 	try {
-		const result = await client.send(new GetCommand(params));
-		if (!result.Item) {
-			throw new Error("Task not found");
+		const taskResult = await client.send(new GetCommand(params));
+		if (!taskResult.Item) {
+			throw new Error(`Task ${data.taskId} not found in pack ${data.packId}`);
 		}
-		task = result.Item;
+		task = itemToTask(taskResult.Item);
 	} catch (e) {
-		throw new Error("Could not retrieve competition");
+		throw new Error(`Could not retrieve task ${data.taskId} in pack ${data.packId}: ${e}`);
 	}
 
-	async function returnAnswer(result: boolean) {
+	async function returnAnswer(result: boolean): Promise<string> {
 		// create activity
-		const params = {
+		const params: PutCommandInput = {
 			TableName: Resource.Competitions.name,
 			Item: {
-				PK: pk,
-				SK: "ACTIVITY#" + createId(),
+				PK: compId,
+				SK: `ACTIVITY#${createId()}`,
 				userId: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 				packId: data.packId,
 				taskId: data.taskId,
@@ -228,53 +256,74 @@ export const check: Handler = Util.handler(async (event) => {
 			},
 		};
 
+		let activity: Activity;
 		try {
-			const putResult = await client.send(new PutCommand(params));
+			await client.send(new PutCommand(params));
+			activity = itemToActivity(params.Item);
 		} catch (e) {
-			throw new Error("Could not create activity");
+			throw new Error(`Could not create activity: ${e}`);
 		}
 
 		// send to all connected clients
-		const connections = await client.send(new ScanCommand({ TableName: Resource.SocketConnections.name, ProjectionExpression: "id" }));
+		const socketParams: ScanCommandInput = {
+			TableName: Resource.SocketConnections.name,
+			ProjectionExpression: "id",
+		};
+
+		var connections;
+		try {
+			connections = await client.send(new ScanCommand(socketParams));
+		} catch (e) {
+			throw new Error(`Could not retrieve connections: ${e}`);
+		}
+
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
 
-		const postToConnection = async function ({ id }: any) {
+		const postToConnection = async function ({ id }: Record<string, AttributeValue>) {
 			try {
 				await apiG.postToConnection({
 					ConnectionId: id.S,
 					Data: JSON.stringify({
 						filter: {
-							competitionId: pk,
+							competitionId: compId,
 						},
 						type: "TASK:ANSWERED",
-						body: params.Item,
+						body: activity,
 					}),
 				});
-			} catch (e: any) {
-				if (e.statusCode === 410) {
+			} catch (e) {
+				if ((e as { statusCode?: number }).statusCode === 410) {
 					// Remove stale connections
-					await client.send(new DeleteCommand({ TableName: Resource.SocketConnections.name, Key: { id: id.S } }));
+					const deleteParams: DeleteCommandInput = {
+						TableName: Resource.SocketConnections.name,
+						Key: { id: id.S },
+					};
+					await client.send(new DeleteCommand(deleteParams));
 				}
 			}
 		};
 
 		await Promise.all(connections.Items!.map(postToConnection));
-		return JSON.stringify({ result });
+		return JSON.stringify({ result, activity });
 	}
 
 	switch (task.verificationType) {
 		case "COMPARE":
-			if (task.answer.trim() === data.answer.trim()) {
+			if (data.answer.trim() === task.answer.trim()) {
 				return await returnAnswer(true);
 			} else {
 				return await returnAnswer(false);
 			}
 		case "MULTIPLE":
-			const possibleAnswers = JSON.parse(task.answer);
-			const correctAnswer = possibleAnswers.find((answer: any) => answer.correct === true);
-			if (correctAnswer.text == data.answer) {
+			const possibleAnswers = task.answerChoices;
+			const correctAnswer = possibleAnswers.find((answer) => answer.correct);
+			if (!correctAnswer) {
+				throw new Error(`No correct answer found in task ${data.taskId} in pack ${data.packId}`);
+			}
+			if (data.answer == correctAnswer.name) {
+				// change this to id?
 				return await returnAnswer(true);
 			} else {
 				return await returnAnswer(false);
@@ -285,11 +334,12 @@ export const check: Handler = Util.handler(async (event) => {
 				CSHARP: 51,
 			};
 
-			const languageId = languageMap[task.answerType];
+			const languageId = languageMap[task.answerType as keyof typeof languageMap];
 			if (!languageId) {
-				throw new Error("Answer type not supported");
+				throw new Error(`Answer type ${task.answerType} not supported`);
 			}
-			var result;
+
+			var result: AxiosResponse<Judge0CreateSubmissionResponse>;
 			try {
 				result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
 					stdin: data.stdin,
@@ -297,33 +347,34 @@ export const check: Handler = Util.handler(async (event) => {
 					language_id: languageId,
 				});
 			} catch (e) {
-				console.log(e.response.data);
 				return await returnAnswer(false);
 			}
+
 			if (result.status == 201) {
 				const submissionId = result.data.token;
-				var status;
+				var status: AxiosResponse<Judge0GetSubmissionResponse>;
 				do {
 					status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
 					await new Promise((resolve) => setTimeout(resolve, 1000));
 				} while (status.data.status.id < 3);
 				if (status.data.status.id == 3) {
-					if (status.data.stdout.trim() === task.answer.trim()) {
-						return await returnAnswer(true);
-					} else {
+					const answerLines = status.data.stdout.trim().split("\n");
+					const outputLines = task.answer.trim().split("\\n");
+					if (answerLines.length !== outputLines.length || !answerLines.every((line, index) => line.trim() === outputLines[index].trim())) {
 						return await returnAnswer(false);
 					}
+					return await returnAnswer(true);
 				} else {
 					return await returnAnswer(false);
 				}
 			}
 			break;
 		case "MANUAL":
-			const params = {
+			const params: PutCommandInput = {
 				TableName: Resource.Competitions.name,
 				Item: {
-					PK: pk,
-					SK: "ACTIVITY#" + createId(),
+					PK: compId,
+					SK: `ACTIVITY#${createId()}`,
 					status: "WAITING",
 					userId: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 					packId: data.packId,
@@ -332,62 +383,57 @@ export const check: Handler = Util.handler(async (event) => {
 				},
 			};
 
-			var putResult: any;
-
 			try {
-				putResult = await client.send(new PutCommand(params));
+				await client.send(new PutCommand(params));
 			} catch (e) {
-				throw new Error("Could not create activity");
+				throw new Error(`Could not create activity: ${e}`);
 			}
-			return JSON.stringify({ manual: true });
+			return JSON.stringify({ manual: true, activity: itemToActivity(params.Item) });
 		default:
-			throw new Error("Verification type not supported");
+			throw new Error(`Verification type ${task.verificationType} not supported`);
 	}
+	return JSON.stringify({ error: "how did we get here" });
 });
 
 export const run: Handler = Util.handler(async (event) => {
-	const { id: pk } = event.pathParameters || {};
-
-	if (!pk) {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
 		throw new Error("Missing id in path parameters");
 	}
 
-	let data = {
+	const data: CompetitionRun = {
 		language: "",
 		code: "",
 		stdin: "",
 	};
 
 	if (event.body != null) {
-		data = JSON.parse(event.body);
-	} else {
-		throw new Error("No body provided");
-	}
+		Object.assign(data, JSON.parse(event.body));
+	} else throw new Error("No body provided");
 
 	const languageMap = {
 		PYTHON: 71,
 		CSHARP: 51,
 	};
 
-	const languageId = languageMap[data.language];
+	const languageId = languageMap[data.language as keyof typeof languageMap];
 	if (!languageId) {
-		throw new Error("Answer type not supported");
+		throw new Error(`Language ${data.language} not supported`);
 	}
-	var result;
+
+	var result: AxiosResponse<Judge0CreateSubmissionResponse>;
 	try {
 		result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
 			source_code: data.code.trim(),
 			language_id: languageId,
 			stdin: data.stdin,
 		});
-		console.log(result);
 	} catch (e) {
-		console.log(e.response.data);
-		throw new Error("Could not run submission");
+		throw new Error(`Could not create submission: ${e}`);
 	}
 	if (result.status == 201) {
 		const submissionId = result.data.token;
-		var status;
+		var status: AxiosResponse<Judge0GetSubmissionResponse>;
 		do {
 			status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
 			await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -402,61 +448,91 @@ export const run: Handler = Util.handler(async (event) => {
 			}
 		}
 	}
+	return JSON.stringify({ output: "how did we get here" });
 });
 
 export const getLb: Handler = Util.handler(async (event) => {
-	const { compId: pk } = event.pathParameters || {};
-
-	if (!pk) {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
 		throw new Error("Missing id in path parameters");
 	}
 
-	const params = {
+	const competitionParams: GetCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :pk and (SK = :details or begins_with(SK, :team) or begins_with(SK, :activity))",
-		ExpressionAttributeValues: {
-			":pk": { S: pk },
-			":details": { S: "DETAILS" },
-			":team": { S: "TEAM#" },
-			":activity": { S: "ACTIVITY#" },
+		Key: {
+			PK: compId,
+			SK: "DETAILS",
 		},
 	};
 
+	const teamParams: ScanCommandInput = {
+		TableName: Resource.Competitions.name,
+		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":skPrefix": { S: "TEAM#" },
+		},
+	};
+
+	const activityParams: ScanCommandInput = {
+		TableName: Resource.Competitions.name,
+		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":skPrefix": { S: "ACTIVITY#" },
+		},
+	};
+
+	let competition: Competition;
+	let teams: Team[];
+	let activities: Activity[];
 	try {
-		const result = await client.send(new ScanCommand(params));
-		if (!result.Items || result.Items.length === 0) {
+		const result = await client.send(new GetCommand(competitionParams));
+		if (!result.Item) {
 			throw new Error("Competition not found");
 		}
-
-		const teamLabels = result.Items.filter((item) => item.SK.S!.startsWith("TEAM#")).reduce((acc: any, item, index) => {
-			acc[item.SK.S!.split("TEAM#")[1]] = item.name.S;
-			return acc;
-		}, {});
-
-		const timeStarted = parseInt(result.Items.find((item) => item.SK.S === "DETAILS")?.createdAt.N!);
-		const timeNow = Date.now();
-
-		const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
-
-		const timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
-
-		const teamData = [];
-
-		for (const index in timestamps) {
-			const currentTimestamp = new Date(timestamps[index]);
-			const obj: any = { timestamp: currentTimestamp.getTime() };
-
-			for (const key in teamLabels) {
-				const activity = result.Items.filter((item) => item.SK.S?.startsWith("ACTIVITY") && result.Items!.find((team) => team.SK.S == `TEAM#${key}`)!.students.SS!.includes(item.userId.S!) && parseInt(item.createdAt.N!) < timestamps[index] && item.correct && item.correct.BOOL == true);
-				obj[key] = activity.length;
-			}
-
-			teamData.push(obj);
-		}
-
-		return JSON.stringify({ teamLabels, teamData });
+		competition = itemToCompetition(result.Item);
 	} catch (e) {
-		console.log(e);
-		return JSON.stringify({ error: "Could not retrieve competition" });
+		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
 	}
+	try {
+		const result = await client.send(new ScanCommand(teamParams));
+		teams = itemsToTeams(result.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+	}
+	try {
+		const result = await client.send(new ScanCommand(activityParams));
+		activities = itemsToActivities(result.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+	}
+
+	const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
+		acc[item.id] = item.name;
+		return acc;
+	}, {});
+
+	const timeStarted = parseInt(competition.createdAt);
+	const timeNow = Date.now();
+
+	const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
+
+	let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
+	timestamps = timestamps.slice(-100);
+
+	const teamData = [];
+
+	for (const index in timestamps) {
+		const currentTimestamp = new Date(timestamps[index]);
+		const obj: { timestamp: number; [key: string]: number } = { timestamp: currentTimestamp.getTime() };
+
+		for (const key in teamLabels) {
+			const activity = activities.filter((item) => item.userId == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
+			obj[key] = activity.length;
+		}
+		teamData.push(obj);
+	}
+
+	return JSON.stringify({ teamLabels, teamData });
 });

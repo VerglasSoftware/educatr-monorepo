@@ -1,18 +1,15 @@
-import { Avatar, Box, Button, DialogTitle, Drawer, Dropdown, IconButton, Input, ListDivider, Menu, MenuButton, MenuItem, ModalClose, Stack, Tooltip, Typography } from "@mui/joy";
-import { useEffect, useState } from "react";
-import { FaBook, FaDoorOpen, FaHamburger, FaLanguage, FaWindowMaximize } from "react-icons/fa";
-import { FaGear, FaHand, FaMagnifyingGlass } from "react-icons/fa6";
-import { useAppContext } from "../lib/contextLib";
+import { Avatar, Box, Button, Dropdown, IconButton, ListDivider, Menu, MenuButton, MenuItem, Stack, Typography } from "@mui/joy";
 import { Auth } from "aws-amplify";
+import { useEffect, useState } from "react";
+import { FaDoorOpen, FaLanguage } from "react-icons/fa";
+import { useAppContext } from "../lib/contextLib";
 
 export default function NavbarMain({ ...props }) {
 	const { isAuthenticated, userHasAuthenticated } = useAppContext();
-	const [open, setOpen] = useState(false);
 	const [user, setUser] = useState<any>();
 
 	async function handleLogout() {
 		await Auth.signOut();
-
 		userHasAuthenticated(false);
 	}
 
@@ -102,52 +99,6 @@ export default function NavbarMain({ ...props }) {
 						gap: 1.5,
 						alignItems: "center",
 					}}>
-					<Input
-						size="sm"
-						variant="outlined"
-						placeholder="Search anything…"
-						startDecorator={<FaMagnifyingGlass color="primary" />}
-						endDecorator={
-							<IconButton
-								variant="outlined"
-								color="neutral"
-								sx={{ bgcolor: "background.level1" }}>
-								<Typography
-									level="title-sm"
-									textColor="text.icon">
-									⌘ K
-								</Typography>
-							</IconButton>
-						}
-						sx={{
-							alignSelf: "center",
-							display: {
-								xs: "none",
-								sm: "flex",
-							},
-						}}
-					/>
-					<IconButton
-						size="sm"
-						variant="outlined"
-						color="neutral"
-						sx={{ display: { xs: "inline-flex", sm: "none" }, alignSelf: "center" }}>
-						<FaMagnifyingGlass />
-					</IconButton>
-					<Tooltip
-						title="Joy UI overview"
-						variant="outlined">
-						<IconButton
-							size="sm"
-							variant="plain"
-							color="neutral"
-							component="a"
-							href="/blog/first-look-at-joy/"
-							sx={{ alignSelf: "center" }}>
-							<FaBook />
-						</IconButton>
-					</Tooltip>
-
 					{isAuthenticated ? (
 						<Dropdown>
 							<MenuButton

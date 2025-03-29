@@ -1,16 +1,18 @@
 import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/joy";
 import { useState } from "react";
 import { FaCaretLeft, FaCoins, FaMaximize, FaMinimize, FaTrophy } from "react-icons/fa6";
-import LeaderboardChart from "./LeaderboardChart";
 import { useParams } from "react-router-dom";
+import { Competition } from "../../../../functions/src/types/competition";
 import LeaderboardModal from "./LeaderboardModal";
 
-export default function NavbarMain({ competition, ...props }) {
-	const [open, setOpen] = useState(false);
-	const [openLeaderboard, setOpenLeaderboard] = useState(false);
+interface NavbarMainProps {
+	competition: Competition;
+}
 
+export default function NavbarMain({ competition, ...props }: NavbarMainProps) {
 	const { compId } = useParams();
 
+	const [openLeaderboard, setOpenLeaderboard] = useState(false);
 	const isFullscreen = () => !!document.fullscreenElement;
 
 	return (

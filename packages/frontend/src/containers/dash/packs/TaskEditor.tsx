@@ -1,23 +1,18 @@
 import { html } from "@codemirror/lang-html";
 import { python } from "@codemirror/lang-python";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
-import CheckIcon from "@mui/icons-material/Check";
-import CodeIcon from "@mui/icons-material/Code";
-import DataObjectIcon from "@mui/icons-material/DataObject";
-import EditIcon from "@mui/icons-material/Edit";
-import HelpIcon from "@mui/icons-material/Help";
-import InputIcon from "@mui/icons-material/Input";
+import { Add, ArrowBack, ArrowForward, AssignmentTurnedIn, Check, Code, DataObject, Delete, Edit, Help, Input as InputIcon } from "@mui/icons-material";
 import { Box, Button, Checkbox, FormControl, FormLabel, Input, Option, Select, Textarea, Typography } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
 import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
 import { useFormik } from "formik";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
-import Breadcrumb from "../../components/dash/breadcrumb";
+import { toast } from "react-toastify";
+import { Pack } from "../../../../../functions/src/types/pack";
+import { Task } from "../../../../../functions/src/types/task";
+import Breadcrumb from "../../../components/dash/breadcrumb";
 import "./TaskEditor.css";
 
 interface AnswerChoice {
@@ -27,14 +22,10 @@ interface AnswerChoice {
 }
 
 export default function TaskEditor() {
-	const [pack, setPack] = useState<any>();
-	const [tasks, setTasks] = useState<any[]>([]);
-	const [task, setTask] = useState<any>();
+	const [pack, setPack] = useState<Pack>();
+	const [tasks, setTasks] = useState<Task[]>([]);
+	const [task, setTask] = useState<Task>();
 	const [possibleVerificationTypes, setPossibleVerificationTypes] = useState<string[]>([]);
-
-	const placeholderOnChange = useCallback((val, viewUpdate) => {
-		formik.setFieldValue("placeholder", val);
-	}, []);
 
 	const { id } = useParams();
 	const formik = useFormik({
@@ -52,7 +43,7 @@ export default function TaskEditor() {
 			stdin: "",
 		},
 		onSubmit: async (values) => {
-			const newTask = await API.put("api", `/pack/${id}/task/${task.id}`, {
+			const newTask: Task = await API.put("api", `/pack/${id}/task/${task.id}`, {
 				body: {
 					title: values.title,
 					subtitle: values.subtitle,
@@ -67,28 +58,11 @@ export default function TaskEditor() {
 					stdin: values.stdin,
 				},
 			});
-			// doing this becuase the repsonse of the put request doesnt have the S's and N's dynamodb types.
-			const updatedTasks = tasks.map((t) => {
-				if (t.id == newTask.SK.split("#")[1]) {
-					return {
-						...t,
-						title: { S: newTask.title },
-						subtitle: { S: newTask.subtitle },
-						content: { S: newTask.content },
-						placeholder: { S: newTask.placeholder },
-						answer: { S: newTask.answer },
-						answerChoices: { L: newTask.answerChoices.map((item) => ({ M: { id: { S: item.id }, name: { S: item.name }, correct: { BOOL: item.correct } } })) },
-						answerType: { S: newTask.answerType },
-						verificationType: { S: newTask.verificationType },
-						prerequisites: { L: newTask.prerequisites.map((item) => ({ S: item })) },
-						points: { N: newTask.points.toString() },
-						stdin: { S: newTask.stdin },
-					};
-				}
-				return t;
+			setTasks(tasks.map((t) => (t.id === task.id ? newTask : t)));
+			setTask(newTask);
+			toast.success("Task saved successfully!", {
+				theme: "light",
 			});
-			setTasks(updatedTasks);
-			setTask(updatedTasks.find((t) => t.id === task.id));
 			formik.resetForm({ values });
 		},
 	});
@@ -100,8 +74,8 @@ export default function TaskEditor() {
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const pack = await API.get("api", `/pack/${id}`, {});
-				const tasks = await API.get("api", `/pack/${id}/task`, {});
+				const pack: Pack = await API.get("api", `/pack/${id}`, {});
+				const tasks: Task[] = await API.get("api", `/pack/${id}/task`, {});
 				setPack(pack);
 				setTasks(tasks);
 				setTask(tasks[0]);
@@ -132,24 +106,95 @@ export default function TaskEditor() {
 					break;
 			}
 			formik.setValues({
-				title: task.title.S,
-				subtitle: task.subtitle.S,
-				content: task.content.S,
-				placeholder: task.placeholder.S,
-				answer: task.answer.S,
-				answerChoices: task.answerChoices ? task.answerChoices.L.map((item) => ({
-					id: item.M.id.S,
-					name: item.M.name.S,
-					correct: item.M.correct.BOOL,
-				})) : [],
-				answerType: task.answerType.S,
-				verificationType: task.verificationType.S,
-				prerequisites: task.prerequisites ? task.prerequisites.L.map((item) => item.S) : [],
-				points: parseInt(task.points.N),
-				stdin: task.stdin ? task.stdin.S : "",
+				title: task.title,
+				subtitle: task.subtitle,
+				content: task.content,
+				placeholder: task.placeholder,
+				answer: task.answer,
+				answerChoices: task.answerChoices.map((item) => ({
+					id: item.id,
+					name: item.name,
+					correct: item.correct,
+				})),
+				answerType: task.answerType,
+				verificationType: task.verificationType,
+				prerequisites: task.prerequisites.map((item) => item),
+				points: task.points,
+				stdin: task.stdin,
 			});
 		}
 	}, [tasks]);
+
+	if (pack && tasks.length === 0) {
+		return (
+			<div className="Home">
+				<Helmet>
+					<title>{pack.name} - Task Editor</title>
+				</Helmet>
+				<div>
+					<Box sx={{ display: "flex", alignItems: "center" }}>
+						<Breadcrumb
+							items={[
+								{ label: "Dashboard", href: "/dash" },
+								{ label: "Packs", href: "/dash/packs" },
+								{ label: pack.name, href: `/dash/packs/${id}` },
+								{ label: "Editor", href: `/dash/packs/${id}/edit` },
+							]}
+						/>
+					</Box>
+					<Box
+						sx={{
+							display: "flex",
+							mb: 1,
+							gap: 1,
+							flexDirection: { xs: "column", sm: "row" },
+							alignItems: { xs: "start", sm: "center" },
+							flexWrap: "wrap",
+							justifyContent: "space-between",
+						}}>
+						<Typography
+							level="h2"
+							component="h1">
+							{pack.name}
+						</Typography>
+					</Box>
+					<Box sx={{ display: "flex", justifyContent: "center", marginBottom: 2 }}>
+						<Typography
+							level="h3"
+							component="h2"
+							sx={{ my: 0 }}>
+							No tasks found.
+						</Typography>
+					</Box>
+					<Box sx={{ display: "flex", justifyContent: "center" }}>
+						<Button
+							onClick={async () => {
+								const newtask: Task = await API.post("api", `/pack/${id}/task`, {
+									body: {
+										title: "New Task",
+										subtitle: "",
+										content: "",
+										placeholder: "",
+										answer: "",
+										answerChoices: [],
+										answerType: "TEXT",
+										verificationType: "MANUAL",
+										prerequisites: [],
+										points: 0,
+										stdin: "",
+									},
+								});
+
+								setTasks([...tasks, newtask]);
+								setTask(newtask);
+							}}>
+							Add a task
+						</Button>
+					</Box>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		pack &&
@@ -185,106 +230,225 @@ export default function TaskEditor() {
 							{pack.name}
 						</Typography>
 					</Box>
-					<Box sx={{ display: "flex", justifyContent: "center" }}>
-						<Button
-							variant="plain"
-							disabled={tasks[0].id == task.id}
-							onClick={() => {
-								const index = tasks.findIndex((t) => t.id == task.id);
-								setTask(tasks[index - 1]);
-								switch (tasks[index - 1].answerType.S) {
-									case "PYTHON":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "CSHARP":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "WEB":
-										setPossibleVerificationTypes(["MANUAL"]);
-										break;
-									case "MULTIPLE":
-										setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
-										break;
-									case "TEXT":
-										setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
-										break;
-								}
-								formik.setValues({
-									title: tasks[index - 1].title.S,
-									subtitle: tasks[index - 1].subtitle.S,
-									content: tasks[index - 1].content.S,
-									placeholder: tasks[index - 1].placeholder.S,
-									answer: tasks[index - 1].answer.S,
-									answerChoices: tasks[index - 1].answerChoices ? tasks[index - 1].answerChoices.L.map((item) => ({
-										id: item.M.id.S,
-										name: item.M.name.S,
-										correct: item.M.correct.BOOL,
-									})) : [],
-									answerType: tasks[index - 1].answerType.S,
-									verificationType: tasks[index - 1].verificationType.S,
-									prerequisites: tasks[index - 1].prerequisites ? tasks[index - 1].prerequisites.L.map((item) => item.S) : [],
-									points: parseInt(tasks[index - 1].points.N),
-									stdin: tasks[index - 1].stdin ? tasks[index - 1].stdin.S : "",
-								});
-							}}>
-							<ArrowBackIcon />
-						</Button>
-						<Typography
-							level="h3"
-							component="h2"
-							sx={{ my: 0 }}>
-							{task.title.S}
-						</Typography>
-						<Button
-							variant="plain"
-							disabled={tasks[tasks.length - 1].id == task.id}
-							onClick={() => {
-								const index = tasks.findIndex((t) => t.id == task.id);
-								setTask(tasks[index + 1]);
-								switch (tasks[index + 1].answerType.S) {
-									case "PYTHON":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "CSHARP":
-										setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
-										break;
-									case "WEB":
-										setPossibleVerificationTypes(["MANUAL"]);
-										break;
-									case "MULTIPLE":
-										setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
-										break;
-									case "TEXT":
-										setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
-										break;
-								}
-								formik.setValues({
-									title: tasks[index + 1].title.S,
-									subtitle: tasks[index + 1].subtitle.S,
-									content: tasks[index + 1].content.S,
-									placeholder: tasks[index + 1].placeholder.S,
-									answer: tasks[index + 1].answer.S,
-									answerChoices: tasks[index + 1].answerChoices ? tasks[index + 1].answerChoices.L.map((item) => ({
-										id: item.M.id.S,
-										name: item.M.name.S,
-										correct: item.M.correct.BOOL,
-									})) : [],
-									answerType: tasks[index + 1].answerType.S,
-									verificationType: tasks[index + 1].verificationType.S,
-									prerequisites: tasks[index + 1].prerequisites ? tasks[index + 1].prerequisites.L.map((item) => item.S) : [],
-									points: parseInt(tasks[index + 1].points.N),
-									stdin: tasks[index + 1].stdin ? tasks[index + 1].stdin.S : "",
-								});
-							}}>
-							<ArrowForwardIcon />
-						</Button>
+					<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+						{/* Left Spacer to keep arrows in the center */}
+						<Box sx={{ width: "100px" }} />
+
+						{/* Centered Navigation */}
+						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+							<Button
+								variant="plain"
+								disabled={tasks[0].id == task.id}
+								onClick={() => {
+									const index = tasks.findIndex((t) => t.id == task.id);
+									setTask(tasks[index - 1]);
+									switch (tasks[index - 1].answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: tasks[index - 1].title,
+										subtitle: tasks[index - 1].subtitle,
+										content: tasks[index - 1].content,
+										placeholder: tasks[index - 1].placeholder,
+										answer: tasks[index - 1].answer,
+										answerChoices: tasks[index - 1].answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: tasks[index - 1].answerType,
+										verificationType: tasks[index - 1].verificationType,
+										prerequisites: tasks[index - 1].prerequisites.map((item) => item),
+										points: tasks[index - 1].points,
+										stdin: tasks[index - 1].stdin,
+									});
+								}}>
+								<ArrowBack />
+							</Button>
+
+							<Typography
+								level="h3"
+								component="h2"
+								sx={{ my: 0 }}>
+								{task.title}
+							</Typography>
+
+							<Button
+								variant="plain"
+								disabled={tasks[tasks.length - 1].id == task.id}
+								onClick={() => {
+									const index = tasks.findIndex((t) => t.id == task.id);
+									setTask(tasks[index + 1]);
+									switch (tasks[index + 1].answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: tasks[index + 1].title,
+										subtitle: tasks[index + 1].subtitle,
+										content: tasks[index + 1].content,
+										placeholder: tasks[index + 1].placeholder,
+										answer: tasks[index + 1].answer,
+										answerChoices: tasks[index + 1].answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: tasks[index + 1].answerType,
+										verificationType: tasks[index + 1].verificationType,
+										prerequisites: tasks[index + 1].prerequisites.map((item) => item),
+										points: tasks[index + 1].points,
+										stdin: tasks[index + 1].stdin,
+									});
+								}}>
+								<ArrowForward />
+							</Button>
+						</Box>
+
+						{/* Right-aligned Buttons */}
+						<Box sx={{ display: "flex", gap: 1 }}>
+							<Button
+								variant="plain"
+								color="danger"
+								onClick={() => {
+									const confirmed = window.confirm("Are you sure you want to delete this task?");
+									if (!confirmed) return;
+									API.del("api", `/pack/${id}/task/${task.id}`, {});
+									const index = tasks.findIndex((t) => t.id == task.id);
+									const newTasks = tasks.filter((t) => t.id !== task.id);
+									setTasks(newTasks);
+									setTask(newTasks[index - 1]);
+									switch (tasks[index - 1].answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: tasks[index - 1].title,
+										subtitle: tasks[index - 1].subtitle,
+										content: tasks[index - 1].content,
+										placeholder: tasks[index - 1].placeholder,
+										answer: tasks[index - 1].answer,
+										answerChoices: tasks[index - 1].answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: tasks[index - 1].answerType,
+										verificationType: tasks[index - 1].verificationType,
+										prerequisites: tasks[index - 1].prerequisites.map((item) => item),
+										points: tasks[index - 1].points,
+										stdin: tasks[index - 1].stdin,
+									});
+								}}>
+								<Delete />
+							</Button>
+							<Button
+								variant="plain"
+								color="success"
+								onClick={async () => {
+									const newtask: Task = await API.post("api", `/pack/${id}/task`, {
+										body: {
+											title: "New Task",
+											subtitle: "",
+											content: "",
+											placeholder: "",
+											answer: "",
+											answerChoices: [],
+											answerType: "TEXT",
+											verificationType: "MANUAL",
+											prerequisites: [],
+											points: 0,
+											stdin: "",
+										},
+									});
+
+									setTasks([...tasks, newtask]);
+									setTask(newtask);
+									switch (newtask.answerType) {
+										case "PYTHON":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "CSHARP":
+											setPossibleVerificationTypes(["ALGORITHM", "MANUAL"]);
+											break;
+										case "WEB":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
+										case "MULTIPLE":
+											setPossibleVerificationTypes(["MANUAL", "MULTIPLE"]);
+											break;
+										case "TEXT":
+											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+									}
+									formik.setValues({
+										title: newtask.title,
+										subtitle: newtask.subtitle,
+										content: newtask.content,
+										placeholder: newtask.placeholder,
+										answer: newtask.answer,
+										answerChoices: newtask.answerChoices.map((item) => ({
+											id: item.id,
+											name: item.name,
+											correct: item.correct,
+										})),
+										answerType: newtask.answerType,
+										verificationType: newtask.verificationType,
+										prerequisites: newtask.prerequisites.map((item) => item),
+										points: newtask.points,
+										stdin: newtask.stdin,
+									});
+								}}>
+								<Add />
+							</Button>
+						</Box>
 					</Box>
 					<form onSubmit={formik.handleSubmit}>
 						<Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
 							<Box sx={{ gridColumn: "span 3" }}>
 								<Box sx={{ display: "flex", flexDirection: "column", gap: 2, overflow: "auto", height: "calc(100vh - 14rem)" }}>
 									<FormLabel className="flex items-center">
-										<AssignmentTurnedInIcon className="mr-1" />
+										<AssignmentTurnedIn className="mr-1" />
 										Title
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -297,7 +461,7 @@ export default function TaskEditor() {
 										/>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<HelpIcon className="mr-1" />
+										<Help className="mr-1" />
 										Description
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -310,7 +474,7 @@ export default function TaskEditor() {
 										/>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<EditIcon className="mr-1" />
+										<Edit className="mr-1" />
 										Content
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -325,7 +489,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MULTIPLE" && formik.getFieldProps("answerType").value == "MULTIPLE" && (
 										<>
 											<FormLabel className="flex items-center">
-												<AssignmentTurnedInIcon className="mr-1" />
+												<AssignmentTurnedIn className="mr-1" />
 												Answer choices
 											</FormLabel>
 											{formik.values.answerChoices.map((item, index) => (
@@ -339,7 +503,7 @@ export default function TaskEditor() {
 															name={`answerChoices.${index}.name`}
 															type="text"
 															onChange={formik.handleChange}
-															value={item.name} 
+															value={item.name}
 														/>
 													</FormControl>
 													<FormControl>
@@ -375,7 +539,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "MULTIPLE" && (
 										<>
 											<FormLabel className="flex items-center">
-												<AssignmentTurnedInIcon className="mr-1" />
+												<AssignmentTurnedIn className="mr-1" />
 												Answer choices
 											</FormLabel>
 											{formik.values.answerChoices.map((item, index) => (
@@ -416,7 +580,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "COMPARE" && formik.getFieldProps("answerType").value == "TEXT" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CheckIcon className="mr-1" />
+												<Check className="mr-1" />
 												Answer
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -433,7 +597,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "ALGORITHM" && formik.getFieldProps("answerType").value == "PYTHON" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -442,11 +606,13 @@ export default function TaskEditor() {
 													height="50vh"
 													extensions={[python()]}
 													value={formik.values.placeholder}
-													onChange={placeholderOnChange}
+													onChange={(newValue) => {
+														formik.setFieldValue("placeholder", newValue);
+													}}
 												/>
 											</FormControl>
 											<FormLabel className="flex items-center">
-												<CheckIcon className="mr-1" />
+												<Check className="mr-1" />
 												Stdout value
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -476,7 +642,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "PYTHON" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -485,7 +651,9 @@ export default function TaskEditor() {
 													height="50vh"
 													extensions={[python()]}
 													value={formik.values.placeholder}
-													onChange={placeholderOnChange}
+													onChange={(newValue) => {
+														formik.setFieldValue("placeholder", newValue);
+													}}
 												/>
 											</FormControl>
 										</>
@@ -493,7 +661,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "ALGORITHM" && formik.getFieldProps("answerType").value == "CSHARP" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -503,13 +671,12 @@ export default function TaskEditor() {
 													extensions={[csharp()]}
 													value={formik.values.placeholder}
 													onChange={(newValue) => {
-														console.log(newValue);
 														formik.setFieldValue("placeholder", newValue);
 													}}
 												/>
 											</FormControl>
 											<FormLabel className="flex items-center">
-												<CheckIcon className="mr-1" />
+												<Check className="mr-1" />
 												Stdout value
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -539,7 +706,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "CSHARP" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -556,7 +723,7 @@ export default function TaskEditor() {
 									{formik.getFieldProps("verificationType").value == "MANUAL" && formik.getFieldProps("answerType").value == "WEB" && (
 										<>
 											<FormLabel className="flex items-center">
-												<CodeIcon className="mr-1" />
+												<Code className="mr-1" />
 												Placeholder
 											</FormLabel>
 											<FormControl sx={{ gap: 2 }}>
@@ -575,7 +742,7 @@ export default function TaskEditor() {
 							<Box sx={{ gridColumn: "span 1" }}>
 								<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 									<FormLabel className="flex items-center">
-										<DataObjectIcon className="mr-1" />
+										<DataObject className="mr-1" />
 										Answer Type
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -618,7 +785,7 @@ export default function TaskEditor() {
 										</Select>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<CheckIcon className="mr-1" />
+										<Check className="mr-1" />
 										Verification Type
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -643,7 +810,7 @@ export default function TaskEditor() {
 										</Select>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<CheckIcon className="mr-1" />
+										<Check className="mr-1" />
 										Points
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -658,7 +825,7 @@ export default function TaskEditor() {
 										/>
 									</FormControl>
 									<FormLabel className="flex items-center">
-										<AssignmentTurnedInIcon className="mr-1" />
+										<AssignmentTurnedIn className="mr-1" />
 										Prerequisites
 									</FormLabel>
 									<FormControl sx={{ gap: 2 }}>
@@ -669,7 +836,7 @@ export default function TaskEditor() {
 												const isRecursive = newValue.some((id) => {
 													return tasks
 														.find((t) => t.id === id)
-														.prerequisites.L.map((item) => item.S)
+														.prerequisites.map((item) => item)
 														.includes(task.id);
 												});
 												if (!isRecursive) {
@@ -683,7 +850,7 @@ export default function TaskEditor() {
 											{tasks
 												.filter((item) => item.id != task.id)
 												.map((item) => (
-													<Option value={item.id}>{item.title.S}</Option>
+													<Option value={item.id}>{item.title}</Option>
 												))}
 										</Select>
 									</FormControl>

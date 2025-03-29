@@ -1,20 +1,25 @@
-import { Autocomplete, Box, Button, ButtonGroup, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Stack, Typography } from "@mui/joy";
+import { Autocomplete, Box, Button, ButtonGroup, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Option, Select, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { FaPlus } from "react-icons/fa6";
 import { useParams } from "react-router-dom";
-import Breadcrumb from "../../components/dash/breadcrumb";
-import CompetitionPackTable from "../../components/dash/organisations/CompetitionPackTable";
+import { Competition } from "../../../../../functions/src/types/competition";
+import { Organisation } from "../../../../../functions/src/types/organisation";
+import { Team } from "../../../../../functions/src/types/team";
+import { User } from "../../../../../functions/src/types/user";
+import Breadcrumb from "../../../components/dash/breadcrumb";
+import CompetitionPackTable from "../../../components/dash/competition/CompetitionPackTable";
 
 export default function CompetitionDetail() {
-	const [competition, setCompetition] = useState<any>();
-	const [teams, setTeams] = useState<any>([]);
-	const [students, setStudents] = useState<any>([]);
+	const [organisations, setOrganisations] = useState<Organisation[]>();
+	const [competition, setCompetition] = useState<Competition>();
+	const [teams, setTeams] = useState<Team[]>();
+	const [students, setStudents] = useState<User[]>();
 
-	const [name, setName] = useState<any>("");
+	const [name, setName] = useState<string>("");
 
-	const { compId, orgId } = useParams();
+	const { compId } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
@@ -26,8 +31,8 @@ export default function CompetitionDetail() {
 				const teams = await API.get("api", `/competition/${compId}/team`, {});
 				setTeams(teams);
 
-				const students = await API.get("api", `/organisation/${orgId}/students`, {});
-				setStudents(students);
+				const organisations = await API.get("api", `/organisation`, {});
+				setOrganisations(organisations);
 			} catch (e) {
 				console.log(e);
 			}
@@ -36,10 +41,32 @@ export default function CompetitionDetail() {
 		onLoad();
 	}, []);
 
-	console.log("teams is: " + JSON.stringify(teams));
+	useEffect(() => {
+		if (!competition?.organisationId) return;
 
+		async function fetchStudents() {
+			try {
+				console.log("Fetching students...");
+				const students = await API.get("api", `/organisation/${competition.organisationId}/student`, {});
+				setStudents(students);
+			} catch (e) {
+				console.error("Error fetching students:", e);
+			}
+		}
+
+		fetchStudents();
+	}, [competition?.organisationId]);
+
+	let teamMembers = [];
+	for (const member in teams) {
+		teamMembers = teamMembers.concat(teams[member].students);
+	}
+	console.log(competition, teams, organisations, students);
 	return (
-		competition && (
+		competition &&
+		teams &&
+		organisations &&
+		students && (
 			<div className="Home">
 				<Helmet>
 					<title>{competition.name} - Competitions</title>
@@ -54,7 +81,6 @@ export default function CompetitionDetail() {
 							]}
 						/>
 					</Box>
-
 					<Box
 						sx={{
 							display: "flex",
@@ -91,6 +117,24 @@ export default function CompetitionDetail() {
 													value={name}
 													onChange={(e) => setName(e.target.value)}
 												/>
+											</FormControl>
+										</Stack>
+										<Stack spacing={1}>
+											<FormLabel>Organisation</FormLabel>
+											<FormControl sx={{ gap: 2 }}>
+												<Select
+													size="sm"
+													placeholder="Organisation"
+													value={competition.organisationId}
+													onChange={(e) => {
+														const orgId = (e.target as HTMLSelectElement).value;
+														console.log(orgId);
+														setCompetition({ ...competition, organisationId: orgId });
+													}}>
+													{organisations?.map((organisation) => {
+														return <Option value={organisation.id}>{organisation.name}</Option>;
+													})}
+												</Select>
 											</FormControl>
 										</Stack>
 									</Stack>
@@ -157,7 +201,7 @@ export default function CompetitionDetail() {
 					</Box>
 
 					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
-						{teams.map((team: any) => (
+						{teams.map((team) => (
 							<Box sx={{ gridColumn: "span 3" }}>
 								<Card sx={{ flexGrow: "1" }}>
 									<Stack
@@ -173,8 +217,8 @@ export default function CompetitionDetail() {
 													<Input
 														size="sm"
 														placeholder="Name"
-														defaultValue={team.name.S}
-														onChange={(e) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, name: { S: e.target.value } } : t)))}
+														defaultValue={team.name}
+														onChange={(e) => setTeams(teams.map((t) => (t.id == team.id ? { ...t, name: e.target.value } : t)))}
 													/>
 												</FormControl>
 											</Stack>
@@ -185,18 +229,21 @@ export default function CompetitionDetail() {
 														multiple
 														placeholder="Members"
 														size="sm"
-														options={students.map((student: any) => {
-															return { label: `${student.given_name} ${student.family_name}`, value: student.PK };
-														})}
+														options={students
+															.filter((student) => !teamMembers.includes(student.id))
+															.map((student) => {
+																return { label: `${student.given_name} ${student.family_name}`, value: student.id };
+															})}
 														loading={students.length == 0}
-														value={
-															!team.students
-																? []
-																: team.students.SS.map((s: any) => {
-																		return { label: `${students.find((student: any) => student.PK == s)?.given_name} ${students.find((student: any) => student.PK == s)?.family_name}`, value: s };
-																	})
-														}
-														onChange={(e, v) => setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? { ...t, students: { SS: v.map((s: any) => s.value) } } : t)))}
+														value={students
+															.filter((student) => team.students.includes(student.id))
+															.map((student) => {
+																return { label: `${student.given_name} ${student.family_name}`, value: student.id };
+															})}
+														onChange={(_, v: { label: string; value: string }[]) => {
+															const newStudents = v.map((s) => s.value);
+															setTeams(teams.map((t) => (t.id == team.id ? { ...t, students: newStudents } : t)));
+														}}
 													/>
 												</FormControl>
 											</Stack>
@@ -209,25 +256,26 @@ export default function CompetitionDetail() {
 												size="sm">
 												<Button
 													onClick={async () => {
-														await API.del("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {});
-														setTeams(teams.filter((t: any) => t.SK.S != team.SK.S));
+														await API.del("api", `/competition/${compId}/team/${team.id}`, {});
+														setTeams(teams.filter((t) => t.id != team.id));
 													}}>
 													Delete
 												</Button>
 												<Button
 													variant="solid"
 													color="primary"
-													onClick={async (e) => {
-														const name = e.currentTarget.parentElement?.parentElement?.parentElement?.parentElement?.querySelectorAll("input")[0].value;
-
-														const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.SK.S.split("#")[1]}`, {
-															body: {
-																name: team.name.S,
-																students: team.students.SS,
-															},
-														});
-
-														//setTeams(teams.map((t: any) => (t.SK.S == team.SK.S ? updatedTeam : t)));
+													onClick={async () => {
+														try {
+															const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.id}`, {
+																body: {
+																	name: team.name,
+																	students: team.students,
+																},
+															});
+															setTeams(teams.map((t) => (t.id === team.id ? updatedTeam : t)));
+														} catch (error) {
+															console.error("Error updating team:", error);
+														}
 													}}>
 													Save
 												</Button>

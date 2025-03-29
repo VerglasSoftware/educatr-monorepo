@@ -1,6 +1,6 @@
 import { api } from "./api";
-import { socketApi } from "./socketApi";
 import { identityPool, userPool, userPoolClient } from "./auth";
+import { socketApi } from "./socketApi";
 
 const region = aws.getRegionOutput().name;
 

@@ -1,16 +1,13 @@
-import Button from "@mui/joy/Button";
-import DialogContent from "@mui/joy/DialogContent";
-import DialogTitle from "@mui/joy/DialogTitle";
-import FormControl from "@mui/joy/FormControl";
-import FormLabel from "@mui/joy/FormLabel";
-import Input from "@mui/joy/Input";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import Stack from "@mui/joy/Stack";
+import { Button, DialogContent, DialogTitle, FormControl, FormLabel, Input, Modal, ModalDialog, Stack } from "@mui/joy";
 import { API } from "aws-amplify";
 import { Dispatch, FormEvent, Fragment, SetStateAction } from "react";
 
-export default function NewPackModal({ open, setOpen }: { open: boolean; setOpen: Dispatch<SetStateAction<boolean>> }) {
+interface NewPackModalProps {
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+export default function NewPackModal({ open, setOpen }: NewPackModalProps) {
 	return (
 		<Fragment>
 			<Modal
@@ -22,14 +19,12 @@ export default function NewPackModal({ open, setOpen }: { open: boolean; setOpen
 					<form
 						onSubmit={async (event: FormEvent<HTMLFormElement>) => {
 							event.preventDefault();
-
-							const pack = await API.post("api", "/pack", {
+							await API.post("api", "/pack", {
 								body: {
-									name: (event.currentTarget.elements[0] as any).value,
-									description: (event.currentTarget.elements[1] as any).value,
+									name: (event.currentTarget.elements[0] as HTMLInputElement).value,
+									description: (event.currentTarget.elements[1] as HTMLInputElement).value,
 								},
 							});
-
 							setOpen(false);
 						}}>
 						<Stack spacing={2}>

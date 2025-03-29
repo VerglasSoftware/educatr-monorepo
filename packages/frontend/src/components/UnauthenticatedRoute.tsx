@@ -9,8 +9,7 @@ interface Props {
 export default function UnauthenticatedRoute(props: Props) {
 	const { isAuthenticated } = useAppContext();
 	const { children } = props;
-	const redirect = querystring("redirect");
-
+	const redirect = queryString("redirect");
 	if (isAuthenticated) {
 		return <Navigate to={redirect || "/"} />;
 	}
@@ -18,11 +17,10 @@ export default function UnauthenticatedRoute(props: Props) {
 	return cloneElement(children, props);
 }
 
-function querystring(name: string, url = window.location.href) {
+function queryString(name: string, url = window.location.href) {
 	const parsedName = name.replace(/[[]]/g, "\\$&");
 	const regex = new RegExp(`[?&]${parsedName}(=([^&#]*)|&|#|$)`, "i");
 	const results = regex.exec(url);
-
 	if (!results || !results[2]) {
 		return false;
 	}

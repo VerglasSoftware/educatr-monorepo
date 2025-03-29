@@ -1,23 +1,32 @@
 import { html } from "@codemirror/lang-html";
 import { python } from "@codemirror/lang-python";
-import { Divider, Radio, RadioGroup, Textarea } from "@mui/joy";
-import Button from "@mui/joy/Button";
-import DialogContent from "@mui/joy/DialogContent";
-import DialogTitle from "@mui/joy/DialogTitle";
-import FormControl from "@mui/joy/FormControl";
-import FormLabel from "@mui/joy/FormLabel";
-import Input from "@mui/joy/Input";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import Stack from "@mui/joy/Stack";
+import { Button, DialogContent, DialogTitle, Divider, FormControl, FormLabel, Input, Modal, ModalDialog, Radio, RadioGroup, Stack, Textarea } from "@mui/joy";
 import { csharp } from "@replit/codemirror-lang-csharp";
 import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
-import { Fragment, useEffect, useState } from "react";
+import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
 import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
+import { Activity } from "../../../../functions/src/types/activity";
+import { Competition } from "../../../../functions/src/types/competition";
+import { Task } from "../../../../functions/src/types/task";
 
-export default function TaskModal({ open, setOpen, competition, task, packId, refreshManual }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>>; competition: any; task: any; packId: string; refreshManual: any }) {
+interface TaskModalProps {
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	competition: Competition;
+	task: Task;
+	packId: string;
+	setActivities: Dispatch<SetStateAction<Activity[]>>;
+}
+
+interface CheckResponse {
+	result?: boolean;
+	manual?: boolean;
+	activity: Activity;
+}
+
+export default function TaskModal({ open, setOpen, competition, task, packId, setActivities }: TaskModalProps) {
 	const [answer, setAnswer] = useState<string>("");
 	const [submitTaskLoading, setSubmitTaskLoading] = useState<boolean>(false);
 	const [stdin, setStdin] = useState<string>("");
@@ -27,25 +36,25 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 	async function submitTask() {
 		setSubmitTaskLoading(true);
 		try {
-			const result = await API.post("api", `/competition/${competition.PK}/check`, {
+			const result: CheckResponse = await API.post("api", `/competition/${competition.id}/check`, {
 				body: {
 					packId: packId,
-					taskId: task.SK.S.split("#")[1],
+					taskId: task.id,
 					answer: answer,
-					stdin: task.stdin && task.stdin.S,
+					stdin: task.stdin,
 				},
 			});
 			setSubmitTaskLoading(false);
-
+			setActivities((activities) => [...activities, result.activity]);
 			if (result.manual === true) {
-				return toast.info(`${task.title.S} has been submitted for manual verification.`);
+				return toast.info(`${task.title} has been submitted for manual verification.`);
 			}
 
 			if (result.result === true) {
-				toast.success(`You answered ${task.title.S} correctly, and ${task.points.N} point${task.points.N != 1 && "s"} have been added to your team.`);
+				toast.success(`You answered ${task.title} correctly, and ${task.points} point${task.points != 1 && "s"} have been added to your team.`);
 				setOpen(false);
 			} else {
-				toast.error(`You answered ${task.title.S} incorrectly, but no points have been taken from your team.`);
+				toast.error(`You answered ${task.title} incorrectly, but no points have been taken from your team.`);
 			}
 		} catch (e) {
 			setSubmitTaskLoading(false);
@@ -55,7 +64,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 	}
 	useEffect(() => {
 		if (task) {
-			setAnswer(task.placeholder.S);
+			setAnswer(task.placeholder);
 		}
 	}, [task]);
 	return (
@@ -65,16 +74,16 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 					open={open}
 					onClose={() => setOpen(false)}>
 					<ModalDialog minWidth="50%">
-						<DialogTitle>{task.title.S}</DialogTitle>
+						<DialogTitle>{task.title}</DialogTitle>
 						<DialogContent>
-							{task.subtitle.S}
-							{task.points.N} point{task.points.N != 1 && "s"}
+							{task.subtitle}
+							{task.points} point{task.points != 1 && "s"}
 						</DialogContent>
 						<Divider />
-						<DialogContent>{task.content.S}</DialogContent>
+						<DialogContent>{task.content}</DialogContent>
 						<Divider />
 						<DialogContent>
-							{task.answerType.S == "TEXT" && (
+							{task.answerType == "TEXT" && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
@@ -85,7 +94,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 									</FormControl>
 								</Stack>
 							)}
-							{task.answerType.S == "MULTIPLE" && (
+							{task.answerType == "MULTIPLE" && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
@@ -94,23 +103,23 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											name="radio-buttons-group"
 											value={answer}
 											onChange={(e) => setAnswer(e.currentTarget.value)}>
-											{JSON.parse(task.answer.S).map((answer: any) => (
+											{task.answerChoices.map((answer) => (
 												<Radio
-													value={answer.text}
-													label={answer.text}
+													value={answer.name}
+													label={answer.name}
 												/>
 											))}
 										</RadioGroup>
 									</FormControl>
 								</Stack>
 							)}
-							{(task.answerType.S == "CSHARP" || task.answerType.S == "PYTHON") && (
+							{(task.answerType == "CSHARP" || task.answerType == "PYTHON") && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>
 										<CodeMirror
 											height="40vh"
-											extensions={task.answerType.S == "CSHARP" ? [csharp()] : [python()]}
+											extensions={task.answerType == "CSHARP" ? [csharp()] : [python()]}
 											value={answer}
 											onChange={(e) => setAnswer(e)}
 											className="mb-4"
@@ -125,9 +134,9 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 											onClick={async () => {
 												setRunLoading(true);
 												try {
-													const result = await API.post("api", `/competition/${competition.PK}/run`, {
+													const result = await API.post("api", `/competition/${competition.id}/run`, {
 														body: {
-															language: task.answerType.S,
+															language: task.answerType,
 															code: answer,
 															stdin: stdin,
 														},
@@ -135,6 +144,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 													setRunLoading(false);
 													setStdout(result.output);
 												} catch (e) {
+													console.log(e);
 													setRunLoading(false);
 													setStdout("An error occurred when running your code.");
 												}
@@ -151,7 +161,7 @@ export default function TaskModal({ open, setOpen, competition, task, packId, re
 									</FormControl>
 								</Stack>
 							)}
-							{task.answerType.S == "WEB" && (
+							{task.answerType == "WEB" && (
 								<Stack spacing={2}>
 									<FormControl>
 										<FormLabel>Answer</FormLabel>

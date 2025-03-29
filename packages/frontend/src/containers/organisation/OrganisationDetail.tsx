@@ -3,17 +3,16 @@ import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
+import { Organisation } from "../../../../functions/src/types/organisation";
 import Breadcrumb from "../../components/dash/breadcrumb";
 import OrganisationStudentTable from "../../components/dash/organisations/OrganisationStudentTable";
 import "./OrganisationDetail.css";
 
 export default function OrganisationDetail() {
-	const [organisation, setOrganisation] = useState<any>();
+	const [organisation, setOrganisation] = useState<Organisation>();
 
-	const [open, setOpen] = useState(false);
-
-	const [name, setName] = useState<any>("");
-	const [logo, setLogo] = useState<any>("");
+	const [name, setName] = useState<string>("");
+	const [logo, setLogo] = useState<string>("");
 
 	const { id } = useParams();
 
