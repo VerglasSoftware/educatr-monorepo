@@ -1,6 +1,6 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, QueryCommand, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { APIGatewayProxyEvent, Handler } from "aws-lambda";
@@ -42,16 +42,17 @@ const itemsToCompetitions = (items: Record<string, AttributeValue>[] | undefined
 };
 
 export const list: Handler = Util.handler(async (event) => {
-	const params: ScanCommandInput = {
+	const params: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "SK = :sk",
+		IndexName: "ItemTypeIndex",
+		KeyConditionExpression: "SK = :sk",
 		ExpressionAttributeValues: {
 			":sk": { S: "DETAILS" },
 		},
 	};
 
 	try {
-		const result = await client.send(new ScanCommand(params));
+		const result = await client.send(new QueryCommand(params));
 		const competitions = itemsToCompetitions(result.Items);
 		return JSON.stringify(competitions);
 	} catch (e) {
