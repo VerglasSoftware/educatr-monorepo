@@ -1,7 +1,7 @@
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import { Box, Checkbox, Divider, Dropdown, IconButton, Menu, MenuButton, MenuItem, Sheet, Table, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { Fragment } from "react/jsx-runtime";
 import { Competition } from "../../../../../functions/src/types/competition";
@@ -9,25 +9,11 @@ import { Competition } from "../../../../../functions/src/types/competition";
 interface CompetitionTableProps {
 	selected: readonly string[];
 	setSelected: Dispatch<SetStateAction<readonly string[]>>;
+	competitions: Competition[];
 }
 
-export default function CompetitionTable({ selected, setSelected }: CompetitionTableProps) {
+export default function CompetitionTable({ selected, setSelected, competitions }: CompetitionTableProps) {
 	const nav = useNavigate();
-
-	const [competition, setCompetitions] = useState<Competition[]>([]);
-
-	useEffect(() => {
-		async function onLoad() {
-			try {
-				const competition = await API.get("api", `/competition`, {});
-				setCompetitions(competition);
-			} catch (e) {
-				console.log(e);
-			}
-		}
-
-		onLoad();
-	}, []);
 
 	return (
 		<Fragment>
@@ -58,12 +44,12 @@ export default function CompetitionTable({ selected, setSelected }: CompetitionT
 							<th style={{ width: 48, textAlign: "center", padding: "12px 6px" }}>
 								<Checkbox
 									size="sm"
-									indeterminate={selected.length > 0 && selected.length !== competition.length}
-									checked={selected.length === competition.length}
+									indeterminate={selected.length > 0 && selected.length !== competitions.length}
+									checked={selected.length === competitions.length}
 									onChange={(event) => {
-										setSelected(event.target.checked ? competition.map((row) => row.id) : []);
+										setSelected(event.target.checked ? competitions.map((row) => row.id) : []);
 									}}
-									color={selected.length > 0 || selected.length === competition.length ? "primary" : undefined}
+									color={selected.length > 0 || selected.length === competitions.length ? "primary" : undefined}
 									sx={{ verticalAlign: "text-bottom" }}
 								/>
 							</th>
@@ -72,7 +58,7 @@ export default function CompetitionTable({ selected, setSelected }: CompetitionT
 						</tr>
 					</thead>
 					<tbody>
-						{[...competition].map((row) => (
+						{[...competitions].map((row) => (
 							<tr key={row.id}>
 								<td style={{ textAlign: "center", width: 120 }}>
 									<Checkbox

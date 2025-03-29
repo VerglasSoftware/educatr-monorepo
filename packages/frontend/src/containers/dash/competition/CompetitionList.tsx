@@ -1,17 +1,32 @@
 import { Box, Button, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { FaPlus } from "react-icons/fa6";
 import { IoTrashBin } from "react-icons/io5";
+import { Competition } from "../../../../../functions/src/types/competition";
 import Breadcrumb from "../../../components/dash/breadcrumb";
 import CompetitionTable from "../../../components/dash/competition/CompetitionTable";
 import NewCompetitionModal from "../../../components/dash/competition/NewCompetitionModal";
 import "./CompetitionList.css";
 
 export default function CompetitionList() {
+	const [competitions, setCompetitions] = useState<Competition[]>();
 	const [open, setOpen] = useState(false);
 	const [selected, setSelected] = useState<readonly string[]>([]);
+
+	useEffect(() => {
+		async function onLoad() {
+			try {
+				const competition = await API.get("api", `/competition`, {});
+				setCompetitions(competition);
+			} catch (e) {
+				console.log(e);
+			}
+		}
+
+		onLoad();
+	}, []);
 
 	return (
 		<div className="Home">
@@ -72,6 +87,7 @@ export default function CompetitionList() {
 				<CompetitionTable
 					selected={selected}
 					setSelected={setSelected}
+					competitions={competitions}
 				/>
 			</div>
 			<NewCompetitionModal
