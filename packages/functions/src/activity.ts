@@ -1,6 +1,6 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
-import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, QueryCommand, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
@@ -43,9 +43,10 @@ export const list: Handler = Util.handler(async (event) => {
 	}
 
 	// Query the Competitions table to find the team the user is part of
-	const teamParams: ScanCommandInput = {
+	const teamParams: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix) AND contains (students, :userId)",
+		KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		FilterExpression: "contains (students, :userId)",
 		ExpressionAttributeValues: {
 			":compId": { S: compId },
 			":skPrefix": { S: "TEAM#" },
@@ -55,7 +56,7 @@ export const list: Handler = Util.handler(async (event) => {
 
 	var team: Team;
 	try {
-		const teamResult = await client.send(new ScanCommand(teamParams));
+		const teamResult = await client.send(new QueryCommand(teamParams));
 		if (!teamResult.Items || teamResult.Count === 0) {
 			throw new Error(`User ${event.requestContext.authorizer!.jwt.claims["cognito:username"]} is not part of a team in competition ${compId}`);
 		}
@@ -69,20 +70,21 @@ export const list: Handler = Util.handler(async (event) => {
 	// Dynamically create FilterExpression for each userId
 	const userIdConditions = team.students.map((_, index) => `userId = :userId${index}`).join(" OR ");
 
-	const activityParams: ScanCommandInput = {
+	const activityParams: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: `begins_with(SK, :activityPrefix) AND (${userIdConditions})`,
+		KeyConditionExpression: "PK = :compId AND begins_with(SK, :activityPrefix)",
+		FilterExpression: `(${userIdConditions})`,
 		ExpressionAttributeValues: team.students.reduce(
 			(acc: { [key: string]: { S: string } }, id, index) => {
 				acc[`:userId${index}`] = { S: id };
 				return acc;
 			},
-			{ ":activityPrefix": { S: "ACTIVITY#" } }
+			{ ":compId": { S: compId }, ":activityPrefix": { S: "ACTIVITY#" } }
 		),
 	};
 
 	try {
-		const activityResult = await client.send(new ScanCommand(activityParams));
+		const activityResult = await client.send(new QueryCommand(activityParams));
 		const activities = itemsToActivities(activityResult.Items);
 		return JSON.stringify(activities);
 	} catch (e) {

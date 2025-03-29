@@ -18,8 +18,12 @@ export const competitionTable = new sst.aws.Dynamo("Competitions", {
 	fields: {
 		PK: "string",
 		SK: "string",
+		itemType: "string"
 	},
 	primaryIndex: { hashKey: "PK", rangeKey: "SK" },
+	globalIndexes: {
+		"ItemTypeIndex": { hashKey: "itemType" }
+	}
 });
 
 export const packTable = new sst.aws.Dynamo("Packs", {
