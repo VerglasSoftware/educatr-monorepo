@@ -206,6 +206,7 @@ export const listStudents: Handler = Util.handler(async (event) => {
 		}
 		const org = itemToOrganisation(result.Item);
 		const students = org.students;
+		console.log(`Students for organisation ${orgId}: ${students}`);
 
 		if (!students || students.length === 0) {
 			return JSON.stringify([]);
@@ -213,13 +214,18 @@ export const listStudents: Handler = Util.handler(async (event) => {
 
 		const userParams: ScanCommandInput = {
 			TableName: Resource.Users.name,
-			FilterExpression: "PK IN (:students)",
-			ExpressionAttributeValues: {
-				":students": { SS: students },
-			},
+			FilterExpression: students.map((_, index) => `PK = :student${index}`).join(" OR "),
+			ExpressionAttributeValues: students.reduce(
+				(acc: Record<string, AttributeValue>, student, index) => {
+					acc[`:student${index}`] = { S: student };
+					return acc;
+				},
+				{} as Record<string, AttributeValue>
+			),
 		};
 
 		const userResult = await client.send(new ScanCommand(userParams));
+		console.log(`Users for organisation ${orgId}: ${JSON.stringify(userResult.Items)}`);
 		const users = itemsToUsers(userResult.Items);
 		return JSON.stringify(users);
 	} catch (e) {
