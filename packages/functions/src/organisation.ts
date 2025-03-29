@@ -207,6 +207,10 @@ export const listStudents: Handler = Util.handler(async (event) => {
 		const org = itemToOrganisation(result.Item);
 		const students = org.students;
 
+		if (!students || students.length === 0) {
+			return JSON.stringify([]);
+		}
+
 		const userParams: ScanCommandInput = {
 			TableName: Resource.Users.name,
 			FilterExpression: "PK IN (:students)",
