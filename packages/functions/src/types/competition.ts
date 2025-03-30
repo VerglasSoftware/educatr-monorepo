@@ -40,7 +40,6 @@ export interface CompetitionCheck {
 	packId: string;
 	taskId: string;
 	answer: string;
-	stdin: string;
 }
 
 export interface CompetitionRun {

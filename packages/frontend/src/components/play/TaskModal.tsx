@@ -42,7 +42,6 @@ export default function TaskModal({ open, setOpen, competition, task, packId, se
 					packId: packId,
 					taskId: task.id,
 					answer: answer,
-					stdin: task.stdin,
 				},
 			});
 			setSubmitTaskLoading(false);

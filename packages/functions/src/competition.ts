@@ -215,7 +215,6 @@ export const check: Handler = Util.handler(async (event) => {
 		packId: "",
 		taskId: "",
 		answer: "",
-		stdin: "",
 	};
 
 	if (event.body != null) {
