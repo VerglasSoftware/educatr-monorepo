@@ -104,6 +104,9 @@ export default function TaskEditor() {
 				case "TEXT":
 					setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
 					break;
+				case "MANUAL":
+					setPossibleVerificationTypes(["MANUAL"]);
+					break;
 			}
 			formik.setValues({
 				title: task.title,
@@ -258,6 +261,9 @@ export default function TaskEditor() {
 										case "TEXT":
 											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
 											break;
+										case "MANUAL":
+											setPossibleVerificationTypes(["MANUAL"]);
+											break;
 									}
 									formik.setValues({
 										title: tasks[index - 1].title,
@@ -308,6 +314,9 @@ export default function TaskEditor() {
 											break;
 										case "TEXT":
 											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+										case "MANUAL":
+											setPossibleVerificationTypes(["MANUAL"]);
 											break;
 									}
 									formik.setValues({
@@ -360,6 +369,9 @@ export default function TaskEditor() {
 											break;
 										case "TEXT":
 											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+										case "MANUAL":
+											setPossibleVerificationTypes(["MANUAL"]);
 											break;
 									}
 									formik.setValues({
@@ -419,6 +431,9 @@ export default function TaskEditor() {
 											break;
 										case "TEXT":
 											setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
+											break;
+										case "MANUAL":
+											setPossibleVerificationTypes(["MANUAL"]);
 											break;
 									}
 									formik.setValues({
@@ -773,10 +788,15 @@ export default function TaskEditor() {
 														formik.setFieldValue("placeholder", "");
 														setPossibleVerificationTypes(["MANUAL", "COMPARE"]);
 														break;
+													case "MANUAL":
+														formik.setFieldValue("placeholder", "");
+														setPossibleVerificationTypes(["MANUAL"]);
+														break;
 												}
 												formik.setFieldValue("answerType", newValue);
 											}}
 											value={formik.values.answerType}>
+											<Option value="MANUAL">Manual</Option>
 											<Option value="TEXT">Text</Option>
 											<Option value="MULTIPLE">Multiple Choice</Option>
 											<Option value="PYTHON">Python</Option>
