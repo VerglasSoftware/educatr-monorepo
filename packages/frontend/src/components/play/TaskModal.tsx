@@ -5,6 +5,7 @@ import { csharp } from "@replit/codemirror-lang-csharp";
 import CodeMirror from "@uiw/react-codemirror";
 import { API } from "aws-amplify";
 import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
+import Markdown from "react-markdown";
 import NewWindow from "react-new-window";
 import { toast } from "react-toastify";
 import { Activity } from "../../../../functions/src/types/activity";
@@ -80,7 +81,9 @@ export default function TaskModal({ open, setOpen, competition, task, packId, se
 							{task.points} point{task.points != 1 && "s"}
 						</DialogContent>
 						<Divider />
-						<DialogContent>{task.content}</DialogContent>
+						<DialogContent>
+							<Markdown>{task.content}</Markdown>
+						</DialogContent>
 						<Divider />
 						<DialogContent>
 							{task.answerType == "TEXT" && (
