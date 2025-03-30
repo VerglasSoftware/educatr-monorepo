@@ -253,6 +253,7 @@ export const check: Handler = Util.handler(async (event) => {
 				packId: data.packId,
 				taskId: data.taskId,
 				correct: result,
+				correctString: result ? "true" : "false",
 				createdAt: Date.now(),
 			},
 		};
@@ -453,7 +454,8 @@ export const run: Handler = Util.handler(async (event) => {
 });
 
 export const getLb: Handler = Util.handler(async (event) => {
-	const { compId } = event.pathParameters || {};
+	try {
+		const { compId } = event.pathParameters || {};
 	if (!compId) {
 		throw new Error("Missing id in path parameters");
 	}
@@ -466,21 +468,22 @@ export const getLb: Handler = Util.handler(async (event) => {
 		},
 	};
 
-	const teamParams: ScanCommandInput = {
+	const teamParams: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
 		ExpressionAttributeValues: {
 			":compId": { S: compId },
 			":skPrefix": { S: "TEAM#" },
 		},
 	};
 
-	const activityParams: ScanCommandInput = {
+	const activityParams: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		IndexName: "CorrectIndex",
+		KeyConditionExpression: "PK = :compId AND correctString = :correctString",
 		ExpressionAttributeValues: {
 			":compId": { S: compId },
-			":skPrefix": { S: "ACTIVITY#" },
+			":correctString": { S: "true" }
 		},
 	};
 
@@ -497,13 +500,13 @@ export const getLb: Handler = Util.handler(async (event) => {
 		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
 	}
 	try {
-		const result = await client.send(new ScanCommand(teamParams));
+		const result = await client.send(new QueryCommand(teamParams));
 		teams = itemsToTeams(result.Items);
 	} catch (e) {
 		throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
 	}
 	try {
-		const result = await client.send(new ScanCommand(activityParams));
+		const result = await client.send(new QueryCommand(activityParams));
 		activities = itemsToActivities(result.Items);
 	} catch (e) {
 		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
@@ -536,4 +539,7 @@ export const getLb: Handler = Util.handler(async (event) => {
 	}
 
 	return JSON.stringify({ teamLabels, teamData });
+	} catch (e) {
+		throw new Error(`Could not retrieve leaderboard for competition: ${e}`);
+	}
 });

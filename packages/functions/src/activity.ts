@@ -69,11 +69,12 @@ export const list: Handler = Util.handler(async (event) => {
 	// Query the Competitions table to find all activities for this user in the team
 	// Dynamically create FilterExpression for each userId
 	const userIdConditions = team.students.map((_, index) => `userId = :userId${index}`).join(" OR ");
+	const userIdConditions = team.students.map((_, index) => `userId = :userId${index}`).join(" OR ");
 
 	const activityParams: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
 		KeyConditionExpression: "PK = :compId AND begins_with(SK, :activityPrefix)",
-		FilterExpression: `(${userIdConditions})`,
+		FilterExpression: `${userIdConditions}`,
 		ExpressionAttributeValues: team.students.reduce(
 			(acc: { [key: string]: { S: string } }, id, index) => {
 				acc[`:userId${index}`] = { S: id };
@@ -88,7 +89,7 @@ export const list: Handler = Util.handler(async (event) => {
 		const activities = itemsToActivities(activityResult.Items);
 		return JSON.stringify(activities);
 	} catch (e) {
-		throw new Error(`Could not retrieve activities for team ${team.id} in competition ${compId}: ${e}`);
+		throw new Error(`Could not retrieve activities for team ${team.id} in competition ${compId}: ${e}. ${JSON.stringify(team)}`);
 	}
 });
 
