@@ -16,7 +16,7 @@ export const itemToTeam = (item: Record<string, any> | undefined): Team => {
 	return {
 		id: isDynamoFormat(item.SK) ? item.SK.S.split("#")[1] : item.SK.split("#")[1],
 		name: isDynamoFormat(item.name) ? item.name.S : item.name,
-		students: isDynamoFormat(item.students) ? item.students.SS.map((student: any) => student) : item.students,
+		students: isDynamoFormat(item.students) ? item.students.L.map((student: any) => student.S) : item.students,
 		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
 	};
 };
