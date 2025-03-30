@@ -6054,31 +6054,37 @@ upd_task_json
 			content: { S: task.content },
 			placeholder: { S: task.placeholder || "" },
 			answer: {
-				S:
-					(task.answerType == "multiple"
-						? JSON.stringify(
-								task.answerOptions.map((o) => {
-									return { text: o.name, correct: o.correct };
-								})
-							)
-						: task.answer) || "",
+				S: (task.answerType == "multiple" ? "" : task.answer) || "",
 			},
-
+			answerChoices: {
+				L: task.answerOptions
+					? task.answerOptions
+							.map((a) => ({
+								M: {
+									id: { S: a.id || "" },
+									name: { S: a.name || "" },
+									correct: a.correct !== undefined ? { BOOL: a.correct } : undefined,
+								},
+							}))
+							.filter((a) => a.M.correct !== undefined || Object.keys(a.M).length > 0)
+					: [],
+			},
 			answerType: { S: answerType },
 			verificationType: { S: verificationType },
+			createdAt: { N: `${Date.parse(task.createdAt)}` },
 
-			//"prerequisites": { SS: upd_task_json.filter(t => t.id == task.prerequisites).map(t => `${t.newId}`) },
+			// "prerequisites": { SS: upd_task_json.filter(t => t.id == task.prerequisites).map(t => `${t.newId}`) },
 		};
 
 		new_tasks.push(nt);
 
-		fs.writeFile(`convert_v4_output/${task.newId}.json`, JSON.stringify(nt), (err) => {
-			if (err) {
-				console.error(err);
-			} else {
-				console.log("Done!");
-			}
-		});
+		// fs.writeFile(`convert_v4_output/${task.newId}.json`, JSON.stringify(nt), (err) => {
+		// 	if (err) {
+		// 		console.error(err);
+		// 	} else {
+		// 		console.log("Done!");
+		// 	}
+		// });
 	});
 
 fs.writeFile("convert_v4_output.json", JSON.stringify(new_tasks), (err) => {

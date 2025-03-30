@@ -380,3 +380,11 @@ api.route(
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
+
+api.route(
+	"GET /task/importTasks",
+	{
+		handler: "packages/functions/src/task.importTasks",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);

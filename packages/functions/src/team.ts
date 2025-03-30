@@ -102,7 +102,7 @@ export const create: Handler = Util.handler(async (event) => {
 			PK: compId,
 			SK: `TEAM#${createId()}`,
 			name: data.name,
-			students: new Set<string>(data.students),
+			students: data.students,
 			createdAt: Date.now(),
 		},
 	};

@@ -3,8 +3,9 @@ import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, 
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
+import axios from "axios";
 import { Resource } from "sst";
-import { Task, TaskCreateUpdate } from "./types/task";
+import { Task, TaskCreateUpdate, TaskDynamoWithPK } from "./types/task";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -32,6 +33,7 @@ export const itemToTask = (item: Record<string, any> | undefined): Task => {
 		answerType: isDynamoFormat(item.answerType) ? item.answerType.S : item.answerType,
 		placeholder: isDynamoFormat(item.placeholder) ? item.placeholder.S : item.placeholder,
 		prerequisites: isDynamoFormat(item.prerequisites) ? item.prerequisites.L.map((prerequisite: any) => prerequisite.S) : item.prerequisites,
+		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N as string)).toISOString() : new Date(item.createdAt as string).toISOString(),
 	};
 };
 
@@ -135,6 +137,7 @@ export const create: Handler = Util.handler(async (event) => {
 			answerType: data.answerType,
 			placeholder: data.placeholder,
 			prerequisites: data.prerequisites,
+			createdAt: Date.now(),
 		},
 	};
 
@@ -244,4 +247,61 @@ export const del: Handler = Util.handler(async (event) => {
 	} catch (e) {
 		throw new Error(`Could not delete task ${taskId} for pack ${packId}: ${e}`);
 	}
+});
+
+export const importTasks: Handler = Util.handler(async (event) => {
+	// delete all tasks
+	const params: ScanCommandInput = {
+		TableName: Resource.Packs.name,
+		FilterExpression: "begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":skPrefix": { S: "TASK#" },
+		},
+	};
+
+	try {
+		const result = await client.send(new ScanCommand(params));
+		if (result.Items) {
+			for (const item of result.Items) {
+				const deleteParams: DeleteCommandInput = {
+					TableName: Resource.Packs.name,
+					Key: {
+						PK: item.PK.S,
+						SK: item.SK.S,
+					},
+				};
+				await client.send(new DeleteCommand(deleteParams));
+			}
+		}
+	} catch (e) {
+		throw new Error(`Could not delete all tasks: ${e}`);
+	}
+
+	const response = await axios.get("https://raw.githubusercontent.com/VerglasSoftware/educatr-monorepo/refs/heads/dev/convert_v4_output.json");
+	const tasks: TaskDynamoWithPK[] = response.data;
+	for (const task of tasks) {
+		const params: PutCommandInput = {
+			TableName: Resource.Packs.name,
+			Item: {
+				...itemToTask(task),
+				PK: task.PK.S,
+				SK: task.SK.S,
+				createdAt: parseInt(task.createdAt.N),
+				prerequisites: [],
+				stdin: "",
+			},
+		};
+		if (params.Item) {
+			delete params.Item.id; // Remove id from the task object
+		}
+		try {
+			await client.send(new PutCommand(params));
+		} catch (e) {
+			console.log(task);
+			throw new Error(`Could not import task ${task.SK.S} for pack ${task.PK.S}: ${e}`);
+		}
+		console.log(`Imported task ${task.SK.S} for pack ${task.PK.S}`);
+	}
+
+	return JSON.stringify({ success: true });
 });

@@ -239,49 +239,62 @@ export default function PlayCompetition() {
 								{pack.name}
 							</Typography>
 							<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(5, 1fr)", justifyContent: "center", gap: 2 }}>
-								{pack.tasks.map((task) => {
-									const correct = !!activities.find((a) => a.taskId === task.id && a.correct === true);
-									if (task.prerequisites && task.prerequisites.length > 0) {
-										const prereqs = task.prerequisites.map((p) => p);
-										const completedPrereqs = prereqs.filter((p) => activities.find((a) => a.taskId == p && a.correct === true));
-										if (completedPrereqs.length != prereqs.length) return null;
-									}
-									return (
-										<Link
-											component="button"
-											onClick={() => {
-												setSelectedTask(task);
-												setSelectedTaskPackId(pack.id);
-												setOpen(true);
-											}}
-											id={task.id}
-											disabled={correct}>
-											<Card
-												variant="plain"
-												sx={{ backgroundColor: correct ? "rgb(0 255 0 / 0.4)" : "rgb(0 0 0 / 0.3)", width: "100%" }}>
-												<CardContent
-													sx={{
-														display: "flex",
-														flexDirection: "column",
-														alignItems: "center",
-														justifyContent: "center",
-														padding: "2%",
-													}}>
-													<Typography
-														level="title-lg"
-														textColor="common.white">
-														{task.title}
-													</Typography>
-													<Typography
-														level="body-sm"
-														textColor="common.white">
-														{task.points} point{task.points != 1 && "s"}
-													</Typography>
-												</CardContent>
-											</Card>
-										</Link>
-									);
-								})}
+								{pack.tasks
+									.sort((a, b) => {
+										// Sort numerically if titles are numbers, otherwise lexicographically
+										const numA = parseFloat(a.title);
+										const numB = parseFloat(b.title);
+										if (!isNaN(numA) && !isNaN(numB)) {
+											return numA - numB;
+										}
+										if (!isNaN(numA) || !isNaN(numB)) {
+											return isNaN(numA) ? 1 : -1;
+										}
+										return a.title.localeCompare(b.title, undefined, { numeric: true });
+									})
+									.map((task) => {
+										const correct = !!activities.find((a) => a.taskId === task.id && a.correct === true);
+										if (task.prerequisites && task.prerequisites.length > 0) {
+											const prereqs = task.prerequisites.map((p) => p);
+											const completedPrereqs = prereqs.filter((p) => activities.find((a) => a.taskId == p && a.correct === true));
+											if (completedPrereqs.length != prereqs.length) return null;
+										}
+										return (
+											<Link
+												component="button"
+												onClick={() => {
+													setSelectedTask(task);
+													setSelectedTaskPackId(pack.id);
+													setOpen(true);
+												}}
+												id={task.id}
+												disabled={correct}>
+												<Card
+													variant="plain"
+													sx={{ backgroundColor: correct ? "rgb(0 255 0 / 0.4)" : "rgb(0 0 0 / 0.3)", width: "100%" }}>
+													<CardContent
+														sx={{
+															display: "flex",
+															flexDirection: "column",
+															alignItems: "center",
+															justifyContent: "center",
+															padding: "2%",
+														}}>
+														<Typography
+															level="title-lg"
+															textColor="common.white">
+															{task.title}
+														</Typography>
+														<Typography
+															level="body-sm"
+															textColor="common.white">
+															{task.points} point{task.points != 1 && "s"}
+														</Typography>
+													</CardContent>
+												</Card>
+											</Link>
+										);
+									})}
 							</Box>
 						</>
 					))}
