@@ -13,7 +13,7 @@ export const itemToUser = (item: Record<string, any> | undefined): User => {
 	}
 	const isDynamoFormat = (val: any) => typeof val === "object" && val !== null && "S" in val;
 	return {
-		id: isDynamoFormat(item.PK) ? item.PK.S.split("#")[1] : item.PK.split("#")[1],
+		id: isDynamoFormat(item.PK) ? item.PK.S : (item.PK as string),
 		email: isDynamoFormat(item.email) ? item.email.S : (item.email as string),
 		role: isDynamoFormat(item.role) ? UserRole[item.role.S as keyof typeof UserRole] : UserRole[item.role as keyof typeof UserRole],
 		given_name: isDynamoFormat(item.given_name) ? item.given_name.S : (item.given_name as string),

@@ -22,6 +22,10 @@ export interface TaskDynamo {
 	createdAt: { N: string };
 }
 
+export interface TaskDynamoWithPK extends TaskDynamo {
+	PK: { S: string };
+}
+
 export interface Task {
 	id: string;
 	title: string;
