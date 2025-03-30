@@ -456,89 +456,89 @@ export const run: Handler = Util.handler(async (event) => {
 export const getLb: Handler = Util.handler(async (event) => {
 	try {
 		const { compId } = event.pathParameters || {};
-	if (!compId) {
-		throw new Error("Missing id in path parameters");
-	}
-
-	const competitionParams: GetCommandInput = {
-		TableName: Resource.Competitions.name,
-		Key: {
-			PK: compId,
-			SK: "DETAILS",
-		},
-	};
-
-	const teamParams: QueryCommandInput = {
-		TableName: Resource.Competitions.name,
-		KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
-		ExpressionAttributeValues: {
-			":compId": { S: compId },
-			":skPrefix": { S: "TEAM#" },
-		},
-	};
-
-	const activityParams: QueryCommandInput = {
-		TableName: Resource.Competitions.name,
-		IndexName: "CorrectIndex",
-		KeyConditionExpression: "PK = :compId AND correctString = :correctString",
-		ExpressionAttributeValues: {
-			":compId": { S: compId },
-			":correctString": { S: "true" }
-		},
-	};
-
-	let competition: Competition;
-	let teams: Team[];
-	let activities: Activity[];
-	try {
-		const result = await client.send(new GetCommand(competitionParams));
-		if (!result.Item) {
-			throw new Error("Competition not found");
+		if (!compId) {
+			throw new Error("Missing id in path parameters");
 		}
-		competition = itemToCompetition(result.Item);
-	} catch (e) {
-		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
-	}
-	try {
-		const result = await client.send(new QueryCommand(teamParams));
-		teams = itemsToTeams(result.Items);
-	} catch (e) {
-		throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
-	}
-	try {
-		const result = await client.send(new QueryCommand(activityParams));
-		activities = itemsToActivities(result.Items);
-	} catch (e) {
-		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
-	}
 
-	const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
-		acc[item.id] = item.name;
-		return acc;
-	}, {});
+		const competitionParams: GetCommandInput = {
+			TableName: Resource.Competitions.name,
+			Key: {
+				PK: compId,
+				SK: "DETAILS",
+			},
+		};
 
-	const timeStarted = parseInt(competition.createdAt);
-	const timeNow = Date.now();
+		const teamParams: QueryCommandInput = {
+			TableName: Resource.Competitions.name,
+			KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":compId": { S: compId },
+				":skPrefix": { S: "TEAM#" },
+			},
+		};
 
-	const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
+		const activityParams: QueryCommandInput = {
+			TableName: Resource.Competitions.name,
+			IndexName: "CorrectIndex",
+			KeyConditionExpression: "PK = :compId AND correctString = :correctString",
+			ExpressionAttributeValues: {
+				":compId": { S: compId },
+				":correctString": { S: "true" },
+			},
+		};
 
-	let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
-	timestamps = timestamps.slice(-100);
-
-	const teamData = [];
-
-	for (const index in timestamps) {
-		const currentTimestamp = new Date(timestamps[index]);
-		const obj: { timestamp: number; [key: string]: number } = { timestamp: currentTimestamp.getTime() };
-
-		for (const key in teamLabels) {
-			const activity = activities.filter((item) => item.userId == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
-			obj[key] = activity.length;
+		let competition: Competition;
+		let teams: Team[];
+		let activities: Activity[];
+		try {
+			const result = await client.send(new GetCommand(competitionParams));
+			if (!result.Item) {
+				throw new Error("Competition not found");
+			}
+			competition = itemToCompetition(result.Item);
+		} catch (e) {
+			throw new Error(`Could not retrieve competition ${compId}: ${e}`);
 		}
-		teamData.push(obj);
-	}
+		try {
+			const result = await client.send(new QueryCommand(teamParams));
+			teams = itemsToTeams(result.Items);
+		} catch (e) {
+			throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+		}
+		try {
+			const result = await client.send(new QueryCommand(activityParams));
+			activities = itemsToActivities(result.Items);
+		} catch (e) {
+			throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+		}
 
-	return JSON.stringify({ teamLabels, teamData });
+		const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
+			acc[item.id] = item.name;
+			return acc;
+		}, {});
+
+		const timeStarted = parseInt(competition.createdAt);
+		const timeNow = Date.now();
+
+		const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
+
+		let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
+		timestamps = timestamps.slice(-100);
+
+		const teamData = [];
+
+		for (const index in timestamps) {
+			const currentTimestamp = new Date(timestamps[index]);
+			const obj: { timestamp: number; [key: string]: number } = { timestamp: currentTimestamp.getTime() };
+
+			for (const key in teamLabels) {
+				const activity = activities.filter((item) => item.userId == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
+				obj[key] = activity.length;
+			}
+			teamData.push(obj);
+		}
+
+		return JSON.stringify({ teamLabels, teamData });
 	} catch (e) {
 		throw new Error(`Could not retrieve leaderboard for competition: ${e}`);
 	}
