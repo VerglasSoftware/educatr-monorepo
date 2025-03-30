@@ -344,7 +344,7 @@ export const check: Handler = Util.handler(async (event) => {
 			var result: AxiosResponse<Judge0CreateSubmissionResponse>;
 			try {
 				result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
-					stdin: data.stdin,
+					stdin: data.stdin.replace(/\\n/g, "\n"),
 					source_code: data.answer.trim(),
 					language_id: languageId,
 				});
@@ -428,7 +428,7 @@ export const run: Handler = Util.handler(async (event) => {
 		result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
 			source_code: data.code.trim(),
 			language_id: languageId,
-			stdin: data.stdin,
+			stdin: data.stdin.replace(/\\n/g, "\n"),
 		});
 	} catch (e) {
 		throw new Error(`Could not create submission: ${e}`);
