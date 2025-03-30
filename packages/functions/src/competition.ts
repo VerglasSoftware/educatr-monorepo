@@ -344,14 +344,13 @@ export const check: Handler = Util.handler(async (event) => {
 			var result: AxiosResponse<Judge0CreateSubmissionResponse>;
 			try {
 				result = await axios.post(`${Resource.ExecuteApi.url}/submissions`, {
-					stdin: data.stdin.replace(/\\n/g, "\n"),
+					stdin: task.stdin.replace(/\\n/g, "\n"),
 					source_code: data.answer.trim(),
 					language_id: languageId,
 				});
 			} catch (e) {
 				return await returnAnswer(false);
 			}
-
 			if (result.status == 201) {
 				const submissionId = result.data.token;
 				var status: AxiosResponse<Judge0GetSubmissionResponse>;
@@ -362,6 +361,7 @@ export const check: Handler = Util.handler(async (event) => {
 				if (status.data.status.id == 3) {
 					const answerLines = status.data.stdout.trim().split("\n");
 					const outputLines = task.answer.trim().split("\\n");
+					console.log(`Answer: ${answerLines}, Output: ${outputLines}`);
 					if (answerLines.length !== outputLines.length || !answerLines.every((line, index) => line.trim() === outputLines[index].trim())) {
 						return await returnAnswer(false);
 					}
