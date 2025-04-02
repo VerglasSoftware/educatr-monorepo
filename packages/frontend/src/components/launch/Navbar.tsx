@@ -1,7 +1,6 @@
-import { Avatar, Box, Button, DialogTitle, Drawer, Dropdown, IconButton, Input, ListDivider, Menu, MenuButton, MenuItem, ModalClose, Stack, Tooltip, Typography } from "@mui/joy";
+import { Box, IconButton, Stack, Tooltip } from "@mui/joy";
 import { useState } from "react";
-import { FaBook, FaDoorOpen, FaHamburger, FaLanguage, FaWindowMaximize } from "react-icons/fa";
-import { FaBackward, FaCaretLeft, FaCoins, FaGear, FaHand, FaMagnifyingGlass, FaMaximize, FaMinimize, FaPause, FaTrophy, FaWindowMinimize } from "react-icons/fa6";
+import { FaCaretLeft, FaMaximize, FaMinimize } from "react-icons/fa6";
 
 export default function NavbarMain({ ...props }) {
 	const [open, setOpen] = useState(false);

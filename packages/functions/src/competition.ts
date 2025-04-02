@@ -357,6 +357,7 @@ export const check: Handler = Util.handler(async (event) => {
 					status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
 					await new Promise((resolve) => setTimeout(resolve, 1000));
 				} while (status.data.status.id < 3);
+				console.log(task.stdin.replace(/\\n/g, "\n"));
 				if (status.data.status.id == 3) {
 					const answerLines = status.data.stdout.trim().split("\n");
 					const outputLines = task.answer.trim().split("\\n");

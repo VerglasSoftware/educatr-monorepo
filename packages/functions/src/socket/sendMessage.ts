@@ -16,13 +16,18 @@ export const itemsToConnections = (items: Record<string, AttributeValue>[] | und
 			throw new Error("Item not found");
 		}
 		return {
-			id: item.id.S,
+			id: item.id,
 		};
 	});
 };
 
 export const main: Handler = Util.handler(async (event) => {
-	const messageData: Activity = JSON.parse(event.body!).data;
+	// const messageData: Activity = JSON.parse(event.body!).data;
+	const parsedBody = JSON.parse(event.body!);
+	const messageData: Activity = JSON.parse(parsedBody.data);
+	if (!messageData) {
+		throw new Error("Message data not found");
+	}
 	const { stage, domainName } = event.requestContext;
 
 	const socketParams: ScanInput = {

@@ -60,7 +60,7 @@ export default function PlayCompetition() {
 
 			switch (data.type) {
 				case "COMPETITION:STATUS_UPDATE":
-					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
+					setCompetition({ ...competition, status: data.body.status });
 					break;
 				case "TASK:ANSWERED": {
 					const newActivity: Activity = data.body;
@@ -98,7 +98,6 @@ export default function PlayCompetition() {
 			[ReadyState.CLOSED]: "Closed",
 			[ReadyState.UNINSTANTIATED]: "Uninstantiated",
 		}[readyState];
-		console.log(connectionStatus);
 		setWebhookStatus(connectionStatus);
 	}, [readyState]);
 
@@ -118,7 +117,6 @@ export default function PlayCompetition() {
 		async function fetchUser() {
 			try {
 				const currentUser = await Auth.currentAuthenticatedUser();
-				console.log(currentUser);
 				setUser(currentUser);
 			} catch (error) {
 				console.error("Error fetching user", error);
