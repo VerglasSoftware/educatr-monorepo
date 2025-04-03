@@ -42,7 +42,7 @@ export default function PlayCompetition() {
 
 	const [activities, setActivities] = useState<Activity[]>();
 
-	const [user, setUser] = useState<User>();
+	const [user, setUser] = useState(null);
 
 	const [websocketUrl, setWebsocketUrl] = useState<string>(null);
 
@@ -60,40 +60,49 @@ export default function PlayCompetition() {
 	);
 
 	useEffect(() => {
-		if (lastMessage) {
-			const data = JSON.parse(lastMessage.data);
-			if (data.type !== "COMPETITION:ANNOUNCE" && (!data.filter?.competitionId || data.filter.competitionId !== compId)) return;
+		async function handleMessage() {
+			if (lastMessage) {
+				const data = JSON.parse(lastMessage.data);
+				if (data.type !== "COMPETITION:ANNOUNCE" && (!data.filter?.competitionId || data.filter.competitionId !== compId)) return;
 
-			switch (data.type) {
-				case "COMPETITION:STATUS_UPDATE":
-					setCompetition({ ...competition, status: data.body.status });
-					break;
-				case "TASK:ANSWERED": {
-					const newActivity: Activity = data.body;
-					setActivities([...(activities?.filter((a) => a.taskId !== newActivity.taskId) || []), newActivity]);
-					if (waitingTask && newActivity.taskId === waitingTask.id) {
-						setWaitingTask(null);
-					}
-					if (user && user.nickname != newActivity.userId) {
-						if (newActivity.correct) {
-							toast.success(`Someone answered ${newActivity.taskId} correctly, and points have been added to your team.`);
-						} else {
-							toast.error(`Someone answered ${newActivity.taskId} incorrectly, but no points have been taken from your team.`);
+				switch (data.type) {
+					case "COMPETITION:STATUS_UPDATE":
+						setCompetition({ ...competition, status: data.body.status });
+						break;
+					case "TASK:ANSWERED": {
+						const newActivity: Activity = data.body;
+						setActivities([...(activities?.filter((a) => a.taskId !== newActivity.taskId) || []), newActivity]);
+						if (waitingTask && newActivity.taskId === waitingTask.id) {
+							setWaitingTask(null);
 						}
+						if (user && user.username != newActivity.userId) {
+							// path parameter is the userId
+							console.log("userId", newActivity.userId);
+							const useruser: User = await API.get("api", `/user/cognito/${newActivity.userId}`, {});
+							const pack = packs.find((p) => p.id == newActivity.packId);
+							const task = pack.tasks.find((t) => t.id == newActivity.taskId);
+
+							if (newActivity.correct) {
+								toast.success(`${useruser.nickname || useruser.given_name} answered ${task.title} in ${pack.name} correctly, and ${task.points} points have been added to your team.`);
+							} else {
+								toast.error(`${useruser.nickname || useruser.given_name} answered ${task.title} in ${pack.name} incorrectly, but no points have been taken from your team.`);
+							}
+						}
+						break;
 					}
-					break;
+					case "COMPETITION:SHOW_LEADERBOARD":
+						setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
+						break;
+					case "COMPETITION:ANNOUNCE":
+						setAnnounceMessage(data.body.announce);
+						setAnnounceModalOpen(true);
+						break;
+					default:
+						break;
 				}
-				case "COMPETITION:SHOW_LEADERBOARD":
-					setCompetition({ ...competition, showLeaderboard: data.body.showLeaderboard });
-					break;
-				case "COMPETITION:ANNOUNCE":
-					setAnnounceMessage(data.body.announce);
-					setAnnounceModalOpen(true);
-					break;
-				default:
-					break;
 			}
 		}
+		handleMessage();
 	}, [lastMessage]);
 
 	useEffect(() => {
