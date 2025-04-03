@@ -1,10 +1,7 @@
 import { Box, IconButton, Stack, Tooltip } from "@mui/joy";
-import { useState } from "react";
 import { FaCaretLeft, FaMaximize, FaMinimize } from "react-icons/fa6";
 
 export default function NavbarMain({ ...props }) {
-	const [open, setOpen] = useState(false);
-
 	const isFullscreen = () => !!document.fullscreenElement;
 
 	return (

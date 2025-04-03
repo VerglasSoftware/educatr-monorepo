@@ -44,14 +44,20 @@ export default function PlayCompetition() {
 
 	const [user, setUser] = useState<User>();
 
+	const [websocketUrl, setWebsocketUrl] = useState<string>(null);
+
 	const { compId } = useParams();
 
-	const { lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI, {
-		shouldReconnect: () => true,
-		onReconnectStop: () => {
-			window.location.reload();
+	const { lastMessage, readyState } = useWebSocket(
+		websocketUrl,
+		{
+			shouldReconnect: () => true,
+			onReconnectStop: () => {
+				window.location.reload();
+			},
 		},
-	});
+		!!websocketUrl
+	);
 
 	useEffect(() => {
 		if (lastMessage) {
@@ -118,6 +124,8 @@ export default function PlayCompetition() {
 			try {
 				const currentUser = await Auth.currentAuthenticatedUser();
 				setUser(currentUser);
+				const userId = currentUser.username;
+				setWebsocketUrl(`${import.meta.env.VITE_WEBSOCKET_URI}?userId=${encodeURIComponent(userId)}`);
 			} catch (error) {
 				console.error("Error fetching user", error);
 			}

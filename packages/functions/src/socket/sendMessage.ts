@@ -3,28 +3,30 @@ import { Util } from "@educatr/core/util";
 import { Handler } from "aws-lambda";
 import { AttributeValue, DeleteItemInput, DocumentClient, ScanInput } from "aws-sdk/clients/dynamodb";
 import { Resource } from "sst";
-import { Activity } from "../types/activity";
 
 const dynamoDb = new DocumentClient();
+
+export const itemToConnection = (item: Record<string, any> | undefined): { id: string } => {
+	if (!item) {
+		throw new Error("Item not found");
+	}
+	const isDynamoFormat = (val: any) => typeof val === "object" && val !== null && "S" in val;
+
+	return {
+		id: isDynamoFormat(item.id) ? item.id.S : item.id,
+	};
+};
 
 export const itemsToConnections = (items: Record<string, AttributeValue>[] | undefined): { id: string }[] => {
 	if (!items) {
 		throw new Error("Items not found");
 	}
-	return items.map((item: Record<string, any> | undefined) => {
-		if (!item) {
-			throw new Error("Item not found");
-		}
-		return {
-			id: item.id,
-		};
-	});
+	return items.map(itemToConnection);
 };
 
 export const main: Handler = Util.handler(async (event) => {
-	// const messageData: Activity = JSON.parse(event.body!).data;
 	const parsedBody = JSON.parse(event.body!);
-	const messageData: Activity = JSON.parse(parsedBody.data);
+	const messageData = JSON.parse(parsedBody.data);
 	if (!messageData) {
 		throw new Error("Message data not found");
 	}

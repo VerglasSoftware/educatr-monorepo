@@ -6,10 +6,12 @@ import { Resource } from "sst";
 const client = new DocumentClient();
 
 export const main: Handler = Util.handler(async (event) => {
+	const userId = event.queryStringParameters?.userId;
 	const params: DocumentClient.PutItemInput = {
 		TableName: Resource.SocketConnections.name,
 		Item: {
 			id: event.requestContext.connectionId,
+			userId: userId,
 		},
 	};
 

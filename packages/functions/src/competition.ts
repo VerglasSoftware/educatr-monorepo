@@ -7,6 +7,7 @@ import { APIGatewayProxyEvent, Handler } from "aws-lambda";
 import axios, { AxiosResponse } from "axios";
 import { Resource } from "sst";
 import { itemsToActivities, itemToActivity } from "./activity";
+import { itemsToConnections } from "./socket/sendMessage";
 import { itemToTask } from "./task";
 import { itemsToTeams } from "./team";
 import { Activity } from "./types/activity";
@@ -265,27 +266,53 @@ export const check: Handler = Util.handler(async (event) => {
 			throw new Error(`Could not create activity: ${e}`);
 		}
 
-		// send to all connected clients
-		const socketParams: ScanCommandInput = {
-			TableName: Resource.SocketConnections.name,
-			ProjectionExpression: "id",
+		// get team user is in
+		const teamParams: QueryCommandInput = {
+			TableName: Resource.Competitions.name,
+			KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":compId": { S: compId },
+				":skPrefix": { S: "TEAM#" },
+			},
 		};
 
-		var connections;
+		let students: string[];
 		try {
-			connections = await client.send(new ScanCommand(socketParams));
+			const teamResult = await client.send(new QueryCommand(teamParams));
+			const teams = itemsToTeams(teamResult.Items);
+			const team = teams.find((team) => team.students.includes(event.requestContext.authorizer!.jwt.claims["cognito:username"]));
+			if (!team) {
+				throw new Error(`User not in any team for competition ${compId}`);
+			}
+			students = team.students;
+		} catch (e) {
+			throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+		}
+
+		// send to all connected clients from userIds in students array
+		const socketParams: ScanCommandInput = {
+			TableName: Resource.SocketConnections.name,
+			FilterExpression: "userId IN (:students)",
+			ExpressionAttributeValues: {
+				":students": { S: students.join(",") },
+			},
+		};
+
+		var connectionsResult;
+		try {
+			connectionsResult = await client.send(new ScanCommand(socketParams));
 		} catch (e) {
 			throw new Error(`Could not retrieve connections: ${e}`);
 		}
-
+		const connections = itemsToConnections(connectionsResult.Items);
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
 
-		const postToConnection = async function ({ id }: Record<string, AttributeValue>) {
+		const postToConnection = async function ({ id }: { id: string }) {
 			try {
 				await apiG.postToConnection({
-					ConnectionId: id.S,
+					ConnectionId: id,
 					Data: JSON.stringify({
 						filter: {
 							competitionId: compId,
@@ -299,14 +326,14 @@ export const check: Handler = Util.handler(async (event) => {
 					// Remove stale connections
 					const deleteParams: DeleteCommandInput = {
 						TableName: Resource.SocketConnections.name,
-						Key: { id: id.S },
+						Key: { id: { S: id } },
 					};
 					await client.send(new DeleteCommand(deleteParams));
 				}
 			}
 		};
 
-		await Promise.all(connections.Items!.map(postToConnection));
+		await Promise.all(connections.map(postToConnection));
 		return JSON.stringify({ result, activity });
 	}
 
