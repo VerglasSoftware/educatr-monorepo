@@ -276,7 +276,7 @@ export const check: Handler = Util.handler(async (event) => {
 			},
 		};
 
-		let students: string[];
+		let students: string[] = [];
 		try {
 			const teamResult = await client.send(new QueryCommand(teamParams));
 			const teams = itemsToTeams(teamResult.Items);
@@ -288,15 +288,15 @@ export const check: Handler = Util.handler(async (event) => {
 		} catch (e) {
 			throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
 		}
+		console.log(`Students: ${students}`);
 
 		// send to all connected clients from userIds in students array
 		const socketParams: ScanCommandInput = {
 			TableName: Resource.SocketConnections.name,
-			FilterExpression: "userId IN (:students)",
-			ExpressionAttributeValues: {
-				":students": { S: students.join(",") },
-			},
+			FilterExpression: students.map((_, i) => `contains(userId, :student${i})`).join(" OR "),
+			ExpressionAttributeValues: Object.fromEntries(students.map((s, i) => [`:student${i}`, { S: s }])),
 		};
+		console.log(`Socket params: ${JSON.stringify(socketParams)}`);
 
 		var connectionsResult;
 		try {
@@ -304,12 +304,15 @@ export const check: Handler = Util.handler(async (event) => {
 		} catch (e) {
 			throw new Error(`Could not retrieve connections: ${e}`);
 		}
+		console.log(`Connections result: ${JSON.stringify(connectionsResult)}`);
 		const connections = itemsToConnections(connectionsResult.Items);
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
+		console.log(`Connections: ${connections.map((c) => c.id)}`);
 
 		const postToConnection = async function ({ id }: { id: string }) {
+			console.log(`Sending to connection ${id}`);
 			try {
 				await apiG.postToConnection({
 					ConnectionId: id,
