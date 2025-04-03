@@ -6,19 +6,21 @@ interface LeaderboardChartProps {
 	competitionId: string;
 }
 
+interface LeaderboardData {
+	teamLabels: Record<string, string>;
+	teamData: {
+		[key: string]: number;
+		timestamp: number;
+	}[];
+}
+
 export default function LeaderboardChart({ competitionId }: LeaderboardChartProps) {
-	const [leaderboardData, setLeaderboardData] = useState<{
-		teamLabels: Record<string, string>;
-		teamData: {
-			[key: string]: number;
-			timestamp: number;
-		}[];
-	}>();
+	const [leaderboardData, setLeaderboardData] = useState<LeaderboardData>();
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const leaderboardData = await API.get("api", `/competition/${competitionId}/leaderboard`, {});
+				const leaderboardData: LeaderboardData = await API.get("api", `/competition/${competitionId}/leaderboard`, {});
 				setLeaderboardData(leaderboardData);
 			} catch (e) {
 				console.log(e);

@@ -557,7 +557,10 @@ export const getLb: Handler = Util.handler(async (event) => {
 			const obj: { timestamp: number; [key: string]: number } = { timestamp: currentTimestamp.getTime() };
 
 			for (const key in teamLabels) {
-				const activity = activities.filter((item) => item.userId == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true);
+				const activity = activities.filter((item) => {
+					const team = teams.find((team) => team.students.includes(item.userId));
+					return team?.id == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true;
+				});
 				obj[key] = activity.length;
 			}
 			teamData.push(obj);
