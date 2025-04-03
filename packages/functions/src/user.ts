@@ -99,15 +99,15 @@ export const updateMe: Handler = Util.handler(async (event) => {
 });
 
 export const getCognito: Handler = Util.handler(async (event) => {
-	const { cognitoUid } = event.pathParameters || {};
-	if (!cognitoUid) {
-		throw new Error("Missing cognitoUid in path parameters");
+	const { cognitoId } = event.pathParameters || {};
+	if (!cognitoId) {
+		throw new Error("Missing cognitoId in path parameters");
 	}
 
 	const params: GetCommandInput = {
 		TableName: Resource.Users.name,
 		Key: {
-			PK: cognitoUid,
+			PK: cognitoId,
 			SK: "DETAILS",
 		},
 	};
@@ -122,6 +122,6 @@ export const getCognito: Handler = Util.handler(async (event) => {
 		return JSON.stringify(user);
 	} catch (e) {
 		console.log(e);
-		throw new Error(`Could not retrieve user ${cognitoUid}: ${e}`);
+		throw new Error(`Could not retrieve user ${cognitoId}: ${e}`);
 	}
 });

@@ -374,7 +374,7 @@ api.route(
 );
 
 api.route(
-	"GET /user/cognito/:cognitoUid",
+	"GET /user/cognito/{cognitoId}",
 	{
 		handler: "packages/functions/src/user.getCognito",
 	},

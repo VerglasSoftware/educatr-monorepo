@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import AuthenticatedRoute from "./components/AuthenticatedRoute.tsx";
+import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import UnauthenticatedRoute from "./components/UnauthenticatedRoute.tsx";
 import Home from "./containers/Home.tsx";
 import Login from "./containers/Login.tsx";
@@ -43,68 +44,68 @@ export default function Links() {
 			<Route
 				path="/dash/packs"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<PackList />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 			<Route
 				path="/dash/packs/:id"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<PackDetail />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 			<Route
 				path="/dash/packs/:id/edit"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<TaskEditor />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 			<Route
 				path="/dash/:id"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<OrganisationDetail />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 
 			<Route
 				path="/dash/:orgId/classes"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<ClassList />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 
 			<Route
 				path="/dash/competitions"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<CompetitionList />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 			<Route
 				path="/dash/:orgId/classes/:classId"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<ClassDetail />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 
 			<Route
 				path="/dash/competitions/:compId"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<CompetitionDetail />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 
@@ -128,9 +129,9 @@ export default function Links() {
 			<Route
 				path="/launch/:compId"
 				element={
-					<AuthenticatedRoute>
+					<ProtectedRoute requiredRole="USER">
 						<LaunchCompetition />
-					</AuthenticatedRoute>
+					</ProtectedRoute>
 				}
 			/>
 		</Routes>

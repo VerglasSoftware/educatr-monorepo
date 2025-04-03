@@ -1,8 +1,8 @@
-import { createContext, useContext } from "react";
+import { createContext, Dispatch, SetStateAction, useContext } from "react";
 
 export interface AppContextType {
 	isAuthenticated: boolean;
-	userHasAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+	userHasAuthenticated: Dispatch<SetStateAction<boolean>>;
 }
 
 export const AppContext = createContext<AppContextType>({

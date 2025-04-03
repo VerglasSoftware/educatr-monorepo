@@ -25,7 +25,7 @@ export const itemToActivity = (item: Record<string, any> | undefined): Activity 
 		verifierId: isDynamoFormat(item.verifierId) ? item.verifierId.S : item.verifierId,
 		status: isDynamoFormat(item.status) ? item.status.S : item.status,
 		correct: isDynamoFormat(item.correct) ? item.correct.BOOL : item.correct,
-		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
+		createdAt: isDynamoFormat(item.createdAt) ? parseInt(item.createdAt.N) : item.createdAt,
 	};
 };
 
