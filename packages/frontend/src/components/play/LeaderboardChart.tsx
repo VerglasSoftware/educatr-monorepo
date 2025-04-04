@@ -22,6 +22,7 @@ export default function LeaderboardChart({ competitionId }: LeaderboardChartProp
 			try {
 				const leaderboardData: LeaderboardData = await API.get("api", `/competition/${competitionId}/leaderboard`, {});
 				setLeaderboardData(leaderboardData);
+				console.log(leaderboardData);
 			} catch (e) {
 				console.log(e);
 			}
@@ -37,6 +38,16 @@ export default function LeaderboardChart({ competitionId }: LeaderboardChartProp
 	}, [competitionId]);
 
 	return (
+		// [
+		// 	{
+		// 		timestamp: 1743719162025,
+		// 		changedTeams: { k7u0qzimb37fqgs8glifpnth: 0, woi9tr2j0bx840b8xsj0s7gc: 4 }
+		// 	},
+		// 	{
+		// 		timestamp: 1743720302025,
+		// 		changedTeams: { woi9tr2j0bx840b8xsj0s7gc: 5 }
+		// 	}
+		// ]
 		leaderboardData && (
 			<LineChart
 				xAxis={[
@@ -50,7 +61,13 @@ export default function LeaderboardChart({ competitionId }: LeaderboardChartProp
 					label: leaderboardData.teamLabels[key],
 					showMark: false,
 				}))}
-				dataset={leaderboardData.teamData}
+				dataset={leaderboardData.teamData.map((item) => ({
+					...item,
+					...Object.keys(leaderboardData.teamLabels).reduce((acc, key) => {
+						acc[key] = item.changedTeams[key] ?? 0;
+						return acc;
+					}, {}),
+				}))}
 				tooltip={{ trigger: "none" }}
 			/>
 		)

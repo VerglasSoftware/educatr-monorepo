@@ -31,7 +31,7 @@ const itemToCompetition = (item: Record<string, any> | undefined): Competition =
 		userStartedById: isDynamoFormat(item.userStartedById) ? item.userStartedById.S : item.userStartedById,
 		organisationId: isDynamoFormat(item.organisationId) ? item.organisationId.S : item.organisationId,
 		packs: isDynamoFormat(item.packs) ? item.packs.L.map((pack: any) => pack.S) : item.packs,
-		createdAt: isDynamoFormat(item.createdAt) ? new Date(parseInt(item.createdAt.N)).toISOString() : new Date(item.createdAt).toISOString(),
+		createdAt: isDynamoFormat(item.createdAt) ? parseInt(item.createdAt.N) : item.createdAt,
 	};
 };
 
@@ -516,25 +516,15 @@ export const getLb: Handler = Util.handler(async (event) => {
 		let teams: Team[];
 		let activities: Activity[];
 		try {
-			const result = await client.send(new GetCommand(competitionParams));
-			if (!result.Item) {
+			const [competitionResult, teamResult, activityResult] = await Promise.all([client.send(new GetCommand(competitionParams)), client.send(new QueryCommand(teamParams)), client.send(new QueryCommand(activityParams))]);
+			if (!competitionResult.Item) {
 				throw new Error("Competition not found");
 			}
-			competition = itemToCompetition(result.Item);
+			competition = itemToCompetition(competitionResult.Item);
+			teams = itemsToTeams(teamResult.Items);
+			activities = itemsToActivities(activityResult.Items);
 		} catch (e) {
-			throw new Error(`Could not retrieve competition ${compId}: ${e}`);
-		}
-		try {
-			const result = await client.send(new QueryCommand(teamParams));
-			teams = itemsToTeams(result.Items);
-		} catch (e) {
-			throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
-		}
-		try {
-			const result = await client.send(new QueryCommand(activityParams));
-			activities = itemsToActivities(result.Items);
-		} catch (e) {
-			throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+			throw new Error(`Could not retrieve data for competition ${compId}: ${e}`);
 		}
 
 		const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
@@ -549,22 +539,68 @@ export const getLb: Handler = Util.handler(async (event) => {
 
 		let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
 		timestamps = timestamps.slice(-100);
-
 		const teamData = [];
 
-		for (const index in timestamps) {
-			const currentTimestamp = new Date(timestamps[index]);
-			const obj: { timestamp: number; [key: string]: number } = { timestamp: currentTimestamp.getTime() };
+		let previousPoints: Record<string, number> = {};
+		const teamActivitiesMap = new Map<string, Activity[]>();
 
-			for (const key in teamLabels) {
-				const activity = activities.filter((item) => {
-					const team = teams.find((team) => team.students.includes(item.userId));
-					return team?.id == key && parseInt(item.createdAt) < timestamps[index] && item.correct == true;
-				});
-				obj[key] = activity.length;
-			}
-			teamData.push(obj);
+		for (const team of teams) {
+			teamActivitiesMap.set(
+				team.id,
+				activities.filter((activity) => team.students.includes(activity.userId) && activity.correct === true)
+			);
+			previousPoints[team.id] = 0;
 		}
+
+		// Add initial timestamp with zero points for all teams
+		const initialObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: Math.max(timeStarted, timeNow - 100 * 60 * 1000), changedTeams: {} };
+		for (const team of teams) {
+			initialObj.changedTeams[team.id] = 0;
+		}
+		teamData.push(initialObj);
+
+		for (const currentTimestamp of timestamps) {
+			const preStepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp - 1, changedTeams: {} };
+			const stepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp, changedTeams: {} };
+
+			for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
+				let currentPoints = 0;
+
+				for (const activity of teamActivities) {
+					if (parseInt(activity.createdAt) < currentTimestamp) {
+						currentPoints++;
+					} else {
+						break;
+					}
+				}
+
+				if (previousPoints[teamId] !== currentPoints) {
+					// Add the previous value just before the change (to create the step)
+					preStepObj.changedTeams[teamId] = previousPoints[teamId];
+					// Then the new value at the current time
+					stepObj.changedTeams[teamId] = currentPoints;
+
+					previousPoints[teamId] = currentPoints;
+				}
+			}
+
+			if (Object.keys(preStepObj.changedTeams).length > 0) {
+				teamData.push(preStepObj);
+			}
+			if (Object.keys(stepObj.changedTeams).length > 0) {
+				teamData.push(stepObj);
+			}
+		}
+
+		const finalObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: timeNow, changedTeams: {} };
+
+		for (const team of Object.keys(teamLabels)) {
+			finalObj.changedTeams[team] = previousPoints[team];
+		}
+
+		teamData.push(finalObj);
+
+		console.log("teamData", teamData);
 
 		return JSON.stringify({ teamLabels, teamData });
 	} catch (e) {
