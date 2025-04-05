@@ -44,7 +44,7 @@ export default function LaunchCompetition() {
 
 	const { compId } = useParams();
 
-	const { sendMessage, lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI, {
+	const { lastMessage, readyState } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URI, {
 		shouldReconnect: () => true,
 		onReconnectStop: () => {
 			window.location.reload();
@@ -142,19 +142,9 @@ export default function LaunchCompetition() {
 
 	async function sendAnnoucement() {
 		setStartButtonLoading(true);
-
-		sendMessage(
-			JSON.stringify({
-				action: "sendmessage",
-				data: JSON.stringify({
-					type: "COMPETITION:ANNOUNCE",
-					body: {
-						announce: announce,
-					},
-				}),
-			})
-		);
-
+		await API.post("api", `/competition/${compId}/announce`, {
+			body: { message: announce },
+		});
 		setStartButtonLoading(false);
 		setAnnounce("");
 	}
@@ -162,24 +152,8 @@ export default function LaunchCompetition() {
 	async function showLeaderboard() {
 		setStartButtonLoading(true);
 		const showingLeaderboard = await API.put("api", `/competition/${compId}`, {
-			body: { ...competition, showLeaderboard: true },
+			body: { showLeaderboard: true },
 		});
-
-		sendMessage(
-			JSON.stringify({
-				action: "sendmessage",
-				data: JSON.stringify({
-					filter: {
-						competitionId: compId,
-					},
-					type: "COMPETITION:SHOW_LEADERBOARD",
-					body: {
-						showLeaderboard: true,
-					},
-				}),
-			})
-		);
-
 		setCompetition(showingLeaderboard);
 		setStartButtonLoading(false);
 	}
@@ -187,24 +161,8 @@ export default function LaunchCompetition() {
 	async function hideLeaderboard() {
 		setEndButtonLoading(true);
 		const notShowingLeaderboard = await API.put("api", `/competition/${compId}`, {
-			body: { ...competition, showLeaderboard: false },
+			body: { showLeaderboard: false },
 		});
-
-		sendMessage(
-			JSON.stringify({
-				action: "sendmessage",
-				data: JSON.stringify({
-					filter: {
-						competitionId: compId,
-					},
-					type: "COMPETITION:SHOW_LEADERBOARD",
-					body: {
-						showLeaderboard: false,
-					},
-				}),
-			})
-		);
-
 		setCompetition(notShowingLeaderboard);
 		setEndButtonLoading(false);
 	}
@@ -212,24 +170,8 @@ export default function LaunchCompetition() {
 	async function startCompetition() {
 		setStartButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { ...competition, status: "IN_PROGRESS" },
+			body: { status: "IN_PROGRESS" },
 		});
-
-		sendMessage(
-			JSON.stringify({
-				action: "sendmessage",
-				data: JSON.stringify({
-					filter: {
-						competitionId: compId,
-					},
-					type: "COMPETITION:STATUS_UPDATE",
-					body: {
-						status: "IN_PROGRESS",
-					},
-				}),
-			})
-		);
-
 		setCompetition(newCompetition);
 		setStartButtonLoading(false);
 	}
@@ -237,24 +179,8 @@ export default function LaunchCompetition() {
 	async function pauseCompetition() {
 		setPauseButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { ...competition, status: "PAUSED" },
+			body: { status: "PAUSED" },
 		});
-
-		sendMessage(
-			JSON.stringify({
-				action: "sendmessage",
-				data: JSON.stringify({
-					filter: {
-						competitionId: compId,
-					},
-					type: "COMPETITION:STATUS_UPDATE",
-					body: {
-						status: "PAUSED",
-					},
-				}),
-			})
-		);
-
 		setCompetition(newCompetition);
 		setPauseButtonLoading(false);
 	}
@@ -262,24 +188,8 @@ export default function LaunchCompetition() {
 	async function resumeCompetition() {
 		setResumeButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { ...competition, status: "IN_PROGRESS" },
+			body: { status: "IN_PROGRESS" },
 		});
-
-		sendMessage(
-			JSON.stringify({
-				action: "sendmessage",
-				data: JSON.stringify({
-					filter: {
-						competitionId: compId,
-					},
-					type: "COMPETITION:STATUS_UPDATE",
-					body: {
-						status: "IN_PROGRESS",
-					},
-				}),
-			})
-		);
-
 		setCompetition(newCompetition);
 		setResumeButtonLoading(false);
 	}
@@ -287,24 +197,8 @@ export default function LaunchCompetition() {
 	async function endCompetition() {
 		setEndButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { ...competition, status: "ENDED" },
+			body: { status: "ENDED" },
 		});
-
-		sendMessage(
-			JSON.stringify({
-				action: "sendmessage",
-				data: JSON.stringify({
-					filter: {
-						competitionId: compId,
-					},
-					type: "COMPETITION:STATUS_UPDATE",
-					body: {
-						status: "ENDED",
-					},
-				}),
-			})
-		);
-
 		setCompetition(newCompetition);
 		setEndButtonLoading(false);
 	}

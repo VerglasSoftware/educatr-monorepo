@@ -11,7 +11,7 @@ import { itemsToConnections } from "./socket/sendMessage";
 import { itemToTask } from "./task";
 import { itemsToTeams } from "./team";
 import { Activity } from "./types/activity";
-import { Competition, CompetitionCheck, CompetitionCreate, CompetitionRun, CompetitionUpdate, Judge0CreateSubmissionResponse, Judge0GetSubmissionResponse } from "./types/competition";
+import { Competition, CompetitionAnnounce, CompetitionCheck, CompetitionCreate, CompetitionRun, CompetitionUpdate, Judge0CreateSubmissionResponse, Judge0GetSubmissionResponse } from "./types/competition";
 import { Task } from "./types/task";
 import { Team } from "./types/team";
 
@@ -156,7 +156,7 @@ export const update: Handler = Util.handler(async (event) => {
 	}
 	const existing = itemToCompetition(existingResult.Item);
 	const organisationChanged = existing.organisationId !== data.organisationId;
-	console.log("Organisation changed: ", organisationChanged);
+
 	if (organisationChanged) {
 		const teamsParams: ScanCommandInput = {
 			TableName: Resource.Competitions.name,
@@ -166,19 +166,16 @@ export const update: Handler = Util.handler(async (event) => {
 				":skPrefix": { S: "TEAM#" },
 			},
 		};
-		console.log("Teams query: ", teamsParams);
+
 		let teamsResult;
 		try {
 			teamsResult = await client.send(new ScanCommand(teamsParams));
-			console.log("Teams result: ", teamsResult);
 		} catch (e) {
 			throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
 		}
 		const teamItems = itemsToTeams(teamsResult.Items);
-		console.log("Teams to update: ", teamItems);
 
 		for (const team of teamItems) {
-			console.log("Updating team: ", team);
 			const updateParams: UpdateCommandInput = {
 				TableName: Resource.Competitions.name,
 				Key: {
@@ -199,6 +196,88 @@ export const update: Handler = Util.handler(async (event) => {
 				throw new Error(`Could not update team ${team.id}: ${e}`);
 			}
 		}
+	}
+
+	const statusChanged = existing.status !== data.status;
+	if (statusChanged) {
+		const socketParams: ScanCommandInput = {
+			TableName: Resource.SocketConnections.name,
+			ProjectionExpression: "id",
+		};
+		const connectionsResult = await client.send(new ScanCommand(socketParams));
+		const connections = itemsToConnections(connectionsResult.Items);
+
+		const apiG = new ApiGatewayManagementApi({
+			endpoint: Resource.SocketApi.managementEndpoint,
+		});
+
+		const postToConnection = async function ({ id }: { id: string }) {
+			try {
+				await apiG.postToConnection({
+					ConnectionId: id,
+					Data: JSON.stringify({
+						filter: {
+							competitionId: compId,
+						},
+						type: "COMPETITION:STATUS_UPDATE",
+						body: {
+							status: data.status,
+						},
+					}),
+				});
+			} catch (e: any) {
+				if (e.statusCode === 410) {
+					// Remove stale connections
+					const deleteParams: DeleteCommandInput = {
+						TableName: Resource.SocketConnections.name,
+						Key: { id },
+					};
+					await client.send(new DeleteCommand(deleteParams));
+				}
+			}
+		};
+		await Promise.all(connections.map(postToConnection));
+	}
+
+	const showLeaderboardChanged = existing.showLeaderboard !== data.showLeaderboard;
+	if (showLeaderboardChanged) {
+		const socketParams: ScanCommandInput = {
+			TableName: Resource.SocketConnections.name,
+			ProjectionExpression: "id",
+		};
+		const connectionsResult = await client.send(new ScanCommand(socketParams));
+		const connections = itemsToConnections(connectionsResult.Items);
+
+		const apiG = new ApiGatewayManagementApi({
+			endpoint: Resource.SocketApi.managementEndpoint,
+		});
+
+		const postToConnection = async function ({ id }: { id: string }) {
+			try {
+				await apiG.postToConnection({
+					ConnectionId: id,
+					Data: JSON.stringify({
+						filter: {
+							competitionId: compId,
+						},
+						type: "COMPETITION:SHOW_LEADERBOARD",
+						body: {
+							status: data.showLeaderboard,
+						},
+					}),
+				});
+			} catch (e: any) {
+				if (e.statusCode === 410) {
+					// Remove stale connections
+					const deleteParams: DeleteCommandInput = {
+						TableName: Resource.SocketConnections.name,
+						Key: { id },
+					};
+					await client.send(new DeleteCommand(deleteParams));
+				}
+			}
+		};
+		await Promise.all(connections.map(postToConnection));
 	}
 
 	const params: UpdateCommandInput = {
@@ -677,4 +756,58 @@ export const getLb: Handler = Util.handler(async (event) => {
 	} catch (e) {
 		throw new Error(`Could not retrieve leaderboard for competition: ${e}`);
 	}
+});
+
+export const announce: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const data: CompetitionAnnounce = {
+		message: "",
+	};
+
+	if (event.body != null) {
+		Object.assign(data, JSON.parse(event.body));
+	} else throw new Error("No body provided");
+
+	const socketParams: ScanCommandInput = {
+		TableName: Resource.SocketConnections.name,
+		ProjectionExpression: "id",
+	};
+	const connectionsResult = await client.send(new ScanCommand(socketParams));
+	const connections = itemsToConnections(connectionsResult.Items);
+
+	const apiG = new ApiGatewayManagementApi({
+		endpoint: Resource.SocketApi.managementEndpoint,
+	});
+
+	const postToConnection = async function ({ id }: { id: string }) {
+		try {
+			await apiG.postToConnection({
+				ConnectionId: id,
+				Data: JSON.stringify({
+					type: "COMPETITION:ANNOUNCE",
+					filter: {
+						competitionId: compId,
+					},
+					body: {
+						announce: data.message,
+					},
+				}),
+			});
+		} catch (e: any) {
+			if (e.statusCode === 410) {
+				// Remove stale connections
+				const deleteParams: DeleteCommandInput = {
+					TableName: Resource.SocketConnections.name,
+					Key: { id },
+				};
+				await client.send(new DeleteCommand(deleteParams));
+			}
+		}
+	};
+	await Promise.all(connections.map(postToConnection));
+	return JSON.stringify({ success: true });
 });

@@ -65,8 +65,7 @@ export default function PlayCompetition() {
 		async function handleMessage() {
 			if (lastMessage) {
 				const data = JSON.parse(lastMessage.data);
-				if (data.type !== "COMPETITION:ANNOUNCE" && (!data.filter?.competitionId || data.filter.competitionId !== compId)) return;
-
+				if (data.filter.competitionId !== compId) return;
 				switch (data.type) {
 					case "COMPETITION:STATUS_UPDATE":
 						setCompetition({ ...competition, status: data.body.status });

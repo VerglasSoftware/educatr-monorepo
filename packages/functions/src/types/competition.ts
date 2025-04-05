@@ -49,6 +49,10 @@ export interface CompetitionRun {
 	stdin: string;
 }
 
+export interface CompetitionAnnounce {
+	message: string;
+}
+
 export interface Judge0CreateSubmissionResponse {
 	token: string;
 }
