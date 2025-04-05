@@ -6,7 +6,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
 import { itemsToConnections } from "./socket/sendMessage";
-import { itemToTeam } from "./team";
+import { itemsToTeams, itemToTeam } from "./team";
 import { Activity, ActivityCreateUpdate } from "./types/activity";
 import { Team } from "./types/team";
 
@@ -281,13 +281,43 @@ export const approve: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 		const activity = itemToActivity(result.Attributes);
 
+		// get team user is in
+		const teamParams: QueryCommandInput = {
+			TableName: Resource.Competitions.name,
+			KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":compId": { S: compId },
+				":skPrefix": { S: "TEAM#" },
+			},
+		};
+
+		let students: string[] = [];
+		try {
+			const teamResult = await client.send(new QueryCommand(teamParams));
+			const teams = itemsToTeams(teamResult.Items);
+			const team = teams.find((team) => team.students.includes(activity.userId));
+			if (!team) {
+				throw new Error(`User not in any team for competition ${compId}`);
+			}
+			students = team.students;
+		} catch (e) {
+			throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+		}
+
+		// send to all connected clients from userIds in students array
 		const socketParams: ScanCommandInput = {
 			TableName: Resource.SocketConnections.name,
-			ProjectionExpression: "id",
+			FilterExpression: students.map((_, i) => `contains(userId, :student${i})`).join(" OR ") + " OR attribute_not_exists(userId)",
+			ExpressionAttributeValues: Object.fromEntries(students.map((s, i) => [`:student${i}`, { S: s }])),
 		};
-		const connectionsResult = await client.send(new ScanCommand(socketParams));
-		const connections = itemsToConnections(connectionsResult.Items);
 
+		var connectionsResult;
+		try {
+			connectionsResult = await client.send(new ScanCommand(socketParams));
+		} catch (e) {
+			throw new Error(`Could not retrieve connections: ${e}`);
+		}
+		const connections = itemsToConnections(connectionsResult.Items);
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
@@ -304,17 +334,18 @@ export const approve: Handler = Util.handler(async (event) => {
 						body: activity,
 					}),
 				});
-			} catch (e: any) {
-				if (e.statusCode === 410) {
+			} catch (e) {
+				if ((e as { statusCode?: number }).statusCode === 410) {
 					// Remove stale connections
 					const deleteParams: DeleteCommandInput = {
 						TableName: Resource.SocketConnections.name,
-						Key: { id },
+						Key: { id: { S: id } },
 					};
 					await client.send(new DeleteCommand(deleteParams));
 				}
 			}
 		};
+
 		await Promise.all(connections.map(postToConnection));
 		return JSON.stringify(activity);
 	} catch (e) {
@@ -355,13 +386,43 @@ export const reject: Handler = Util.handler(async (event) => {
 		const result = await client.send(new UpdateCommand(params));
 		const activity = itemToActivity(result.Attributes);
 
+		// get team user is in
+		const teamParams: QueryCommandInput = {
+			TableName: Resource.Competitions.name,
+			KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":compId": { S: compId },
+				":skPrefix": { S: "TEAM#" },
+			},
+		};
+
+		let students: string[] = [];
+		try {
+			const teamResult = await client.send(new QueryCommand(teamParams));
+			const teams = itemsToTeams(teamResult.Items);
+			const team = teams.find((team) => team.students.includes(activity.userId));
+			if (!team) {
+				throw new Error(`User not in any team for competition ${compId}`);
+			}
+			students = team.students;
+		} catch (e) {
+			throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+		}
+
+		// send to all connected clients from userIds in students array
 		const socketParams: ScanCommandInput = {
 			TableName: Resource.SocketConnections.name,
-			ProjectionExpression: "id",
+			FilterExpression: students.map((_, i) => `contains(userId, :student${i})`).join(" OR ") + " OR attribute_not_exists(userId)",
+			ExpressionAttributeValues: Object.fromEntries(students.map((s, i) => [`:student${i}`, { S: s }])),
 		};
-		const connectionsResult = await client.send(new ScanCommand(socketParams));
-		const connections = itemsToConnections(connectionsResult.Items);
 
+		var connectionsResult;
+		try {
+			connectionsResult = await client.send(new ScanCommand(socketParams));
+		} catch (e) {
+			throw new Error(`Could not retrieve connections: ${e}`);
+		}
+		const connections = itemsToConnections(connectionsResult.Items);
 		const apiG = new ApiGatewayManagementApi({
 			endpoint: Resource.SocketApi.managementEndpoint,
 		});
@@ -378,12 +439,12 @@ export const reject: Handler = Util.handler(async (event) => {
 						body: activity,
 					}),
 				});
-			} catch (e: any) {
-				if (e.statusCode === 410) {
+			} catch (e) {
+				if ((e as { statusCode?: number }).statusCode === 410) {
 					// Remove stale connections
 					const deleteParams: DeleteCommandInput = {
 						TableName: Resource.SocketConnections.name,
-						Key: { id },
+						Key: { id: { S: id } },
 					};
 					await client.send(new DeleteCommand(deleteParams));
 				}

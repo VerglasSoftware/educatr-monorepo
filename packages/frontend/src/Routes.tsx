@@ -11,6 +11,7 @@ import PackDetail from "./containers/dash/packs/PackDetail.tsx";
 import PackList from "./containers/dash/packs/PackList.tsx";
 import TaskEditor from "./containers/dash/packs/TaskEditor.tsx";
 import LaunchCompetition from "./containers/launch/Competition.tsx";
+import LaunchHome from "./containers/launch/Home.tsx";
 import ClassDetail from "./containers/organisation/ClassDetail.tsx";
 import ClassList from "./containers/organisation/ClassList.tsx";
 import OrganisationDetail from "./containers/organisation/OrganisationDetail.tsx";
@@ -91,6 +92,7 @@ export default function Links() {
 					</ProtectedRoute>
 				}
 			/>
+
 			<Route
 				path="/dash/:orgId/classes/:classId"
 				element={
@@ -123,6 +125,15 @@ export default function Links() {
 					<AuthenticatedRoute>
 						<PlayCompetition />
 					</AuthenticatedRoute>
+				}
+			/>
+
+			<Route
+				path="/launch"
+				element={
+					<ProtectedRoute requiredRole="USER">
+						<LaunchHome />
+					</ProtectedRoute>
 				}
 			/>
 
