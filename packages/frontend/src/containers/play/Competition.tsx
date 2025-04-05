@@ -40,7 +40,9 @@ export default function PlayCompetition() {
 	const [announceModalOpen, setAnnounceModalOpen] = useState(false);
 	const [announceMessage, setAnnounceMessage] = useState("");
 
+	const [teamPoints, setTeamPoints] = useState(0);
 	const [activities, setActivities] = useState<Activity[]>();
+	const [taskLookup, setTaskLookup] = useState<Record<string, Task>>({});
 
 	const [user, setUser] = useState(null);
 
@@ -145,6 +147,39 @@ export default function PlayCompetition() {
 	}, []);
 
 	useEffect(() => {
+		if (!packs) return;
+		
+		const lookup: Record<string, Task> = {};
+		packs.forEach(pack => {
+			pack.tasks.forEach(task => {
+				lookup[task.id] = task;
+			});
+		});
+		
+		setTaskLookup(lookup);
+	}, [packs]);
+
+	useEffect(() => {
+		if (!activities || !taskLookup) return;
+	  
+		const countedTaskIds = new Set();
+		
+		const totalPoints = activities
+		  .filter(a => a.correct === true)
+		  .filter(a => {
+			if (countedTaskIds.has(a.taskId)) return false;
+			countedTaskIds.add(a.taskId);
+			return true;
+		  })
+		  .reduce((sum, act) => {
+			const task = taskLookup[act.taskId];
+			return sum + (task?.points || 0);
+		  }, 0);
+	  
+		setTeamPoints(totalPoints);
+	  }, [activities, taskLookup]);
+
+	useEffect(() => {
 		if (activities == null) return;
 		if (packs == null) return;
 		activities.forEach((activity) => {
@@ -233,7 +268,7 @@ export default function PlayCompetition() {
 			<Helmet>
 				<title>{competition.name}</title>
 			</Helmet>
-			<NavbarMain competition={competition} />
+			<NavbarMain competition={competition} points={teamPoints} />
 			<Box
 				sx={{
 					display: "flex",
