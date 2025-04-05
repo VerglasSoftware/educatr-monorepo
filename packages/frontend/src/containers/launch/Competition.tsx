@@ -152,7 +152,7 @@ export default function LaunchCompetition() {
 	async function showLeaderboard() {
 		setStartButtonLoading(true);
 		const showingLeaderboard = await API.put("api", `/competition/${compId}`, {
-			body: { showLeaderboard: true },
+			body: { ...competition, showLeaderboard: true },
 		});
 		setCompetition(showingLeaderboard);
 		setStartButtonLoading(false);
@@ -161,7 +161,7 @@ export default function LaunchCompetition() {
 	async function hideLeaderboard() {
 		setEndButtonLoading(true);
 		const notShowingLeaderboard = await API.put("api", `/competition/${compId}`, {
-			body: { showLeaderboard: false },
+			body: { ...competition, showLeaderboard: false },
 		});
 		setCompetition(notShowingLeaderboard);
 		setEndButtonLoading(false);
@@ -170,7 +170,7 @@ export default function LaunchCompetition() {
 	async function startCompetition() {
 		setStartButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { status: "IN_PROGRESS" },
+			body: { ...competition, status: "IN_PROGRESS" },
 		});
 		setCompetition(newCompetition);
 		setStartButtonLoading(false);
@@ -179,7 +179,7 @@ export default function LaunchCompetition() {
 	async function pauseCompetition() {
 		setPauseButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { status: "PAUSED" },
+			body: { ...competition, status: "PAUSED" },
 		});
 		setCompetition(newCompetition);
 		setPauseButtonLoading(false);
@@ -188,7 +188,7 @@ export default function LaunchCompetition() {
 	async function resumeCompetition() {
 		setResumeButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { status: "IN_PROGRESS" },
+			body: { ...competition, status: "IN_PROGRESS" },
 		});
 		setCompetition(newCompetition);
 		setResumeButtonLoading(false);
@@ -197,7 +197,7 @@ export default function LaunchCompetition() {
 	async function endCompetition() {
 		setEndButtonLoading(true);
 		const newCompetition = await API.put("api", `/competition/${compId}`, {
-			body: { status: "ENDED" },
+			body: { ...competition, status: "ENDED" },
 		});
 		setCompetition(newCompetition);
 		setEndButtonLoading(false);
