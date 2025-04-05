@@ -1,15 +1,18 @@
-import { Autocomplete, Box, Button, ButtonGroup, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Option, Select, Stack, Typography } from "@mui/joy";
+import { Box, Button, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Option, Select, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
+import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
 import { FaPlus } from "react-icons/fa6";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { Competition } from "../../../../../functions/src/types/competition";
 import { Organisation } from "../../../../../functions/src/types/organisation";
 import { Team } from "../../../../../functions/src/types/team";
 import { User } from "../../../../../functions/src/types/user";
 import Breadcrumb from "../../../components/dash/breadcrumb";
 import CompetitionPackTable from "../../../components/dash/competition/CompetitionPackTable";
+import TeamCard from "../../../components/dash/competition/TeamCard";
 
 export default function CompetitionDetail() {
 	const [organisations, setOrganisations] = useState<Organisation[]>();
@@ -17,21 +20,14 @@ export default function CompetitionDetail() {
 	const [teams, setTeams] = useState<Team[]>();
 	const [students, setStudents] = useState<User[]>();
 
-	const [name, setName] = useState<string>("");
-
 	const { compId } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const competition = await API.get("api", `/competition/${compId}`, {});
+				const [competition, teams, organisations] = await Promise.all([API.get("api", `/competition/${compId}`, {}), API.get("api", `/competition/${compId}/team`, {}), API.get("api", `/organisation`, {})]);
 				setCompetition(competition);
-				setName(competition.name);
-
-				const teams = await API.get("api", `/competition/${compId}/team`, {});
 				setTeams(teams);
-
-				const organisations = await API.get("api", `/organisation`, {});
 				setOrganisations(organisations);
 			} catch (e) {
 				console.log(e);
@@ -57,11 +53,38 @@ export default function CompetitionDetail() {
 		fetchStudents();
 	}, [competition?.organisationId]);
 
+	useEffect(() => {
+		if (!competition) return;
+		formik.setValues({
+			name: competition.name,
+			organisation: competition.organisationId,
+		});
+	}, [competition]);
+
+	const formik = useFormik({
+		initialValues: {
+			name: "",
+			organisation: "",
+		},
+		onSubmit: async (values) => {
+			const competition: Competition = await API.put("api", `/competition/${compId}`, {
+				body: {
+					name: values.name,
+					organisationId: values.organisation,
+				},
+			});
+			setCompetition(competition);
+			toast.success("Competition updated", {
+				theme: "light",
+			});
+			formik.resetForm();
+		},
+	});
+
 	let teamMembers = [];
 	for (const member in teams) {
 		teamMembers = teamMembers.concat(teams[member].students);
 	}
-	console.log(competition, teams, organisations, students);
 	return (
 		competition &&
 		teams &&
@@ -101,63 +124,57 @@ export default function CompetitionDetail() {
 					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
 						<Box sx={{ gridColumn: "span 6" }}>
 							<Card sx={{ flexGrow: "1" }}>
-								<Stack
-									direction="row"
-									spacing={1}
-									sx={{ my: 1 }}>
+								<form onSubmit={formik.handleSubmit}>
 									<Stack
-										spacing={2}
-										sx={{ width: "100%" }}>
-										<Stack spacing={1}>
-											<FormLabel>Name</FormLabel>
-											<FormControl sx={{ gap: 2 }}>
-												<Input
-													size="sm"
-													placeholder="Name"
-													value={name}
-													onChange={(e) => setName(e.target.value)}
-												/>
-											</FormControl>
-										</Stack>
-										<Stack spacing={1}>
-											<FormLabel>Organisation</FormLabel>
-											<FormControl sx={{ gap: 2 }}>
-												<Select
-													size="sm"
-													placeholder="Organisation"
-													value={competition.organisationId}
-													onChange={(e) => {
-														const orgId = (e.target as HTMLSelectElement).value;
-														console.log(orgId);
-														setCompetition({ ...competition, organisationId: orgId });
-													}}>
-													{organisations?.map((organisation) => {
-														return <Option value={organisation.id}>{organisation.name}</Option>;
-													})}
-												</Select>
-											</FormControl>
+										direction="row"
+										spacing={1}
+										sx={{ my: 1 }}>
+										<Stack
+											spacing={2}
+											sx={{ width: "100%" }}>
+											<Stack spacing={1}>
+												<FormLabel>Name</FormLabel>
+												<FormControl sx={{ gap: 2 }}>
+													<Input
+														size="sm"
+														placeholder="Name"
+														id="name"
+														name="name"
+														value={formik.values.name}
+														onChange={formik.handleChange}
+													/>
+												</FormControl>
+											</Stack>
+											<Stack spacing={1}>
+												<FormLabel>Organisation</FormLabel>
+												<FormControl sx={{ gap: 2 }}>
+													<Select
+														size="sm"
+														placeholder="Organisation"
+														id="organisation"
+														name="organisation"
+														value={formik.values.organisation}
+														onChange={(_, value) => formik.setFieldValue("organisation", value)}
+														required>
+														{organisations?.map((organisation) => {
+															return <Option value={organisation.id}>{organisation.name}</Option>;
+														})}
+													</Select>
+												</FormControl>
+											</Stack>
 										</Stack>
 									</Stack>
-								</Stack>
-								<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
-									<CardActions sx={{ alignSelf: "flex-end", pt: 2 }}>
-										<Button
-											size="sm"
-											variant="solid"
-											onClick={async () => {
-												const updatedCompetition = await API.put("api", `/competition/${compId}`, {
-													body: {
-														name,
-														status: competition.status || "",
-														packs: competition.packs || [],
-													},
-												});
-												setCompetition(updatedCompetition);
-											}}>
-											Save
-										</Button>
-									</CardActions>
-								</CardOverflow>
+									<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
+										<CardActions sx={{ alignSelf: "flex-end", pt: 2 }}>
+											<Button
+												size="sm"
+												variant="solid"
+												type="submit">
+												Save
+											</Button>
+										</CardActions>
+									</CardOverflow>
+								</form>
 							</Card>
 						</Box>
 						<Box sx={{ gridColumn: "span 6" }}>
@@ -201,90 +218,27 @@ export default function CompetitionDetail() {
 					</Box>
 
 					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
-						{teams.map((team) => (
-							<Box sx={{ gridColumn: "span 3" }}>
-								<Card sx={{ flexGrow: "1" }}>
-									<Stack
-										direction="row"
-										spacing={1}
-										sx={{ my: 1 }}>
-										<Stack
-											spacing={2}
-											sx={{ width: "100%" }}>
-											<Stack spacing={1}>
-												<FormLabel>Name</FormLabel>
-												<FormControl sx={{ gap: 2 }}>
-													<Input
-														size="sm"
-														placeholder="Name"
-														defaultValue={team.name}
-														onChange={(e) => setTeams(teams.map((t) => (t.id == team.id ? { ...t, name: e.target.value } : t)))}
-													/>
-												</FormControl>
-											</Stack>
-											<Stack spacing={1}>
-												<FormLabel>Members</FormLabel>
-												<FormControl sx={{ gap: 2 }}>
-													<Autocomplete
-														multiple
-														placeholder="Members"
-														size="sm"
-														options={students
-															.filter((student) => !teamMembers.includes(student.id))
-															.map((student) => {
-																return { label: `${student.given_name} ${student.family_name}`, value: student.id };
-															})}
-														loading={students.length == 0}
-														value={students
-															.filter((student) => team.students.includes(student.id))
-															.map((student) => {
-																return { label: `${student.given_name} ${student.family_name}`, value: student.id };
-															})}
-														onChange={(_, v: { label: string; value: string }[]) => {
-															const newStudents = v.map((s) => s.value);
-															setTeams(teams.map((t) => (t.id == team.id ? { ...t, students: newStudents } : t)));
-														}}
-													/>
-												</FormControl>
-											</Stack>
-										</Stack>
-									</Stack>
-									<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
-										<CardActions buttonFlex="1">
-											<ButtonGroup
-												sx={{ bgcolor: "background.surface" }}
-												size="sm">
-												<Button
-													onClick={async () => {
-														await API.del("api", `/competition/${compId}/team/${team.id}`, {});
-														setTeams(teams.filter((t) => t.id != team.id));
-													}}>
-													Delete
-												</Button>
-												<Button
-													variant="solid"
-													color="primary"
-													onClick={async () => {
-														try {
-															const updatedTeam = await API.put("api", `/competition/${compId}/team/${team.id}`, {
-																body: {
-																	name: team.name,
-																	students: team.students,
-																},
-															});
-															setTeams(teams.map((t) => (t.id === team.id ? updatedTeam : t)));
-														} catch (error) {
-															console.error("Error updating team:", error);
-														}
-													}}>
-													Save
-												</Button>
-											</ButtonGroup>
-										</CardActions>
-									</CardOverflow>
-								</Card>
-							</Box>
-						))}
+						{teams.map((team) => {
+							console.log("Team", team);
+							return (
+								<Box
+									key={team.id}
+									sx={{ gridColumn: "span 3" }}>
+									<TeamCard
+										team={team}
+										students={students}
+										competition={competition}
+										onDelete={(id) => setTeams(teams.filter((t) => t.id !== id))}
+										onUpdate={(updated) => {
+											setTeams(teams.map((t) => (t.id === updated.id ? updated : t)));
+											toast.success("Team updated", {
+												theme: "light",
+											});
+										}}
+									/>
+								</Box>
+							);
+						})}
 					</Box>
 				</div>
 			</div>

@@ -33,6 +33,7 @@ export interface CompetitionUpdate {
 	name: string;
 	status: string;
 	showLeaderboard: boolean;
+	organisationId: string;
 	packs: string[];
 }
 
