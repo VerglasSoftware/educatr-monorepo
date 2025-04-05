@@ -148,36 +148,36 @@ export default function PlayCompetition() {
 
 	useEffect(() => {
 		if (!packs) return;
-		
+
 		const lookup: Record<string, Task> = {};
-		packs.forEach(pack => {
-			pack.tasks.forEach(task => {
+		packs.forEach((pack) => {
+			pack.tasks.forEach((task) => {
 				lookup[task.id] = task;
 			});
 		});
-		
+
 		setTaskLookup(lookup);
 	}, [packs]);
 
 	useEffect(() => {
 		if (!activities || !taskLookup) return;
-	  
+
 		const countedTaskIds = new Set();
-		
+
 		const totalPoints = activities
-		  .filter(a => a.correct === true)
-		  .filter(a => {
-			if (countedTaskIds.has(a.taskId)) return false;
-			countedTaskIds.add(a.taskId);
-			return true;
-		  })
-		  .reduce((sum, act) => {
-			const task = taskLookup[act.taskId];
-			return sum + (task?.points || 0);
-		  }, 0);
-	  
+			.filter((a) => a.correct === true)
+			.filter((a) => {
+				if (countedTaskIds.has(a.taskId)) return false;
+				countedTaskIds.add(a.taskId);
+				return true;
+			})
+			.reduce((sum, act) => {
+				const task = taskLookup[act.taskId];
+				return sum + (task?.points || 0);
+			}, 0);
+
 		setTeamPoints(totalPoints);
-	  }, [activities, taskLookup]);
+	}, [activities, taskLookup]);
 
 	useEffect(() => {
 		if (activities == null) return;
@@ -268,7 +268,10 @@ export default function PlayCompetition() {
 			<Helmet>
 				<title>{competition.name}</title>
 			</Helmet>
-			<NavbarMain competition={competition} points={teamPoints} />
+			<NavbarMain
+				competition={competition}
+				points={teamPoints}
+			/>
 			<Box
 				sx={{
 					display: "flex",

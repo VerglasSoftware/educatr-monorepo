@@ -133,7 +133,6 @@ export default function NavbarMain({ competition, points, ...props }) {
 					</Tooltip>
 				</Box>
 			</Box>
-
 		</Box>
 	);
 }
