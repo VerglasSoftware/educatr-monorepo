@@ -359,6 +359,14 @@ api.route(
 );
 
 api.route(
+	"POST /competition/{compId}/announce",
+	{
+		handler: "packages/functions/src/competition.announce",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
 	"GET /user/me",
 	{
 		handler: "packages/functions/src/user.getMe",

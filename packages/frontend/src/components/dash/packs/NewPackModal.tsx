@@ -1,6 +1,8 @@
 import { Button, DialogContent, DialogTitle, FormControl, FormLabel, Input, Modal, ModalDialog, Stack } from "@mui/joy";
 import { API } from "aws-amplify";
-import { Dispatch, FormEvent, Fragment, SetStateAction } from "react";
+import { useFormik } from "formik";
+import { Dispatch, Fragment, SetStateAction } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface NewPackModalProps {
 	open: boolean;
@@ -8,6 +10,22 @@ interface NewPackModalProps {
 }
 
 export default function NewPackModal({ open, setOpen }: NewPackModalProps) {
+	const nav = useNavigate();
+	const formik = useFormik({
+		initialValues: {
+			name: "",
+			description: "",
+		},
+		onSubmit: async (values) => {
+			await API.post("api", "/pack", {
+				body: {
+					name: values.name,
+					description: values.description,
+				},
+			});
+			nav(`/dash/packs/${values.name}`);
+		},
+	});
 	return (
 		<Fragment>
 			<Modal
@@ -16,28 +34,28 @@ export default function NewPackModal({ open, setOpen }: NewPackModalProps) {
 				<ModalDialog>
 					<DialogTitle>Create new pack</DialogTitle>
 					<DialogContent>Fill in the information of the pack.</DialogContent>
-					<form
-						onSubmit={async (event: FormEvent<HTMLFormElement>) => {
-							event.preventDefault();
-							await API.post("api", "/pack", {
-								body: {
-									name: (event.currentTarget.elements[0] as HTMLInputElement).value,
-									description: (event.currentTarget.elements[1] as HTMLInputElement).value,
-								},
-							});
-							setOpen(false);
-						}}>
+					<form onSubmit={formik.handleSubmit}>
 						<Stack spacing={2}>
 							<FormControl>
 								<FormLabel>Name</FormLabel>
 								<Input
 									autoFocus
 									required
+									id="name"
+									name="name"
+									value={formik.values.name}
+									onChange={formik.handleChange}
 								/>
 							</FormControl>
 							<FormControl>
 								<FormLabel>Description</FormLabel>
-								<Input required />
+								<Input
+									required
+									id="description"
+									name="description"
+									value={formik.values.description}
+									onChange={formik.handleChange}
+								/>
 							</FormControl>
 							<Button type="submit">Create</Button>
 						</Stack>

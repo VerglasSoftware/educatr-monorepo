@@ -33,6 +33,7 @@ export interface CompetitionUpdate {
 	name: string;
 	status: string;
 	showLeaderboard: boolean;
+	organisationId: string;
 	packs: string[];
 }
 
@@ -46,6 +47,10 @@ export interface CompetitionRun {
 	language: string;
 	code: string;
 	stdin: string;
+}
+
+export interface CompetitionAnnounce {
+	message: string;
 }
 
 export interface Judge0CreateSubmissionResponse {
