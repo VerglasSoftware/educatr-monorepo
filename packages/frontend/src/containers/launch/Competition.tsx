@@ -27,6 +27,9 @@ interface EnrichedActivity {
 	activity: Activity;
 	task: Task;
 	pack: Pack;
+	verifier: User;
+	team: Team;
+	teamName: string;
 	userName: string;
 	verifierName?: string;
 	type: string;
@@ -122,6 +125,7 @@ export default function LaunchCompetition() {
 						task,
 						pack,
 						team,
+						verifier,
 						teamName: team?.name,
 						userName: user.given_name + " " + user.family_name,
 						verifierName: verifier?.given_name + " " + verifier?.family_name,
@@ -594,7 +598,7 @@ export default function LaunchCompetition() {
 									}}>
 									{[...enrichedActivities]
 										.sort((a, b) => new Date(b.activity.createdAt).getTime() - new Date(a.activity.createdAt).getTime())
-										.map(({ activity, task, pack, teamName, userName, verifier, verifierName, type }) => (
+										.map(({ activity, task, pack, userName, teamName, verifier, verifierName, type }) => (
 											<Card
 												variant="outlined"
 												sx={{
