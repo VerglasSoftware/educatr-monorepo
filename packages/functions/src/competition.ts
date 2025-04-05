@@ -379,14 +379,17 @@ export const check: Handler = Util.handler(async (event) => {
 				const submissionId = result.data.token;
 				var status: AxiosResponse<Judge0GetSubmissionResponse>;
 				do {
-					status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
+					try {
+						status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}?base64_encoded=true&fields=*`);
+					} catch (err) {
+						throw new Error("Failed to fetch submission status from Judge0");
+					}
 					await new Promise((resolve) => setTimeout(resolve, 1000));
 				} while (status.data.status.id < 3);
-				console.log(task.stdin.replace(/\\n/g, "\n"));
 				if (status.data.status.id == 3) {
-					const answerLines = status.data.stdout.trim().split("\n");
+					const stdout = Buffer.from(status.data.stdout, "base64").toString("utf-8");
+					const answerLines = stdout.trim().split("\n");
 					const outputLines = task.answer.trim().split("\\n");
-					console.log(`Answer: ${answerLines}, Output: ${outputLines}`);
 					if (answerLines.length !== outputLines.length || !answerLines.every((line, index) => line.trim() === outputLines[index].trim())) {
 						return await returnAnswer(false);
 					}
@@ -458,15 +461,21 @@ export const run: Handler = Util.handler(async (event) => {
 	} catch (e) {
 		throw new Error(`Could not create submission: ${e}`);
 	}
+	console.log(result.data);
 	if (result.status == 201) {
 		const submissionId = result.data.token;
 		var status: AxiosResponse<Judge0GetSubmissionResponse>;
 		do {
-			status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}`);
+			try {
+				status = await axios.get(`${Resource.ExecuteApi.url}/submissions/${submissionId}?base64_encoded=true&fields=*`);
+			} catch (err) {
+				throw new Error("Failed to fetch submission status from Judge0");
+			}
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 		} while (status.data.status.id < 3);
 		if (status.data.status.id == 3) {
-			return JSON.stringify({ output: status.data.stdout });
+			const decodedOutput = Buffer.from(status.data.stdout, "base64").toString("utf-8");
+			return JSON.stringify({ output: decodedOutput });
 		} else {
 			if (status.data.status.id == 6) {
 				return JSON.stringify({ output: status.data.compile_output });

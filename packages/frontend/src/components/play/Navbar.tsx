@@ -1,18 +1,16 @@
 import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/joy";
 import { useState } from "react";
 import { FaCaretLeft, FaCoins, FaMaximize, FaMinimize, FaTrophy } from "react-icons/fa6";
+import LeaderboardChart from "./LeaderboardChart";
 import { useParams } from "react-router-dom";
-import { Competition } from "../../../../functions/src/types/competition";
 import LeaderboardModal from "./LeaderboardModal";
 
-interface NavbarMainProps {
-	competition: Competition;
-}
+export default function NavbarMain({ competition, points, ...props }) {
+	const [open, setOpen] = useState(false);
+	const [openLeaderboard, setOpenLeaderboard] = useState(false);
 
-export default function NavbarMain({ competition, ...props }: NavbarMainProps) {
 	const { compId } = useParams();
 
-	const [openLeaderboard, setOpenLeaderboard] = useState(false);
 	const isFullscreen = () => !!document.fullscreenElement;
 
 	return (
@@ -90,9 +88,10 @@ export default function NavbarMain({ competition, ...props }: NavbarMainProps) {
 							color="neutral"
 							sx={{ alignSelf: "center", backgroundColor: "rgb(255 255 255 / 0.2)", color: "white", ":hover": { color: "black" }, px: 1 }}>
 							<FaTrophy color="gold" />
-							<Typography sx={{ color: "inherit", ml: 1 }}>1st</Typography>
+							<Typography sx={{ color: "inherit" }}></Typography>
 						</IconButton>
 					</Tooltip>
+
 					{competition && competition.showLeaderboard && (
 						<LeaderboardModal
 							open={openLeaderboard}
@@ -110,7 +109,7 @@ export default function NavbarMain({ competition, ...props }: NavbarMainProps) {
 							color="neutral"
 							sx={{ alignSelf: "center", backgroundColor: "rgb(255 255 255 / 0.2)", color: "white", ":hover": { color: "black" }, px: 1 }}>
 							<FaCoins color="SkyBlue" />
-							<Typography sx={{ color: "inherit", ml: 1 }}>{3}</Typography>
+							<Typography sx={{ color: "inherit", ml: 1 }}>{points || 0}</Typography>
 						</IconButton>
 					</Tooltip>
 
