@@ -35,12 +35,13 @@ const handler = async (event: PostConfirmationTriggerEvent) => {
 				PK: orgId,
 				SK: "DETAILS",
 			},
-			UpdateExpression: "ADD #students :student",
+			UpdateExpression: "SET #students = list_append(if_not_exists(#students, :emptyList), :student)",
 			ExpressionAttributeNames: {
 				"#students": "students",
 			},
 			ExpressionAttributeValues: {
-				":student": new Set([pk]),
+				":student": [pk],
+				":emptyList": [],
 			},
 		};
 
