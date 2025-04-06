@@ -48,6 +48,9 @@ export default function LaunchCompetition() {
 	const [webhookStatus, setWebhookStatus] = useState<string>("Default");
 
 	const videoRef = useRef<HTMLVideoElement | null>(null);
+	const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+	const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+
 	const [scanButtonLoading, setScanButtonLoading] = useState(false);
 	const [approveButtonLoading, setApproveButtonLoading] = useState(false);
 	const [rejectButtonLoading, setRejectButtonLoading] = useState(false);
@@ -66,6 +69,17 @@ export default function LaunchCompetition() {
 			window.location.reload();
 		},
 	});
+
+	useEffect(() => {
+		async function loadVideoDevices() {
+			const devices = (await navigator.mediaDevices.enumerateDevices()).filter((device) => device.kind === "videoinput");
+			setVideoDevices(devices);
+			if (devices.length > 0) {
+				setSelectedDeviceId(devices[0].deviceId); // default to first
+			}
+		}
+		loadVideoDevices();
+	}, []);
 
 	useEffect(() => {
 		if (lastMessage) {
@@ -169,11 +183,7 @@ export default function LaunchCompetition() {
 				return;
 			}
 
-			const firstDeviceId = videoInputDevices[0].deviceId;
-
-			// Decode from the camera
-			const result = await codeReader.decodeOnceFromVideoDevice(firstDeviceId, videoRef.current!);
-
+			const result = await codeReader.decodeOnceFromVideoDevice(selectedDeviceId ?? "", videoRef.current!);
 			setScanButtonLoading(false);
 			videoRef.current!.hidden = true;
 			console.log("Decoded text:", result.getText());
@@ -412,6 +422,20 @@ export default function LaunchCompetition() {
 									textColor="common.white">
 									Manual Verification
 								</Typography>
+								{videoDevices.length > 1 && (
+									<select
+										value={selectedDeviceId ?? ""}
+										onChange={(e) => setSelectedDeviceId(e.target.value)}
+										style={{ marginBottom: "8px", padding: "4px" }}>
+										{videoDevices.map((device) => (
+											<option
+												key={device.deviceId}
+												value={device.deviceId}>
+												{device.label || `Camera ${device.deviceId}`}
+											</option>
+										))}
+									</select>
+								)}
 								<Button
 									color="primary"
 									disabled={competition.status != "IN_PROGRESS"}
