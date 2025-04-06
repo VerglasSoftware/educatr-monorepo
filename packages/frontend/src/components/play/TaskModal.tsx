@@ -34,6 +34,11 @@ export default function TaskModal({ open, setOpen, competition, task, packId, se
 	const [stdout, setStdout] = useState<string>("");
 	const [runLoading, setRunLoading] = useState<boolean>(false);
 
+	const [isClient, setIsClient] = useState(false);
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
 	async function submitTask() {
 		setSubmitTaskLoading(true);
 		try {
@@ -174,12 +179,14 @@ export default function TaskModal({ open, setOpen, competition, task, packId, se
 											onChange={(e) => setAnswer(e)}
 										/>
 									</FormControl>
-									<NewWindow>
-										<iframe
-											srcDoc={answer}
-											className="bg-white w-full h-full"
-										/>
-									</NewWindow>
+									{isClient && (
+										<NewWindow>
+											<iframe
+												srcDoc={answer}
+												className="bg-white w-full h-full"
+											/>
+										</NewWindow>
+									)}
 								</Stack>
 							)}
 						</DialogContent>

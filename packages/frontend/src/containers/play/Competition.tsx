@@ -51,6 +51,12 @@ export default function PlayCompetition() {
 
 	const { compId } = useParams();
 
+	const [isClient, setIsClient] = useState(false);
+
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
 	const { lastMessage, readyState } = useWebSocket(
 		websocketUrl,
 		{
@@ -124,8 +130,10 @@ export default function PlayCompetition() {
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const promises = [API.get("api", `/competition/${compId}`, {}).then(setCompetition), API.get("api", `/pack?include=tasks`, {}).then(setPacks), API.get("api", `/competition/${compId}/activity`, {}).then(setActivities)];
-				await Promise.allSettled(promises);
+				const [competitionData, packsData, activitiesData]: [Competition, PackWithTasks[], Activity[]] = await Promise.all([API.get("api", `/competition/${compId}`, {}) as Promise<Competition>, API.get("api", `/pack?include=tasks`, {}) as Promise<PackWithTasks[]>, API.get("api", `/competition/${compId}/activity`, {}) as Promise<Activity[]>]);
+				setCompetition(competitionData);
+				setPacks(packsData.filter((pack) => competitionData.packs.includes(pack.id)));
+				setActivities(activitiesData);
 			} catch (e) {
 				console.log(e);
 			}
@@ -260,12 +268,14 @@ export default function PlayCompetition() {
 							</CardContent>
 						</Card>
 					</Box>
-					<NewWindow>
-						<iframe
-							srcDoc={waitingTask.activity && waitingTask.activity.answer}
-							className="bg-white w-full h-full"
-						/>
-					</NewWindow>
+					{isClient && (
+						<NewWindow>
+							<iframe
+								srcDoc={waitingTask.activity && waitingTask.activity.answer}
+								className="bg-white w-full h-full"
+							/>
+						</NewWindow>
+					)}
 				</>
 			)
 		);

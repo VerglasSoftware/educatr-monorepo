@@ -57,18 +57,11 @@ export default function NavbarMain({ ...props }) {
 						alignItems: "center",
 						display: { xs: "none", sm: "flex" },
 					}}>
-					<IconButton
-						size="md"
-						variant="outlined"
-						color="neutral"
-						sx={{ display: { xs: "none", sm: "inline-flex" }, borderRadius: "50%" }}>
-						<FaLanguage />
-					</IconButton>
 					<Button
 						variant="plain"
 						color="neutral"
 						component="a"
-						href="/dash"
+						href="/dash/packs"
 						size="sm"
 						sx={{ alignSelf: "center" }}>
 						Dashboard
