@@ -1,4 +1,5 @@
 import { Box, Card, CardContent, Typography } from "@mui/joy";
+import { useEffect, useState } from "react";
 import { Competition } from "../../../../functions/src/types/competition";
 
 interface NotInProgressProps {
@@ -6,6 +7,32 @@ interface NotInProgressProps {
 }
 
 export default function NotInProgress({ competition }: NotInProgressProps) {
+	const [loaded, setLoaded] = useState(false);
+
+	// Load the Tally embed script only once.
+	useEffect(() => {
+		if (!window.Tally) {
+			const scriptTag = document.createElement("script");
+			scriptTag.src = "https://tally.so/widgets/embed.js";
+			scriptTag.onload = () => {
+				setLoaded(true);
+			};
+			document.body.appendChild(scriptTag);
+			return () => {
+				document.body.removeChild(scriptTag);
+			};
+		} else {
+			setLoaded(true);
+		}
+	}, []);
+
+	// When the competition status changes to ENDED, force Tally to reinitialize the embeds.
+	useEffect(() => {
+		if (competition.status === "ENDED" && loaded && window.Tally && typeof window.Tally.loadEmbeds === "function") {
+			window.Tally.loadEmbeds();
+		}
+	}, [competition.status, loaded]);
+
 	return (
 		<Box
 			sx={{
@@ -33,7 +60,7 @@ export default function NotInProgress({ competition }: NotInProgressProps) {
 						speed="2"
 						color="white"></l-cardio>
 
-					{competition.status == "NOT_STARTED" && (
+					{competition.status === "NOT_STARTED" && (
 						<>
 							<Typography
 								level="title-lg"
@@ -49,7 +76,7 @@ export default function NotInProgress({ competition }: NotInProgressProps) {
 						</>
 					)}
 
-					{competition.status == "PAUSED" && (
+					{competition.status === "PAUSED" && (
 						<>
 							<Typography
 								level="title-lg"
@@ -65,7 +92,7 @@ export default function NotInProgress({ competition }: NotInProgressProps) {
 						</>
 					)}
 
-					{competition.status == "ENDED" && (
+					{competition.status === "ENDED" && (
 						<>
 							<Typography
 								level="title-lg"
@@ -78,6 +105,26 @@ export default function NotInProgress({ competition }: NotInProgressProps) {
 								textColor="common.white">
 								Thanks for playing!
 							</Typography>
+							{loaded && (
+								<>
+									<Typography
+										level="body-sm"
+										textColor="common.white">
+										Please fill out the feedback form below
+									</Typography>
+									{/* Using key={competition.status} forces React to remount the iframe when status changes */}
+									<iframe
+										key={competition.status}
+										data-tally-src="https://tally.so/embed/nGbP0o"
+										loading="lazy"
+										width="100%"
+										height="500"
+										frameBorder="0"
+										marginHeight={0}
+										marginWidth={0}
+										title="(2025) IglooCode Student Feedback"></iframe>
+								</>
+							)}
 						</>
 					)}
 				</CardContent>
