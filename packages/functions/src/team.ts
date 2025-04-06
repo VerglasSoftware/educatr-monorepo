@@ -42,9 +42,12 @@ export const list: Handler = Util.handler(async (event) => {
 			":skPrefix": { S: "TEAM#" },
 		},
 	};
+	console.log("params", params);
+	console.log("compId", compId);
 
 	try {
 		const result = await client.send(new ScanCommand(params));
+		console.log("result", result);
 		const teams = itemsToTeams(result.Items);
 		return JSON.stringify(teams);
 	} catch (e) {

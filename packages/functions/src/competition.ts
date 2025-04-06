@@ -721,6 +721,29 @@ export const getLb: Handler = Util.handler(async (event) => {
 			throw new Error(`Could not retrieve data for competition ${compId}: ${e}`);
 		}
 
+		const taskLookup: Record<string, Task> = {};
+		try {
+			for (const packId of competition.packs) {
+				const packTasksParams: QueryCommandInput = {
+					TableName: Resource.Packs.name,
+					KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					ExpressionAttributeValues: {
+						":packId": { S: packId },
+						":skPrefix": { S: "TASK#" },
+					},
+				};
+
+				const packTasksResult = await client.send(new QueryCommand(packTasksParams));
+				const tasks = packTasksResult.Items?.map(itemToTask) || [];
+
+				tasks.forEach((task) => {
+					taskLookup[task.id] = task;
+				});
+			}
+		} catch (e) {
+			throw new Error(`Could not retrieve tasks for competition packs: ${e}`);
+		}
+
 		const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
 			acc[item.id] = item.name;
 			return acc;
@@ -746,7 +769,6 @@ export const getLb: Handler = Util.handler(async (event) => {
 			previousPoints[team.id] = 0;
 		}
 
-		// Add initial timestamp with zero points for all teams
 		const initialObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: Math.max(timeStarted, timeNow - 100 * 60 * 1000), changedTeams: {} };
 		for (const team of teams) {
 			initialObj.changedTeams[team.id] = 0;
@@ -759,19 +781,22 @@ export const getLb: Handler = Util.handler(async (event) => {
 
 			for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
 				let currentPoints = 0;
+				const countedTaskIds = new Set<string>();
 
 				for (const activity of teamActivities) {
 					if (parseInt(activity.createdAt) < currentTimestamp) {
-						currentPoints++;
+						if (!countedTaskIds.has(activity.taskId)) {
+							countedTaskIds.add(activity.taskId);
+							const taskPoints = taskLookup[activity.taskId]?.points || 0;
+							currentPoints += taskPoints;
+						}
 					} else {
 						break;
 					}
 				}
 
 				if (previousPoints[teamId] !== currentPoints) {
-					// Add the previous value just before the change (to create the step)
 					preStepObj.changedTeams[teamId] = previousPoints[teamId];
-					// Then the new value at the current time
 					stepObj.changedTeams[teamId] = currentPoints;
 
 					previousPoints[teamId] = currentPoints;
@@ -843,7 +868,6 @@ export const announce: Handler = Util.handler(async (event) => {
 			});
 		} catch (e: any) {
 			if (e.statusCode === 410) {
-				// Remove stale connections
 				const deleteParams: DeleteCommandInput = {
 					TableName: Resource.SocketConnections.name,
 					Key: { id },
