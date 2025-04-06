@@ -676,9 +676,9 @@ export const run: Handler = Util.handler(async (event) => {
 			return JSON.stringify({ output: decodedOutput });
 		} else {
 			if (status.data.status.id == 6) {
-				return JSON.stringify({ output: status.data.compile_output });
+				return JSON.stringify({ output: Buffer.from(status.data.compile_output, "base64").toString("utf-8") });
 			} else {
-				return JSON.stringify({ output: status.data.stderr });
+				return JSON.stringify({ output: Buffer.from(status.data.stderr, "base64").toString("utf-8") });
 			}
 		}
 	}

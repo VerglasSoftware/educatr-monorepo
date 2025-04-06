@@ -270,7 +270,6 @@ export const clear: Handler = Util.handler(async (event) => {
 	try {
 		const result = await client.send(new ScanCommand(params));
 		const items = itemsToActivities(result.Items);
-		console.log("Items to delete", items);
 		if (!items) {
 			throw new Error("No items found");
 		}
