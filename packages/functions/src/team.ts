@@ -34,25 +34,32 @@ export const list: Handler = Util.handler(async (event) => {
 		throw new Error("Missing competition id in path parameters");
 	}
 
-	const params: ScanCommandInput = {
-		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
-		ExpressionAttributeValues: {
-			":compId": { S: compId },
-			":skPrefix": { S: "TEAM#" },
-		},
-	};
-	console.log("params", params);
-	console.log("compId", compId);
+	let teams: any[] = [];
+	let lastEvaluatedKey: any | undefined = undefined;
 
-	try {
+	do {
+		const params: ScanCommandInput = {
+			TableName: Resource.Competitions.name,
+			FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":compId": { S: compId },
+				":skPrefix": { S: "TEAM#" },
+			},
+			// Include the ExclusiveStartKey if we're paginating
+			ExclusiveStartKey: lastEvaluatedKey,
+		};
+
+		console.log("Scanning with params:", JSON.stringify(params));
 		const result = await client.send(new ScanCommand(params));
-		console.log("result", result);
-		const teams = itemsToTeams(result.Items);
-		return JSON.stringify(teams);
-	} catch (e) {
-		throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
-	}
+		console.log("Scan result:", JSON.stringify(result));
+
+		if (result.Items) {
+			teams.push(...itemsToTeams(result.Items));
+		}
+		lastEvaluatedKey = result.LastEvaluatedKey;
+	} while (lastEvaluatedKey);
+
+	return JSON.stringify(teams);
 });
 
 export const get: Handler = Util.handler(async (event) => {
