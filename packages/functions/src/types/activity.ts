@@ -5,6 +5,7 @@ export interface Activity {
 	packId: string;
 	verifierId: string;
 	status: string;
+	answer: string;
 	correct: boolean;
 	createdAt: string;
 }
@@ -17,6 +18,7 @@ export interface ActivityDynamo {
 	packId: { S: string };
 	verifierId: { S: string };
 	status: { S: string };
+	answer: { S: string };
 	correct: { BOOL: boolean };
 	createdAt: { N: string };
 }
@@ -27,5 +29,6 @@ export interface ActivityCreateUpdate {
 	packId: string;
 	verifierId: string;
 	status: string;
+	answer: string;
 	correct: boolean;
 }

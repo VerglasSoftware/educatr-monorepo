@@ -3,6 +3,7 @@ import { API, Auth } from "aws-amplify";
 import { cardio, pulsar } from "ldrs";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
+import NewWindow from "react-new-window";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import useWebSocket, { ReadyState } from "react-use-websocket";
@@ -212,52 +213,60 @@ export default function PlayCompetition() {
 	if (waitingTask) {
 		return (
 			waitingTask && (
-				<Box
-					sx={{
-						display: "flex",
-						justifyContent: "center",
-						alignItems: "center",
-						height: "85vh",
-						flexDirection: "column",
-						overflow: "hidden",
-					}}>
-					<Card
-						variant="plain"
-						sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "60%" }}>
-						<CardContent
-							sx={{
-								display: "flex",
-								flexDirection: "column",
-								alignItems: "center",
-								justifyContent: "center",
-								padding: "2%",
-							}}>
-							<l-pulsar
-								size="50"
-								speed="2"
-								color="white"></l-pulsar>
+				<>
+					<Box
+						sx={{
+							display: "flex",
+							justifyContent: "center",
+							alignItems: "center",
+							height: "85vh",
+							flexDirection: "column",
+							overflow: "hidden",
+						}}>
+						<Card
+							variant="plain"
+							sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "60%" }}>
+							<CardContent
+								sx={{
+									display: "flex",
+									flexDirection: "column",
+									alignItems: "center",
+									justifyContent: "center",
+									padding: "2%",
+								}}>
+								<l-pulsar
+									size="50"
+									speed="2"
+									color="white"></l-pulsar>
 
-							<Typography
-								level="h1"
-								textColor="common.white"
-								sx={{ mt: 2 }}>
-								{waitingTask.pack.name.toUpperCase()} | {waitingTask.title.toUpperCase()}
-							</Typography>
-							<Typography
-								level="body-sm"
-								textColor="common.white">
-								The last task you submitted needs to be manually reviewed.
-							</Typography>
-							<Typography
-								level="body-sm"
-								textColor="common.white">
-								A member of our team will be with you as soon as possible.
-							</Typography>
-							<br />
-							<PDF417 value={waitingTask.activity && waitingTask.activity.id} />
-						</CardContent>
-					</Card>
-				</Box>
+								<Typography
+									level="h1"
+									textColor="common.white"
+									sx={{ mt: 2 }}>
+									{waitingTask.pack.name.toUpperCase()} | {waitingTask.title.toUpperCase()}
+								</Typography>
+								<Typography
+									level="body-sm"
+									textColor="common.white">
+									The last task you submitted needs to be manually reviewed.
+								</Typography>
+								<Typography
+									level="body-sm"
+									textColor="common.white">
+									A member of our team will be with you as soon as possible.
+								</Typography>
+								<br />
+								<PDF417 value={waitingTask.activity && waitingTask.activity.id} />
+							</CardContent>
+						</Card>
+					</Box>
+					<NewWindow>
+						<iframe
+							srcDoc={waitingTask.activity && waitingTask.activity.answer}
+							className="bg-white w-full h-full"
+						/>
+					</NewWindow>
+				</>
 			)
 		);
 	}

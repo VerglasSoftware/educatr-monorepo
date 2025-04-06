@@ -393,6 +393,7 @@ export const check: Handler = Util.handler(async (event) => {
 				userId: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 				packId: data.packId,
 				taskId: data.taskId,
+				answer: "",
 				correct: result,
 				correctString: result ? "true" : "false",
 				createdAt: Date.now(),
@@ -433,7 +434,7 @@ export const check: Handler = Util.handler(async (event) => {
 		// send to all connected clients from userIds in students array
 		const socketParams: ScanCommandInput = {
 			TableName: Resource.SocketConnections.name,
-			FilterExpression: students.map((_, i) => `contains(userId, :student${i})`).join(" OR "),
+			FilterExpression: students.map((_, i) => `contains(userId, :student${i})`).join(" OR ") + " OR attribute_not_exists(userId)",
 			ExpressionAttributeValues: Object.fromEntries(students.map((s, i) => [`:student${i}`, { S: s }])),
 		};
 
@@ -547,6 +548,7 @@ export const check: Handler = Util.handler(async (event) => {
 					PK: compId,
 					SK: `ACTIVITY#${createId()}`,
 					status: "WAITING",
+					answer: data.answer,
 					userId: event.requestContext.authorizer!.jwt.claims["cognito:username"],
 					packId: data.packId,
 					taskId: data.taskId,
@@ -556,6 +558,48 @@ export const check: Handler = Util.handler(async (event) => {
 
 			try {
 				await client.send(new PutCommand(params));
+				const activity = itemToActivity(params.Item);
+				const socketParams: ScanCommandInput = {
+					TableName: Resource.SocketConnections.name,
+					FilterExpression: "attribute_not_exists(userId)",
+				};
+
+				var connectionsResult;
+				try {
+					connectionsResult = await client.send(new ScanCommand(socketParams));
+				} catch (e) {
+					throw new Error(`Could not retrieve connections: ${e}`);
+				}
+				const connections = itemsToConnections(connectionsResult.Items);
+				const apiG = new ApiGatewayManagementApi({
+					endpoint: Resource.SocketApi.managementEndpoint,
+				});
+
+				const postToConnection = async function ({ id }: { id: string }) {
+					try {
+						await apiG.postToConnection({
+							ConnectionId: id,
+							Data: JSON.stringify({
+								filter: {
+									competitionId: compId,
+								},
+								type: "TASK:MANUAL",
+								body: activity,
+							}),
+						});
+					} catch (e) {
+						if ((e as { statusCode?: number }).statusCode === 410) {
+							// Remove stale connections
+							const deleteParams: DeleteCommandInput = {
+								TableName: Resource.SocketConnections.name,
+								Key: { id: { S: id } },
+							};
+							await client.send(new DeleteCommand(deleteParams));
+						}
+					}
+				};
+
+				await Promise.all(connections.map(postToConnection));
 			} catch (e) {
 				throw new Error(`Could not create activity: ${e}`);
 			}
