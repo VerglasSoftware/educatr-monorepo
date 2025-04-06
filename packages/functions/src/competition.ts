@@ -198,8 +198,12 @@ export const update: Handler = Util.handler(async (event) => {
 		}
 	}
 
+	let updateCreatedAt = false;
 	const statusChanged = existing.status !== data.status;
 	if (statusChanged) {
+		if (existing.status === "NOT_STARTED" && data.status === "IN_PROGRESS") {
+			updateCreatedAt = true;
+		}
 		const socketParams: ScanCommandInput = {
 			TableName: Resource.SocketConnections.name,
 			ProjectionExpression: "id",
@@ -303,6 +307,15 @@ export const update: Handler = Util.handler(async (event) => {
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
 	};
+	if (updateCreatedAt) {
+		params.UpdateExpression += ", #createdAt = :createdAt";
+		params.ExpressionAttributeNames = params.ExpressionAttributeNames || {};
+		params.ExpressionAttributeNames["#createdAt"] = "createdAt";
+		params.ExpressionAttributeValues = params.ExpressionAttributeValues || {};
+		params.ExpressionAttributeValues[":createdAt"] = Date.now();
+		console.log("Created at updated");
+		console.log(params);
+	}
 
 	try {
 		const result = await client.send(new UpdateCommand(params));

@@ -254,6 +254,40 @@ export const del: Handler = Util.handler(async (event) => {
 	}
 });
 
+export const clear: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing competition id in path parameters");
+	}
+	const params: ScanCommandInput = {
+		TableName: Resource.Competitions.name,
+		FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":skPrefix": { S: "ACTIVITY#" },
+		},
+	};
+	try {
+		const result = await client.send(new ScanCommand(params));
+		const items = itemsToActivities(result.Items);
+		console.log("Items to delete", items);
+		if (!items) {
+			throw new Error("No items found");
+		}
+		const deleteParams: DeleteCommandInput[] = items.map((item) => ({
+			TableName: Resource.Competitions.name,
+			Key: {
+				PK: compId,
+				SK: `ACTIVITY#${item.id}`,
+			},
+		}));
+		await Promise.all(deleteParams.map((param) => client.send(new DeleteCommand(param))));
+		return JSON.stringify({ success: true });
+	} catch (e) {
+		throw new Error(`Could not clear activities in competition ${compId}: ${e}`);
+	}
+});
+
 export const approve: Handler = Util.handler(async (event) => {
 	const { compId, activityId } = event.pathParameters || {};
 	if (!compId) {
