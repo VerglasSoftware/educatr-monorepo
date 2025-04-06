@@ -732,11 +732,11 @@ export const getLb: Handler = Util.handler(async (event) => {
 						":skPrefix": { S: "TASK#" },
 					},
 				};
-				
+
 				const packTasksResult = await client.send(new QueryCommand(packTasksParams));
 				const tasks = packTasksResult.Items?.map(itemToTask) || [];
-				
-				tasks.forEach(task => {
+
+				tasks.forEach((task) => {
 					taskLookup[task.id] = task;
 				});
 			}
