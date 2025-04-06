@@ -211,7 +211,6 @@ export default function PlayCompetition() {
 	}
 
 	if (waitingTask) {
-		console.log("waitingTask", waitingTask.activity.answer);
 		return (
 			waitingTask && (
 				<>

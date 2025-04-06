@@ -75,7 +75,18 @@ export default function TaskEditor() {
 		async function onLoad() {
 			try {
 				const pack: Pack = await API.get("api", `/pack/${id}`, {});
-				const tasks: Task[] = await API.get("api", `/pack/${id}/task`, {});
+				const tasks: Task[] = (await API.get("api", `/pack/${id}/task`, {})).sort((a, b) => {
+					// Sort numerically if titles are numbers, otherwise lexicographically
+					const numA = parseFloat(a.title);
+					const numB = parseFloat(b.title);
+					if (!isNaN(numA) && !isNaN(numB)) {
+						return numA - numB;
+					}
+					if (!isNaN(numA) || !isNaN(numB)) {
+						return isNaN(numA) ? 1 : -1;
+					}
+					return a.title.localeCompare(b.title, undefined, { numeric: true });
+				});
 				setPack(pack);
 				setTasks(tasks);
 				setTask(tasks[0]);
