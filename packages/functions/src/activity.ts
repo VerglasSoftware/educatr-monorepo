@@ -24,6 +24,7 @@ export const itemToActivity = (item: Record<string, any> | undefined): Activity 
 		packId: isDynamoFormat(item.packId) ? item.packId.S : item.packId,
 		verifierId: isDynamoFormat(item.verifierId) ? item.verifierId.S : item.verifierId,
 		status: isDynamoFormat(item.status) ? item.status.S : item.status,
+		answer: isDynamoFormat(item.answer) ? item.answer.S : item.answer,
 		correct: isDynamoFormat(item.correct) ? item.correct.BOOL : item.correct,
 		createdAt: isDynamoFormat(item.createdAt) ? parseInt(item.createdAt.N) : item.createdAt,
 	};
@@ -133,6 +134,7 @@ export const create: Handler = Util.handler(async (event) => {
 		packId: "",
 		verifierId: "",
 		status: "",
+		answer: "",
 		correct: false,
 	};
 
@@ -150,6 +152,7 @@ export const create: Handler = Util.handler(async (event) => {
 			packId: data.packId,
 			verifierId: data.verifierId,
 			status: data.status,
+			answer: data.answer,
 			correct: data.correct,
 			createdAt: Date.now(),
 		},
@@ -179,6 +182,7 @@ export const update: Handler = Util.handler(async (event) => {
 		packId: "",
 		verifierId: "",
 		status: "",
+		answer: "",
 		correct: false,
 	};
 
@@ -194,13 +198,14 @@ export const update: Handler = Util.handler(async (event) => {
 			PK: compId,
 			SK: `ACTIVITY#${activityId}`,
 		},
-		UpdateExpression: "SET #userId = :userId, #taskId = :taskId, #packId = :packId, #verifierId = :verifierId, #status = :status, #correct = :correct",
+		UpdateExpression: "SET #userId = :userId, #taskId = :taskId, #packId = :packId, #verifierId = :verifierId, #status = :status, #answer = :answer, #correct = :correct",
 		ExpressionAttributeNames: {
 			"#userId": "userId",
 			"#taskId": "taskId",
 			"#packId": "packId",
 			"#verifierId": "verifierId",
 			"#status": "status",
+			"#answer": "answer",
 			"#correct": "correct",
 		},
 		ExpressionAttributeValues: {
@@ -209,6 +214,7 @@ export const update: Handler = Util.handler(async (event) => {
 			":packId": data.packId,
 			":verifierId": data.verifierId,
 			":status": data.status,
+			":answer": data.answer,
 			":correct": data.correct,
 		},
 		ReturnValues: ReturnValue.ALL_NEW,
