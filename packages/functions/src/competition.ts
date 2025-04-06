@@ -741,7 +741,7 @@ export const getLb: Handler = Util.handler(async (event) => {
 				});
 			}
 		} catch (e) {
-			throw new Error(`Could not tasks for competition packs: ${e}`);
+			throw new Error(`Could not retrieve tasks for competition packs: ${e}`);
 		}
 
 		const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
