@@ -11,7 +11,6 @@ import { Activity } from "../../../../functions/src/types/activity";
 import { Competition } from "../../../../functions/src/types/competition";
 import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
 import { Task } from "../../../../functions/src/types/task";
-import { User } from "../../../../functions/src/types/user";
 import AnnounceModal from "../../components/play/AnnounceModal";
 import Loading from "../../components/play/Loading";
 import NavbarMain from "../../components/play/Navbar";
@@ -87,14 +86,13 @@ export default function PlayCompetition() {
 						if (user && user.username != newActivity.userId) {
 							// path parameter is the userId
 							console.log("userId", newActivity.userId);
-							const useruser: User = await API.get("api", `/user/cognito/${newActivity.userId}`, {});
 							const pack = packs.find((p) => p.id == newActivity.packId);
 							const task = pack.tasks.find((t) => t.id == newActivity.taskId);
 
 							if (newActivity.correct) {
-								toast.success(`${useruser.nickname || useruser.given_name} answered ${task.title} in ${pack.name} correctly, and ${task.points} points have been added to your team.`);
+								toast.success(`Someone answered ${task.title} in ${pack.name} correctly, and ${task.points} points have been added to your team.`);
 							} else {
-								toast.error(`${useruser.nickname || useruser.given_name} answered ${task.title} in ${pack.name} incorrectly, but no points have been taken from your team.`);
+								toast.error(`Someone answered ${task.title} in ${pack.name} incorrectly, but no points have been taken from your team.`);
 							}
 						}
 						break;
