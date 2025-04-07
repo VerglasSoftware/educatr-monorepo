@@ -11,7 +11,6 @@ import { Competition } from "../../../../functions/src/types/competition";
 import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
 import { Task } from "../../../../functions/src/types/task";
 import { Team } from "../../../../functions/src/types/team";
-import { User } from "../../../../functions/src/types/user";
 import NavbarMain from "../../components/launch/Navbar";
 import LeaderboardChart from "../../components/play/LeaderboardChart";
 import "../play/Play.css";
@@ -27,11 +26,8 @@ interface EnrichedActivity {
 	activity: Activity;
 	task: Task;
 	pack: Pack;
-	verifier: User;
 	team: Team;
 	teamName: string;
-	userName: string;
-	verifierName?: string;
 	type: string;
 }
 
@@ -127,22 +123,14 @@ export default function LaunchCompetition() {
 				socketsLogs.map(async (socketsLog) => {
 					const pack = packs.find((p) => p.tasks.some((t) => t.id === socketsLog.body.taskId));
 					const task = pack?.tasks.find((t) => t.id === socketsLog.body.taskId);
-					const user: User = await API.get("api", `/user/cognito/${socketsLog.body.userId}`, {});
 					const teams: Team[] = await API.get("api", `/competition/${compId}/team`, {});
-					const team = teams.find((t) => t.students.some((m) => m === user.id));
-					let verifier: User = null;
-					if (socketsLog.body.verifierId) {
-						verifier = await API.get("api", `/user/cognito/${socketsLog.body.verifierId}`, {});
-					}
+					const team = teams.find((t) => t.students.some((m) => m === socketsLog.body.userId));
 					return {
 						activity: socketsLog.body,
 						task,
 						pack,
 						team,
-						verifier,
 						teamName: team?.name,
-						userName: user.given_name + " " + user.family_name,
-						verifierName: verifier?.given_name + " " + verifier?.family_name,
 						type: socketsLog.type,
 					};
 				})
@@ -622,7 +610,7 @@ export default function LaunchCompetition() {
 									}}>
 									{[...enrichedActivities]
 										.sort((a, b) => new Date(b.activity.createdAt).getTime() - new Date(a.activity.createdAt).getTime())
-										.map(({ activity, task, pack, userName, teamName, verifier, verifierName, type }) => (
+										.map(({ activity, task, pack, teamName, type }) => (
 											<Card
 												variant="outlined"
 												sx={{
@@ -637,20 +625,12 @@ export default function LaunchCompetition() {
 														flexDirection: "column",
 														alignItems: "left",
 													}}>
-													{type == "TASK:ANSWERED" && verifier && (
+													{type == "TASK:ANSWERED" && (
 														<Typography
 															level="body-md"
 															component="h3"
 															textColor="common.white">
-															{userName} from {teamName} answered {task.title} | {pack.name} {activity.correct ? "correctly" : "incorrectly"} and was verified by {verifierName}
-														</Typography>
-													)}
-													{type == "TASK:ANSWERED" && !verifier && (
-														<Typography
-															level="body-md"
-															component="h3"
-															textColor="common.white">
-															{userName} from {teamName} answered {task.title} | {pack.name} {activity.correct ? "correctly" : "incorrectly"}
+															Someone from {teamName} answered {task.title} | {pack.name} {activity.correct ? "correctly" : "incorrectly"}
 														</Typography>
 													)}
 													{type == "TASK:MANUAL" && (
@@ -658,7 +638,7 @@ export default function LaunchCompetition() {
 															level="body-md"
 															component="h3"
 															textColor="common.white">
-															{userName} from {teamName} is waiting for manual verification on {pack.name} | {task.title}
+															Someone from {teamName} is waiting for manual verification on {pack.name} | {task.title}
 														</Typography>
 													)}
 												</CardContent>
