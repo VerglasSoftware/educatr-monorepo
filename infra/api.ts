@@ -299,6 +299,15 @@ api.route(
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );
+
+api.route(
+	"DELETE /competition/{compId}/activity",
+	{
+		handler: "packages/functions/src/activity.clear",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
 api.route(
 	"POST /competition/{compId}/activity/{activityId}/approve",
 	{

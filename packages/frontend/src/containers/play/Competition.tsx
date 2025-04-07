@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { Activity } from "../../../../functions/src/types/activity";
 import { Competition } from "../../../../functions/src/types/competition";
-import { PackWithTasks } from "../../../../functions/src/types/pack";
+import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
 import { Task } from "../../../../functions/src/types/task";
 import { User } from "../../../../functions/src/types/user";
 import AnnounceModal from "../../components/play/AnnounceModal";
@@ -23,7 +23,8 @@ import "./Play.css";
 interface WaitingTask {
 	id: string;
 	title: string;
-	pack: PackWithTasks;
+	task: Task;
+	pack: Pack;
 	activity: Activity;
 }
 
@@ -196,6 +197,7 @@ export default function PlayCompetition() {
 				const task2 = pack.tasks.find((t) => t.id == activity.taskId);
 				setWaitingTask({
 					pack: { tasks: undefined, ...pack },
+					task: task2,
 					activity: activity,
 					...task2,
 				});
@@ -268,7 +270,7 @@ export default function PlayCompetition() {
 							</CardContent>
 						</Card>
 					</Box>
-					{isClient && (
+					{isClient && waitingTask.task.answerType === "WEB" && (
 						<NewWindow>
 							<iframe
 								srcDoc={waitingTask.activity && waitingTask.activity.answer}
