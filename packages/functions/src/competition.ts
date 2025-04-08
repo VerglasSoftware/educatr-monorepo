@@ -724,6 +724,7 @@ export const getLb: Handler = Util.handler(async (event) => {
 		let competition: Competition;
 		let teams: Team[];
 		let activities: Activity[];
+
 		try {
 			const [competitionResult, teamResult, activityResult] = await Promise.all([client.send(new GetCommand(competitionParams)), client.send(new QueryCommand(teamParams)), client.send(new QueryCommand(activityParams))]);
 			if (!competitionResult.Item) {
@@ -759,41 +760,62 @@ export const getLb: Handler = Util.handler(async (event) => {
 			throw new Error(`Could not retrieve tasks for competition packs: ${e}`);
 		}
 
-		const teamLabels = teams.reduce((acc: Record<string, string>, item, index) => {
+		const teamLabels = teams.reduce((acc: Record<string, string>, item) => {
 			acc[item.id] = item.name;
 			return acc;
 		}, {});
 
 		const timeStarted = parseInt(competition.createdAt);
 		const timeNow = Date.now();
-
 		const minutesArray = Array.from({ length: Math.floor((timeNow - timeStarted) / (1000 * 60)) + 1 }, (_, i) => i);
+		let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60)).slice(-100);
 
-		let timestamps = minutesArray.map((i) => timeStarted + i * (1000 * 60));
-		timestamps = timestamps.slice(-100);
 		const teamData = [];
-
-		let previousPoints: Record<string, number> = {};
+		const previousPoints: Record<string, number> = {};
 		const teamActivitiesMap = new Map<string, Activity[]>();
 
 		// Pre-sort the activities for each team by creation time
 		for (const team of teams) {
 			const teamActs = activities.filter((activity) => team.students.includes(activity.userId) && activity.correct === true).sort((a, b) => parseInt(a.createdAt) - parseInt(b.createdAt));
 			teamActivitiesMap.set(team.id, teamActs);
-			previousPoints[team.id] = 0;
 		}
 
-		const initialObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: Math.max(timeStarted, timeNow - 100 * 60 * 1000), changedTeams: {} };
-		for (const team of teams) {
-			initialObj.changedTeams[team.id] = 0;
+		// Calculate initial scores
+		const firstTimestamp = timestamps[0];
+		const initialObj: { timestamp: number; changedTeams: Record<string, number> } = {
+			timestamp: Math.max(timeStarted, timeNow - 100 * 60 * 1000),
+			changedTeams: {},
+		};
+
+		for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
+			let initialPoints = 0;
+			const counted = new Set<string>();
+			for (const activity of teamActivities) {
+				if (parseInt(activity.createdAt) <= firstTimestamp) {
+					if (!counted.has(activity.taskId)) {
+						counted.add(activity.taskId);
+						initialPoints += taskLookup[activity.taskId]?.points || 0;
+					}
+				} else {
+					break;
+				}
+			}
+			initialObj.changedTeams[teamId] = initialPoints;
+			previousPoints[teamId] = initialPoints;
 		}
+
 		teamData.push(initialObj);
 
 		for (const currentTimestamp of timestamps) {
-			const preStepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp - 1, changedTeams: {} };
-			const stepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp, changedTeams: {} };
+			const preStepObj: { timestamp: number; changedTeams: Record<string, number> } = {
+				timestamp: currentTimestamp - 1,
+				changedTeams: {},
+			};
+			const stepObj: { timestamp: number; changedTeams: Record<string, number> } = {
+				timestamp: currentTimestamp,
+				changedTeams: {},
+			};
 
-			// Local map for counted tasks for each timestamp
 			const countedTasks: Record<string, Set<string>> = {};
 			for (const team of teams) {
 				countedTasks[team.id] = new Set<string>();
@@ -801,9 +823,8 @@ export const getLb: Handler = Util.handler(async (event) => {
 
 			for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
 				let currentPoints = 0;
-
 				for (const activity of teamActivities) {
-					if (parseInt(activity.createdAt) < currentTimestamp) {
+					if (parseInt(activity.createdAt) <= currentTimestamp) {
 						if (!countedTasks[teamId].has(activity.taskId)) {
 							countedTasks[teamId].add(activity.taskId);
 							const taskPoints = taskLookup[activity.taskId]?.points || 0;
@@ -829,10 +850,13 @@ export const getLb: Handler = Util.handler(async (event) => {
 			}
 		}
 
-		const finalObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: timeNow, changedTeams: {} };
+		const finalObj: { timestamp: number; changedTeams: Record<string, number> } = {
+			timestamp: timeNow,
+			changedTeams: {},
+		};
 
-		for (const team of Object.keys(teamLabels)) {
-			finalObj.changedTeams[team] = previousPoints[team];
+		for (const teamId of Object.keys(teamLabels)) {
+			finalObj.changedTeams[teamId] = previousPoints[teamId];
 		}
 
 		teamData.push(finalObj);
