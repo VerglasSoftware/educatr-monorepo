@@ -774,11 +774,10 @@ export const getLb: Handler = Util.handler(async (event) => {
 		let previousPoints: Record<string, number> = {};
 		const teamActivitiesMap = new Map<string, Activity[]>();
 
+		// Pre-sort the activities for each team by creation time
 		for (const team of teams) {
-			teamActivitiesMap.set(
-				team.id,
-				activities.filter((activity) => team.students.includes(activity.userId) && activity.correct === true)
-			);
+			const teamActs = activities.filter((activity) => team.students.includes(activity.userId) && activity.correct === true).sort((a, b) => parseInt(a.createdAt) - parseInt(b.createdAt));
+			teamActivitiesMap.set(team.id, teamActs);
 			previousPoints[team.id] = 0;
 		}
 
@@ -792,14 +791,19 @@ export const getLb: Handler = Util.handler(async (event) => {
 			const preStepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp - 1, changedTeams: {} };
 			const stepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp, changedTeams: {} };
 
+			// Local map for counted tasks for each timestamp
+			const countedTasks: Record<string, Set<string>> = {};
+			for (const team of teams) {
+				countedTasks[team.id] = new Set<string>();
+			}
+
 			for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
 				let currentPoints = 0;
-				const countedTaskIds = new Set<string>();
 
 				for (const activity of teamActivities) {
 					if (parseInt(activity.createdAt) < currentTimestamp) {
-						if (!countedTaskIds.has(activity.taskId)) {
-							countedTaskIds.add(activity.taskId);
+						if (!countedTasks[teamId].has(activity.taskId)) {
+							countedTasks[teamId].add(activity.taskId);
 							const taskPoints = taskLookup[activity.taskId]?.points || 0;
 							currentPoints += taskPoints;
 						}
@@ -811,7 +815,6 @@ export const getLb: Handler = Util.handler(async (event) => {
 				if (previousPoints[teamId] !== currentPoints) {
 					preStepObj.changedTeams[teamId] = previousPoints[teamId];
 					stepObj.changedTeams[teamId] = currentPoints;
-
 					previousPoints[teamId] = currentPoints;
 				}
 			}
