@@ -10,7 +10,6 @@ import { Activity } from "../../../../functions/src/types/activity";
 import { Competition } from "../../../../functions/src/types/competition";
 import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
 import { Task } from "../../../../functions/src/types/task";
-import { Team } from "../../../../functions/src/types/team";
 import NavbarMain from "../../components/launch/Navbar";
 import LeaderboardChart from "../../components/play/LeaderboardChart";
 import "../play/Play.css";
@@ -26,8 +25,6 @@ interface EnrichedActivity {
 	activity: Activity;
 	task: Task;
 	pack: Pack;
-	team: Team;
-	teamName: string;
 	type: string;
 }
 
@@ -123,14 +120,10 @@ export default function LaunchCompetition() {
 				socketsLogs.map(async (socketsLog) => {
 					const pack = packs.find((p) => p.tasks.some((t) => t.id === socketsLog.body.taskId));
 					const task = pack?.tasks.find((t) => t.id === socketsLog.body.taskId);
-					const teams: Team[] = await API.get("api", `/competition/${compId}/team`, {});
-					const team = teams.find((t) => t.students.some((m) => m === socketsLog.body.userId));
 					return {
 						activity: socketsLog.body,
 						task,
 						pack,
-						team,
-						teamName: team?.name,
 						type: socketsLog.type,
 					};
 				})
@@ -610,7 +603,7 @@ export default function LaunchCompetition() {
 									}}>
 									{[...enrichedActivities]
 										.sort((a, b) => new Date(b.activity.createdAt).getTime() - new Date(a.activity.createdAt).getTime())
-										.map(({ activity, task, pack, teamName, type }) => (
+										.map(({ activity, task, pack, type }) => (
 											<Card
 												variant="outlined"
 												sx={{
@@ -630,7 +623,7 @@ export default function LaunchCompetition() {
 															level="body-md"
 															component="h3"
 															textColor="common.white">
-															Someone from {teamName} answered {task.title} | {pack.name} {activity.correct ? "correctly" : "incorrectly"}
+															Someone from a team answered {task.title} | {pack.name} {activity.correct ? "correctly" : "incorrectly"}
 														</Typography>
 													)}
 													{type == "TASK:MANUAL" && (
@@ -638,7 +631,7 @@ export default function LaunchCompetition() {
 															level="body-md"
 															component="h3"
 															textColor="common.white">
-															Someone from {teamName} is waiting for manual verification on {pack.name} | {task.title}
+															Someone from a team is waiting for manual verification on {pack.name} | {task.title}
 														</Typography>
 													)}
 												</CardContent>
