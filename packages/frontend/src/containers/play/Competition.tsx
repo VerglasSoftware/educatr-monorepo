@@ -320,6 +320,7 @@ export default function PlayCompetition() {
 						}}>
 						{packs.map((pack, index) => (
 							<Tab
+								id={pack.id}
 								key={index}
 								sx={{
 									backgroundColor: "transparent",
