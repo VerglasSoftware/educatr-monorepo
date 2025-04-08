@@ -11,6 +11,7 @@ import { Activity } from "../../../../functions/src/types/activity";
 import { Competition } from "../../../../functions/src/types/competition";
 import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
 import { Task } from "../../../../functions/src/types/task";
+import { User } from "../../../../functions/src/types/user";
 import AnnounceModal from "../../components/play/AnnounceModal";
 import Loading from "../../components/play/Loading";
 import NavbarMain from "../../components/play/Navbar";
@@ -43,6 +44,7 @@ export default function PlayCompetition() {
 
 	const [teamPoints, setTeamPoints] = useState(0);
 	const [activities, setActivities] = useState<Activity[]>();
+	const [users, setUsers] = useState<User[]>();
 	const [taskLookup, setTaskLookup] = useState<Record<string, Task>>({});
 
 	const [user, setUser] = useState(null);
@@ -85,14 +87,14 @@ export default function PlayCompetition() {
 						}
 						if (user && user.username != newActivity.userId) {
 							// path parameter is the userId
-							console.log("userId", newActivity.userId);
 							const pack = packs.find((p) => p.id == newActivity.packId);
 							const task = pack.tasks.find((t) => t.id == newActivity.taskId);
+							const user = users.find((u) => u.id == newActivity.userId);
 
 							if (newActivity.correct) {
-								toast.success(`Someone answered ${task.title} in ${pack.name} correctly, and ${task.points} points have been added to your team.`);
+								toast.success(`${user.given_name} ${user.family_name} answered ${task.title} in ${pack.name} correctly, and ${task.points} points have been added to your team.`);
 							} else {
-								toast.error(`Someone answered ${task.title} in ${pack.name} incorrectly, but no points have been taken from your team.`);
+								toast.error(`${user.given_name} ${user.family_name} answered ${task.title} in ${pack.name} incorrectly, but no points have been taken from your team.`);
 							}
 						}
 						break;
@@ -129,10 +131,11 @@ export default function PlayCompetition() {
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const [competitionData, packsData, activitiesData]: [Competition, PackWithTasks[], Activity[]] = await Promise.all([API.get("api", `/competition/${compId}`, {}) as Promise<Competition>, API.get("api", `/pack?include=tasks`, {}) as Promise<PackWithTasks[]>, API.get("api", `/competition/${compId}/activity`, {}) as Promise<Activity[]>]);
+				const [competitionData, packsData, activitiesData, users]: [Competition, PackWithTasks[], Activity[], User[]] = await Promise.all([API.get("api", `/competition/${compId}`, {}) as Promise<Competition>, API.get("api", `/pack?include=tasks`, {}) as Promise<PackWithTasks[]>, API.get("api", `/competition/${compId}/activity`, {}) as Promise<Activity[]>, API.get("api", `/user`, {}) as Promise<User[]>]);
 				setCompetition(competitionData);
 				setPacks(packsData.filter((pack) => competitionData.packs.includes(pack.id)));
 				setActivities(activitiesData);
+				setUsers(users);
 			} catch (e) {
 				console.log(e);
 			}
@@ -203,13 +206,14 @@ export default function PlayCompetition() {
 		});
 	}, [activities, packs]);
 
-	if (!competition || !packs || webhookStatus != "Open" || !activities) {
+	if (!competition || !packs || webhookStatus != "Open" || !activities || !users) {
 		return (
 			<Loading
 				competition={!!competition}
 				packs={!!packs}
 				activity={!!activities}
 				webhookStatus={webhookStatus}
+				users={!!users}
 			/>
 		);
 	}

@@ -376,6 +376,14 @@ api.route(
 );
 
 api.route(
+	"GET /user",
+	{
+		handler: "packages/functions/src/user.list",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
 	"GET /user/me",
 	{
 		handler: "packages/functions/src/user.getMe",

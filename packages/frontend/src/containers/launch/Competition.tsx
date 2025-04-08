@@ -10,6 +10,8 @@ import { Activity } from "../../../../functions/src/types/activity";
 import { Competition } from "../../../../functions/src/types/competition";
 import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
 import { Task } from "../../../../functions/src/types/task";
+import { Team } from "../../../../functions/src/types/team";
+import { User } from "../../../../functions/src/types/user";
 import NavbarMain from "../../components/launch/Navbar";
 import LeaderboardChart from "../../components/play/LeaderboardChart";
 import "../play/Play.css";
@@ -23,14 +25,19 @@ interface SelectedTask {
 
 interface EnrichedActivity {
 	activity: Activity;
+	user: User;
+	team: Team;
 	task: Task;
 	pack: Pack;
+	verifier: User;
 	type: string;
 }
 
 export default function LaunchCompetition() {
 	const [competition, setCompetition] = useState<Competition>();
 	const [packs, setPacks] = useState<PackWithTasks[]>();
+	const [users, setUsers] = useState<User[]>();
+	const [teams, setTeams] = useState<Team[]>();
 	const [socketsLogs, setSocketsLogs] = useState<{ body: Activity; type: string; filter: { competitionId: string } }[]>([]);
 	const [enrichedActivities, setEnrichedActivities] = useState<EnrichedActivity[]>([]);
 
@@ -105,6 +112,12 @@ export default function LaunchCompetition() {
 
 				const packs = await API.get("api", `/pack?include=tasks`, {});
 				setPacks(packs);
+
+				const users = await API.get("api", `/user`, {});
+				setUsers(users);
+
+				const teams = await API.get("api", `/competition/${compId}/team`, {});
+				setTeams(teams);
 			} catch (e) {
 				console.log(e);
 			}
@@ -120,10 +133,19 @@ export default function LaunchCompetition() {
 				socketsLogs.map(async (socketsLog) => {
 					const pack = packs.find((p) => p.tasks.some((t) => t.id === socketsLog.body.taskId));
 					const task = pack?.tasks.find((t) => t.id === socketsLog.body.taskId);
+					const user = users.find((u) => u.id === socketsLog.body.userId);
+					const team = teams.find((t) => t.students.some((s) => s === user?.id));
+					let verifier: User | undefined;
+					if (socketsLog.body.verifierId) {
+						verifier = users.find((u) => u.id === socketsLog.body.verifierId);
+					}
 					return {
 						activity: socketsLog.body,
 						task,
 						pack,
+						user,
+						team,
+						verifier,
 						type: socketsLog.type,
 					};
 				})
@@ -248,7 +270,7 @@ export default function LaunchCompetition() {
 		setEndButtonLoading(false);
 	}
 
-	if (!competition || !packs || webhookStatus != "Open") {
+	if (!competition || !packs || webhookStatus != "Open" || !users || !teams) {
 		return (
 			<Box
 				sx={{
@@ -292,6 +314,20 @@ export default function LaunchCompetition() {
 								Downloading pack data
 							</Typography>
 						)}
+						{!users && (
+							<Typography
+								level="body-sm"
+								textColor="common.white">
+								Downloading competition user data
+							</Typography>
+						)}
+						{!teams && (
+							<Typography
+								level="body-sm"
+								textColor="common.white">
+								Downloading competition team data
+							</Typography>
+						)}
 						{webhookStatus != "Open" && (
 							<Typography
 								level="body-sm"
@@ -308,6 +344,8 @@ export default function LaunchCompetition() {
 	return (
 		competition &&
 		packs &&
+		users &&
+		teams &&
 		webhookStatus == "Open" && (
 			<div className="Home">
 				<Helmet>
@@ -603,7 +641,7 @@ export default function LaunchCompetition() {
 									}}>
 									{[...enrichedActivities]
 										.sort((a, b) => new Date(b.activity.createdAt).getTime() - new Date(a.activity.createdAt).getTime())
-										.map(({ activity, task, pack, type }) => (
+										.map(({ activity, task, pack, user, team, verifier, type }) => (
 											<Card
 												variant="outlined"
 												sx={{
@@ -618,12 +656,20 @@ export default function LaunchCompetition() {
 														flexDirection: "column",
 														alignItems: "left",
 													}}>
-													{type == "TASK:ANSWERED" && (
+													{type == "TASK:ANSWERED" && verifier && (
 														<Typography
 															level="body-md"
 															component="h3"
 															textColor="common.white">
-															Someone from a team answered {task.title} | {pack.name} {activity.correct ? "correctly" : "incorrectly"}
+															{user.given_name} {user.family_name} from {team.name} answered {task.title} | {pack.name} and was verified by {verifier.given_name} {verifier.family_name}
+														</Typography>
+													)}
+													{type == "TASK:ANSWERED" && !verifier && (
+														<Typography
+															level="body-md"
+															component="h3"
+															textColor="common.white">
+															{user.given_name} {user.family_name} from {team.name} answered {task.title} | {pack.name} {activity.correct ? "correctly" : "incorrectly"}
 														</Typography>
 													)}
 													{type == "TASK:MANUAL" && (
@@ -631,7 +677,7 @@ export default function LaunchCompetition() {
 															level="body-md"
 															component="h3"
 															textColor="common.white">
-															Someone from a team is waiting for manual verification on {pack.name} | {task.title}
+															{user.given_name} {user.family_name} from {team.name} is waiting for manual verification on {task.title} | {pack.name}
 														</Typography>
 													)}
 												</CardContent>
