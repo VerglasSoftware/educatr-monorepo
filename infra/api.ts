@@ -384,6 +384,14 @@ api.route(
 );
 
 api.route(
+	"GET /competition/{compId}/packs",
+	{
+		handler: "packages/functions/src/competition.getPacks",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
 	"POST /competition/{compId}/announce",
 	{
 		handler: "packages/functions/src/competition.announce",

@@ -1,12 +1,13 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
 import { AttributeValue, DynamoDBClient, QueryCommand, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { BatchGetCommand, BatchGetCommandInput, DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { APIGatewayProxyEvent, Handler } from "aws-lambda";
 import axios, { AxiosResponse } from "axios";
 import { Resource } from "sst";
 import { itemsToActivities, itemToActivity } from "./activity";
+import { itemsToPacks } from "./pack";
 import { itemsToConnections } from "./socket/sendMessage";
 import { itemsToTasks, itemToTask } from "./task";
 import { itemsToTeams } from "./team";
@@ -332,16 +333,17 @@ export const del: Handler = Util.handler(async (event) => {
 		throw new Error("Missing id in path parameters");
 	}
 
-	const params: ScanCommandInput = {
+	const params: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :pk",
+		IndexName: "ItemTypeIndex",
+		KeyConditionExpression: "SK = :sk",
 		ExpressionAttributeValues: {
-			":pk": { S: compId },
+			":sk": { S: "DETAILS" },
 		},
 	};
 
 	try {
-		const result = await client.send(new ScanCommand(params));
+		const result = await client.send(new QueryCommand(params));
 		if (result.Items) {
 			for (const item of result.Items) {
 				const deleteParams: DeleteCommandInput = {
@@ -1048,4 +1050,79 @@ export const whoWon: Handler = Util.handler(async (event) => {
 	const winners = sortedTeams.slice(0, 3).map(([teamId, points]) => ({ teamId, points }));
 
 	return JSON.stringify({ winners });
+});
+
+export const getPacks: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const competitionParams: GetCommandInput = {
+		TableName: Resource.Competitions.name,
+		Key: {
+			PK: compId,
+			SK: "DETAILS",
+		},
+	};
+
+	let competition: Competition;
+	try {
+		const competitionResult = await client.send(new GetCommand(competitionParams));
+		if (!competitionResult.Item) {
+			throw new Error("Competition not found");
+		}
+		competition = itemToCompetition(competitionResult.Item);
+	} catch (e) {
+		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
+	}
+
+	const packKeys = competition.packs.map((packId) => ({
+		PK: packId,
+		SK: "DETAILS",
+	}));
+
+	const batchGetParams: BatchGetCommandInput = {
+		RequestItems: {
+			[Resource.Packs.name]: {
+				Keys: packKeys,
+			},
+		},
+	};
+
+	let packs;
+	try {
+		const batchGetResult = await client.send(new BatchGetCommand(batchGetParams));
+		packs = itemsToPacks(batchGetResult.Responses?.[Resource.Packs.name]);
+	} catch (e) {
+		throw new Error(`Could not retrieve packs for competition ${compId}: ${e}`);
+	}
+
+	const tasksByPack = new Map<string, Task[]>();
+
+	for (const pack of packs) {
+		const taskParams: QueryCommandInput = {
+			TableName: Resource.Packs.name,
+			KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":packId": { S: pack.id },
+				":skPrefix": { S: "TASK#" },
+			},
+		};
+
+		try {
+			const taskResult = await client.send(new QueryCommand(taskParams));
+			const taskList = itemsToTasks(taskResult.Items);
+			tasksByPack.set(pack.id, taskList);
+		} catch (e) {
+			throw new Error(`Could not retrieve tasks for pack ${pack.id}: ${e}`);
+		}
+	}
+
+	const packDetails = packs.map((pack) => ({
+		...pack,
+		tasks: tasksByPack.get(pack.id) || [],
+	}));
+
+	return JSON.stringify(packDetails);
 });

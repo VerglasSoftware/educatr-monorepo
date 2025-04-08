@@ -1,5 +1,5 @@
-import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, QueryCommand, ReturnValue } from "@aws-sdk/client-dynamodb";
+import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { Handler } from "aws-lambda";
@@ -38,9 +38,9 @@ export const list: Handler = Util.handler(async (event) => {
 	let lastEvaluatedKey: any | undefined = undefined;
 
 	do {
-		const params: ScanCommandInput = {
+		const params: QueryCommandInput = {
 			TableName: Resource.Competitions.name,
-			FilterExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+			KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
 			ExpressionAttributeValues: {
 				":compId": { S: compId },
 				":skPrefix": { S: "TEAM#" },
@@ -49,9 +49,7 @@ export const list: Handler = Util.handler(async (event) => {
 			ExclusiveStartKey: lastEvaluatedKey,
 		};
 
-		console.log("Scanning with params:", JSON.stringify(params));
-		const result = await client.send(new ScanCommand(params));
-		console.log("Scan result:", JSON.stringify(result));
+		const result = await client.send(new QueryCommand(params));
 
 		if (result.Items) {
 			teams.push(...itemsToTeams(result.Items));

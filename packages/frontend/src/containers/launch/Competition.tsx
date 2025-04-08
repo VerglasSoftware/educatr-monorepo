@@ -110,7 +110,7 @@ export default function LaunchCompetition() {
 				const competition = await API.get("api", `/competition/${compId}`, {});
 				setCompetition(competition);
 
-				const packs = await API.get("api", `/pack?include=tasks`, {});
+				const packs = await API.get("api", `/competition/${compId}/packs`, {});
 				setPacks(packs);
 
 				const users = await API.get("api", `/user`, {});

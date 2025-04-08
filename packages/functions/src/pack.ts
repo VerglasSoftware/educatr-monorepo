@@ -23,7 +23,7 @@ export const itemToPack = (item: Record<string, any> | undefined): Pack => {
 	};
 };
 
-const itemsToPacks = (items: Record<string, AttributeValue>[] | undefined): Pack[] => {
+export const itemsToPacks = (items: Record<string, AttributeValue>[] | undefined): Pack[] => {
 	if (!items) {
 		throw new Error("Items not found");
 	}

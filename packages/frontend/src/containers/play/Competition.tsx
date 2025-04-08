@@ -131,7 +131,7 @@ export default function PlayCompetition() {
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const [competitionData, packsData, activitiesData, users]: [Competition, PackWithTasks[], Activity[], User[]] = await Promise.all([API.get("api", `/competition/${compId}`, {}) as Promise<Competition>, API.get("api", `/pack?include=tasks`, {}) as Promise<PackWithTasks[]>, API.get("api", `/competition/${compId}/activity`, {}) as Promise<Activity[]>, API.get("api", `/user`, {}) as Promise<User[]>]);
+				const [competitionData, packsData, activitiesData, users]: [Competition, PackWithTasks[], Activity[], User[]] = await Promise.all([API.get("api", `/competition/${compId}`, {}) as Promise<Competition>, API.get("api", `/competition/${compId}/packs`, {}) as Promise<PackWithTasks[]>, API.get("api", `/competition/${compId}/activity`, {}) as Promise<Activity[]>, API.get("api", `/user`, {}) as Promise<User[]>]);
 				setCompetition(competitionData);
 				setPacks(packsData.filter((pack) => competitionData.packs.includes(pack.id)));
 				setActivities(activitiesData);
