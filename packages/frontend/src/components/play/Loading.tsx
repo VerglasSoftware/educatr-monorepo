@@ -6,9 +6,10 @@ interface LoadingProps {
 	packs: boolean;
 	activity: boolean;
 	webhookStatus: string;
+	users: boolean;
 }
 
-export default function Loading({ competition, packs, activity, webhookStatus }: LoadingProps) {
+export default function Loading({ competition, packs, activity, webhookStatus, users }: LoadingProps) {
 	return (
 		<Box
 			sx={{
@@ -57,6 +58,13 @@ export default function Loading({ competition, packs, activity, webhookStatus }:
 							level="body-sm"
 							textColor="common.white">
 							Downloading task completion data
+						</Typography>
+					)}
+					{!users && (
+						<Typography
+							level="body-sm"
+							textColor="common.white">
+							Downloading completion user data
 						</Typography>
 					)}
 					{webhookStatus != "Open" && (

@@ -1,14 +1,15 @@
 import { ApiGatewayManagementApi } from "@aws-sdk/client-apigatewaymanagementapi";
 import { AttributeValue, DynamoDBClient, QueryCommand, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { BatchGetCommand, BatchGetCommandInput, DeleteCommand, DeleteCommandInput, DynamoDBDocumentClient, GetCommand, GetCommandInput, PutCommand, PutCommandInput, QueryCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { createId } from "@paralleldrive/cuid2";
 import { APIGatewayProxyEvent, Handler } from "aws-lambda";
 import axios, { AxiosResponse } from "axios";
 import { Resource } from "sst";
 import { itemsToActivities, itemToActivity } from "./activity";
+import { itemsToPacks } from "./pack";
 import { itemsToConnections } from "./socket/sendMessage";
-import { itemToTask } from "./task";
+import { itemsToTasks, itemToTask } from "./task";
 import { itemsToTeams } from "./team";
 import { Activity } from "./types/activity";
 import { Competition, CompetitionAnnounce, CompetitionCheck, CompetitionCreate, CompetitionRun, CompetitionUpdate, Judge0CreateSubmissionResponse, Judge0GetSubmissionResponse } from "./types/competition";
@@ -332,16 +333,17 @@ export const del: Handler = Util.handler(async (event) => {
 		throw new Error("Missing id in path parameters");
 	}
 
-	const params: ScanCommandInput = {
+	const params: QueryCommandInput = {
 		TableName: Resource.Competitions.name,
-		FilterExpression: "PK = :pk",
+		IndexName: "ItemTypeIndex",
+		KeyConditionExpression: "SK = :sk",
 		ExpressionAttributeValues: {
-			":pk": { S: compId },
+			":sk": { S: "DETAILS" },
 		},
 	};
 
 	try {
-		const result = await client.send(new ScanCommand(params));
+		const result = await client.send(new QueryCommand(params));
 		if (result.Items) {
 			for (const item of result.Items) {
 				const deleteParams: DeleteCommandInput = {
@@ -774,11 +776,10 @@ export const getLb: Handler = Util.handler(async (event) => {
 		let previousPoints: Record<string, number> = {};
 		const teamActivitiesMap = new Map<string, Activity[]>();
 
+		// Pre-sort the activities for each team by creation time
 		for (const team of teams) {
-			teamActivitiesMap.set(
-				team.id,
-				activities.filter((activity) => team.students.includes(activity.userId) && activity.correct === true)
-			);
+			const teamActs = activities.filter((activity) => team.students.includes(activity.userId) && activity.correct === true).sort((a, b) => parseInt(a.createdAt) - parseInt(b.createdAt));
+			teamActivitiesMap.set(team.id, teamActs);
 			previousPoints[team.id] = 0;
 		}
 
@@ -792,14 +793,19 @@ export const getLb: Handler = Util.handler(async (event) => {
 			const preStepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp - 1, changedTeams: {} };
 			const stepObj: { timestamp: number; changedTeams: Record<string, number> } = { timestamp: currentTimestamp, changedTeams: {} };
 
+			// Local map for counted tasks for each timestamp
+			const countedTasks: Record<string, Set<string>> = {};
+			for (const team of teams) {
+				countedTasks[team.id] = new Set<string>();
+			}
+
 			for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
 				let currentPoints = 0;
-				const countedTaskIds = new Set<string>();
 
 				for (const activity of teamActivities) {
 					if (parseInt(activity.createdAt) < currentTimestamp) {
-						if (!countedTaskIds.has(activity.taskId)) {
-							countedTaskIds.add(activity.taskId);
+						if (!countedTasks[teamId].has(activity.taskId)) {
+							countedTasks[teamId].add(activity.taskId);
 							const taskPoints = taskLookup[activity.taskId]?.points || 0;
 							currentPoints += taskPoints;
 						}
@@ -811,7 +817,6 @@ export const getLb: Handler = Util.handler(async (event) => {
 				if (previousPoints[teamId] !== currentPoints) {
 					preStepObj.changedTeams[teamId] = previousPoints[teamId];
 					stepObj.changedTeams[teamId] = currentPoints;
-
 					previousPoints[teamId] = currentPoints;
 				}
 			}
@@ -891,4 +896,233 @@ export const announce: Handler = Util.handler(async (event) => {
 	};
 	await Promise.all(connections.map(postToConnection));
 	return JSON.stringify({ success: true });
+});
+
+export const topUsers: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const activityParams: QueryCommandInput = {
+		TableName: Resource.Competitions.name,
+		IndexName: "CorrectIndex",
+		KeyConditionExpression: "PK = :compId AND correctString = :correctString",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":correctString": { S: "true" },
+		},
+	};
+
+	let activities: Activity[];
+	try {
+		const activityResult = await client.send(new QueryCommand(activityParams));
+		activities = itemsToActivities(activityResult.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+	}
+
+	const teamActivitiesMap = new Map<string, Activity[]>();
+	for (const activity of activities) {
+		if (!teamActivitiesMap.has(activity.userId)) {
+			teamActivitiesMap.set(activity.userId, []);
+		}
+		teamActivitiesMap.get(activity.userId)?.push(activity);
+	}
+	const teamPointsMap = new Map<string, number>();
+	for (const [userId, userActivities] of teamActivitiesMap.entries()) {
+		let currentPoints = 0;
+		const countedTaskIds = new Set<string>();
+
+		for (const activity of userActivities) {
+			if (!countedTaskIds.has(activity.taskId)) {
+				countedTaskIds.add(activity.taskId);
+				const tasksParams: QueryCommandInput = {
+					TableName: Resource.Packs.name,
+					KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					ExpressionAttributeValues: {
+						":packId": { S: activity.packId },
+						":skPrefix": { S: "TASK#" },
+					},
+				};
+				let tasks: Task[];
+				try {
+					const taskResult = await client.send(new QueryCommand(tasksParams));
+					tasks = itemsToTasks(taskResult.Items);
+				} catch (e) {
+					throw new Error(`Could not retrieve tasks for pack ${activity.packId}: ${e}`);
+				}
+				const taskPoints = tasks.find((item) => item.id === activity.taskId)?.points || 0;
+				currentPoints += taskPoints;
+			}
+		}
+		teamPointsMap.set(userId, currentPoints);
+	}
+	const sortedTeams = Array.from(teamPointsMap.entries()).sort((a, b) => b[1] - a[1]);
+	const winners = sortedTeams.slice(0, 3).map(([userId, points]) => ({ userId, points }));
+	return JSON.stringify({ winners });
+});
+
+export const whoWon: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const activityParams: QueryCommandInput = {
+		TableName: Resource.Competitions.name,
+		IndexName: "CorrectIndex",
+		KeyConditionExpression: "PK = :compId AND correctString = :correctString",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":correctString": { S: "true" },
+		},
+	};
+
+	const teamParams: QueryCommandInput = {
+		TableName: Resource.Competitions.name,
+		KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":skPrefix": { S: "TEAM#" },
+		},
+	};
+
+	let activities: Activity[];
+	try {
+		const activityResult = await client.send(new QueryCommand(activityParams));
+		activities = itemsToActivities(activityResult.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+	}
+
+	let teams: Team[];
+	try {
+		const teamResult = await client.send(new QueryCommand(teamParams));
+		teams = itemsToTeams(teamResult.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+	}
+
+	// Group by teamId instead of userId
+	const teamActivitiesMap = new Map<string, Activity[]>();
+	for (const activity of activities) {
+		const team = teams.find((team) => team.students.includes(activity.userId));
+		if (!team) continue; // Skip if no team found
+		if (!teamActivitiesMap.has(team.id)) {
+			teamActivitiesMap.set(team.id, []);
+		}
+		teamActivitiesMap.get(team.id)?.push(activity);
+	}
+
+	// Score calculation per team
+	const teamPointsMap = new Map<string, number>();
+	for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
+		let currentPoints = 0;
+		const countedTaskIds = new Set<string>();
+
+		for (const activity of teamActivities) {
+			if (!countedTaskIds.has(activity.taskId)) {
+				countedTaskIds.add(activity.taskId);
+				const tasksParams: QueryCommandInput = {
+					TableName: Resource.Packs.name,
+					KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					ExpressionAttributeValues: {
+						":packId": { S: activity.packId },
+						":skPrefix": { S: "TASK#" },
+					},
+				};
+				let tasks: Task[];
+				try {
+					const taskResult = await client.send(new QueryCommand(tasksParams));
+					tasks = itemsToTasks(taskResult.Items);
+				} catch (e) {
+					throw new Error(`Could not retrieve tasks for pack ${activity.packId}: ${e}`);
+				}
+				const taskPoints = tasks.find((item) => item.id === activity.taskId)?.points || 0;
+				currentPoints += taskPoints;
+			}
+		}
+		teamPointsMap.set(teamId, currentPoints);
+	}
+
+	const sortedTeams = Array.from(teamPointsMap.entries()).sort((a, b) => b[1] - a[1]);
+	const winners = sortedTeams.slice(0, 3).map(([teamId, points]) => ({ teamId, points }));
+
+	return JSON.stringify({ winners });
+});
+
+export const getPacks: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const competitionParams: GetCommandInput = {
+		TableName: Resource.Competitions.name,
+		Key: {
+			PK: compId,
+			SK: "DETAILS",
+		},
+	};
+
+	let competition: Competition;
+	try {
+		const competitionResult = await client.send(new GetCommand(competitionParams));
+		if (!competitionResult.Item) {
+			throw new Error("Competition not found");
+		}
+		competition = itemToCompetition(competitionResult.Item);
+	} catch (e) {
+		throw new Error(`Could not retrieve competition ${compId}: ${e}`);
+	}
+
+	const packKeys = competition.packs.map((packId) => ({
+		PK: packId,
+		SK: "DETAILS",
+	}));
+
+	const batchGetParams: BatchGetCommandInput = {
+		RequestItems: {
+			[Resource.Packs.name]: {
+				Keys: packKeys,
+			},
+		},
+	};
+
+	let packs;
+	try {
+		const batchGetResult = await client.send(new BatchGetCommand(batchGetParams));
+		packs = itemsToPacks(batchGetResult.Responses?.[Resource.Packs.name]);
+	} catch (e) {
+		throw new Error(`Could not retrieve packs for competition ${compId}: ${e}`);
+	}
+
+	const tasksByPack = new Map<string, Task[]>();
+
+	for (const pack of packs) {
+		const taskParams: QueryCommandInput = {
+			TableName: Resource.Packs.name,
+			KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+			ExpressionAttributeValues: {
+				":packId": { S: pack.id },
+				":skPrefix": { S: "TASK#" },
+			},
+		};
+
+		try {
+			const taskResult = await client.send(new QueryCommand(taskParams));
+			const taskList = itemsToTasks(taskResult.Items);
+			tasksByPack.set(pack.id, taskList);
+		} catch (e) {
+			throw new Error(`Could not retrieve tasks for pack ${pack.id}: ${e}`);
+		}
+	}
+
+	const packDetails = packs.map((pack) => ({
+		...pack,
+		tasks: tasksByPack.get(pack.id) || [],
+	}));
+
+	return JSON.stringify(packDetails);
 });

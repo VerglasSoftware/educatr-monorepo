@@ -368,9 +368,41 @@ api.route(
 );
 
 api.route(
+	"GET /competition/{compId}/topusers",
+	{
+		handler: "packages/functions/src/competition.topUsers",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
+	"GET /competition/{compId}/whowon",
+	{
+		handler: "packages/functions/src/competition.whoWon",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
+	"GET /competition/{compId}/packs",
+	{
+		handler: "packages/functions/src/competition.getPacks",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
 	"POST /competition/{compId}/announce",
 	{
 		handler: "packages/functions/src/competition.announce",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
+	"GET /user",
+	{
+		handler: "packages/functions/src/user.list",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );

@@ -1,5 +1,5 @@
-import { AttributeValue, DynamoDBClient, ReturnValue } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, GetCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
+import { AttributeValue, DynamoDBClient, ReturnValue, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, GetCommandInput, ScanCommandInput, UpdateCommand, UpdateCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Util } from "@educatr/core/util";
 import { Handler } from "aws-lambda";
 import { Resource } from "sst";
@@ -29,6 +29,24 @@ export const itemsToUsers = (items: Record<string, AttributeValue>[] | undefined
 	}
 	return items.map(itemToUser);
 };
+
+export const list: Handler = Util.handler(async (event) => {
+	const params: ScanCommandInput = {
+		TableName: Resource.Users.name,
+		FilterExpression: "SK = :sk",
+		ExpressionAttributeValues: {
+			":sk": { S: "DETAILS" },
+		},
+	};
+
+	try {
+		const result = await client.send(new ScanCommand(params));
+		const users = itemsToUsers(result.Items);
+		return JSON.stringify(users);
+	} catch (e) {
+		throw new Error(`Could not retrieve users: ${e}`);
+	}
+});
 
 export const getMe: Handler = Util.handler(async (event) => {
 	const cognitoUid: string = event.requestContext.authorizer!.jwt.claims["cognito:username"];

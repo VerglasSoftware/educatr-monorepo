@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Link, Stack, Typography } from "@mui/joy";
+import { Box, Card, CardContent, Link, Tab, TabList, TabPanel, Tabs, Typography } from "@mui/joy";
 import { API, Auth } from "aws-amplify";
 import { cardio, pulsar } from "ldrs";
 import { useEffect, useState } from "react";
@@ -11,6 +11,7 @@ import { Activity } from "../../../../functions/src/types/activity";
 import { Competition } from "../../../../functions/src/types/competition";
 import { Pack, PackWithTasks } from "../../../../functions/src/types/pack";
 import { Task } from "../../../../functions/src/types/task";
+import { User } from "../../../../functions/src/types/user";
 import AnnounceModal from "../../components/play/AnnounceModal";
 import Loading from "../../components/play/Loading";
 import NavbarMain from "../../components/play/Navbar";
@@ -43,6 +44,7 @@ export default function PlayCompetition() {
 
 	const [teamPoints, setTeamPoints] = useState(0);
 	const [activities, setActivities] = useState<Activity[]>();
+	const [users, setUsers] = useState<User[]>();
 	const [taskLookup, setTaskLookup] = useState<Record<string, Task>>({});
 
 	const [user, setUser] = useState(null);
@@ -85,14 +87,14 @@ export default function PlayCompetition() {
 						}
 						if (user && user.username != newActivity.userId) {
 							// path parameter is the userId
-							console.log("userId", newActivity.userId);
 							const pack = packs.find((p) => p.id == newActivity.packId);
 							const task = pack.tasks.find((t) => t.id == newActivity.taskId);
+							const user = users.find((u) => u.id == newActivity.userId);
 
 							if (newActivity.correct) {
-								toast.success(`Someone answered ${task.title} in ${pack.name} correctly, and ${task.points} points have been added to your team.`);
+								toast.success(`${user.given_name} ${user.family_name} answered ${task.title} in ${pack.name} correctly, and ${task.points} points have been added to your team.`);
 							} else {
-								toast.error(`Someone answered ${task.title} in ${pack.name} incorrectly, but no points have been taken from your team.`);
+								toast.error(`${user.given_name} ${user.family_name} answered ${task.title} in ${pack.name} incorrectly, but no points have been taken from your team.`);
 							}
 						}
 						break;
@@ -129,10 +131,11 @@ export default function PlayCompetition() {
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const [competitionData, packsData, activitiesData]: [Competition, PackWithTasks[], Activity[]] = await Promise.all([API.get("api", `/competition/${compId}`, {}) as Promise<Competition>, API.get("api", `/pack?include=tasks`, {}) as Promise<PackWithTasks[]>, API.get("api", `/competition/${compId}/activity`, {}) as Promise<Activity[]>]);
+				const [competitionData, packsData, activitiesData, users]: [Competition, PackWithTasks[], Activity[], User[]] = await Promise.all([API.get("api", `/competition/${compId}`, {}) as Promise<Competition>, API.get("api", `/competition/${compId}/packs`, {}) as Promise<PackWithTasks[]>, API.get("api", `/competition/${compId}/activity`, {}) as Promise<Activity[]>, API.get("api", `/user`, {}) as Promise<User[]>]);
 				setCompetition(competitionData);
 				setPacks(packsData.filter((pack) => competitionData.packs.includes(pack.id)));
 				setActivities(activitiesData);
+				setUsers(users);
 			} catch (e) {
 				console.log(e);
 			}
@@ -203,13 +206,14 @@ export default function PlayCompetition() {
 		});
 	}, [activities, packs]);
 
-	if (!competition || !packs || webhookStatus != "Open" || !activities) {
+	if (!competition || !packs || webhookStatus != "Open" || !activities || !users) {
 		return (
 			<Loading
 				competition={!!competition}
 				packs={!!packs}
 				activity={!!activities}
 				webhookStatus={webhookStatus}
+				users={!!users}
 			/>
 		);
 	}
@@ -298,21 +302,51 @@ export default function PlayCompetition() {
 					flexDirection: "column",
 					padding: "2%",
 				}}>
-				<Stack
-					spacing={2}
-					sx={{ width: "100%" }}>
-					{packs.map((pack) => (
-						<>
-							<Typography
-								level="h2"
-								component="h1"
-								textColor="common.white">
+				<Tabs
+					aria-label="Competition Packs"
+					defaultValue={0}
+					sx={{
+						borderRadius: "12px",
+						overflow: "hidden",
+						backgroundColor: "rgba(0, 0, 0, 0.3)",
+					}}>
+					<TabList
+						sx={{
+							display: "flex",
+							justifyContent: "space-between",
+							padding: "0.5rem",
+							backgroundColor: "rgba(0, 0, 0, 0.6)",
+							borderRadius: "12px",
+						}}>
+						{packs.map((pack, index) => (
+							<Tab
+								id={pack.id}
+								key={index}
+								sx={{
+									backgroundColor: "transparent",
+									padding: "0.8rem 1.2rem",
+									borderRadius: "8px",
+									color: "common.white",
+									"&:hover": {
+										backgroundColor: "rgba(255, 255, 255, 0.1)",
+									},
+									"&[aria-selected='true']": {
+										backgroundColor: "rgb(0, 128, 0, 0.6)",
+										color: "common.white",
+									},
+								}}>
 								{pack.name}
-							</Typography>
+							</Tab>
+						))}
+					</TabList>
+
+					{packs.map((pack, index) => (
+						<TabPanel
+							key={index}
+							value={index}>
 							<Box sx={{ display: "grid", flexGrow: 1, gridTemplateColumns: "repeat(5, 1fr)", justifyContent: "center", gap: 2 }}>
 								{pack.tasks
 									.sort((a, b) => {
-										// Sort numerically if titles are numbers, otherwise lexicographically
 										const numA = parseFloat(a.title);
 										const numB = parseFloat(b.title);
 										if (!isNaN(numA) && !isNaN(numB)) {
@@ -328,7 +362,7 @@ export default function PlayCompetition() {
 										if (task.prerequisites && task.prerequisites.length > 0) {
 											const prereqs = task.prerequisites.map((p) => p);
 											const completedPrereqs = prereqs.filter((p) => activities.find((a) => a.taskId == p && a.correct === true));
-											if (completedPrereqs.length != prereqs.length) return null;
+											if (completedPrereqs.length !== prereqs.length) return null;
 										}
 										return (
 											<Link
@@ -342,7 +376,19 @@ export default function PlayCompetition() {
 												disabled={correct}>
 												<Card
 													variant="plain"
-													sx={{ backgroundColor: correct ? "rgb(0 255 0 / 0.4)" : "rgb(0 0 0 / 0.3)", width: "100%" }}>
+													sx={{
+														backgroundColor: correct ? "rgb(0 255 0 / 0.4)" : "rgb(0 0 0 / 0.3)",
+														width: "200px",
+														minWidth: "200px",
+														maxWidth: "200px",
+														borderRadius: "8px",
+														boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+														transition: "background-color 0.3s",
+														display: "flex",
+														"&:hover": {
+															backgroundColor: correct ? "rgb(0 255 0 / 0.6)" : "rgb(0 0 0 / 0.5)",
+														},
+													}}>
 													<CardContent
 														sx={{
 															display: "flex",
@@ -350,16 +396,18 @@ export default function PlayCompetition() {
 															alignItems: "center",
 															justifyContent: "center",
 															padding: "2%",
+															flexGrow: 1,
 														}}>
 														<Typography
 															level="title-lg"
-															textColor="common.white">
+															textColor="common.white"
+															sx={{ textAlign: "center" }}>
 															{task.title}
 														</Typography>
 														<Typography
 															level="body-sm"
 															textColor="common.white">
-															{task.points} point{task.points != 1 && "s"}
+															{task.points} point{task.points !== 1 && "s"}
 														</Typography>
 													</CardContent>
 												</Card>
@@ -367,9 +415,9 @@ export default function PlayCompetition() {
 										);
 									})}
 							</Box>
-						</>
+						</TabPanel>
 					))}
-				</Stack>
+				</Tabs>
 			</Box>
 
 			<TaskModal
@@ -379,9 +427,6 @@ export default function PlayCompetition() {
 				task={selectedTask}
 				packId={selectedTaskPackId}
 				setActivities={setActivities}
-				// refreshManual={() => {
-				// 	API.get("api", `/competition/${compId}/activity`, {}).then(setActivities);
-				// }}
 			/>
 
 			{announceModalOpen && (
