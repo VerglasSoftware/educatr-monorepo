@@ -37,7 +37,7 @@ export default function LaunchCompetition() {
 	const [competition, setCompetition] = useState<Competition>();
 	const [packs, setPacks] = useState<PackWithTasks[]>();
 	const [users, setUsers] = useState<User[]>();
-	const [teams, setTeams] = useState<Team[]>();
+	const [teams, setTeams] = useState<Team[]>([]);
 	const [socketsLogs, setSocketsLogs] = useState<{ body: Activity; type: string; filter: { competitionId: string } }[]>([]);
 	const [enrichedActivities, setEnrichedActivities] = useState<EnrichedActivity[]>([]);
 
@@ -356,15 +356,18 @@ export default function LaunchCompetition() {
 
 				<Box
 					sx={{
-						display: "flex",
+						display: { xs: "block", sm: "flex" }, // Change display to block (single column) on small screens and flex on larger ones
+						flexDirection: { xs: "column", sm: "row" }, // Column layout for small screens, row layout for larger
 						justifyContent: "space-between",
 						padding: "2%",
+						gap: 3,
 					}}>
+					{/* First Box (Left side) */}
 					<Box
 						sx={{
 							display: "flex",
 							flexDirection: "column",
-							width: "48%",
+							width: "100%", // Use full width for smaller screens
 							gap: 2,
 						}}>
 						<Card
@@ -577,9 +580,10 @@ export default function LaunchCompetition() {
 						</Card>
 					</Box>
 
+					{/* Second Box (Right side - Leaderboard & Activity Log) */}
 					<Box
 						sx={{
-							display: "flex",
+							display: { xs: "none", sm: "flex" }, // Hide leaderboard on small screens
 							flexDirection: "column",
 							width: "48%",
 						}}>
@@ -617,9 +621,16 @@ export default function LaunchCompetition() {
 								</Button>
 							</CardContent>
 						</Card>
+
 						<Card
 							variant="plain"
-							sx={{ backgroundColor: "rgb(0 0 0 / 0.3)", width: "100%", marginTop: "2%", height: "35vh", overflow: "scroll" }}>
+							sx={{
+								backgroundColor: "rgb(0 0 0 / 0.3)",
+								width: "100%",
+								marginTop: "2%",
+								height: "35vh",
+								overflow: "scroll",
+							}}>
 							<CardContent
 								sx={{
 									display: "flex",
