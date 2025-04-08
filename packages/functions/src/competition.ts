@@ -8,7 +8,7 @@ import axios, { AxiosResponse } from "axios";
 import { Resource } from "sst";
 import { itemsToActivities, itemToActivity } from "./activity";
 import { itemsToConnections } from "./socket/sendMessage";
-import { itemToTask } from "./task";
+import { itemsToTasks, itemToTask } from "./task";
 import { itemsToTeams } from "./team";
 import { Activity } from "./types/activity";
 import { Competition, CompetitionAnnounce, CompetitionCheck, CompetitionCreate, CompetitionRun, CompetitionUpdate, Judge0CreateSubmissionResponse, Judge0GetSubmissionResponse } from "./types/competition";
@@ -891,4 +891,158 @@ export const announce: Handler = Util.handler(async (event) => {
 	};
 	await Promise.all(connections.map(postToConnection));
 	return JSON.stringify({ success: true });
+});
+
+export const topUsers: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const activityParams: QueryCommandInput = {
+		TableName: Resource.Competitions.name,
+		IndexName: "CorrectIndex",
+		KeyConditionExpression: "PK = :compId AND correctString = :correctString",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":correctString": { S: "true" },
+		},
+	};
+
+	let activities: Activity[];
+	try {
+		const activityResult = await client.send(new QueryCommand(activityParams));
+		activities = itemsToActivities(activityResult.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+	}
+
+	const teamActivitiesMap = new Map<string, Activity[]>();
+	for (const activity of activities) {
+		if (!teamActivitiesMap.has(activity.userId)) {
+			teamActivitiesMap.set(activity.userId, []);
+		}
+		teamActivitiesMap.get(activity.userId)?.push(activity);
+	}
+	const teamPointsMap = new Map<string, number>();
+	for (const [userId, userActivities] of teamActivitiesMap.entries()) {
+		let currentPoints = 0;
+		const countedTaskIds = new Set<string>();
+
+		for (const activity of userActivities) {
+			if (!countedTaskIds.has(activity.taskId)) {
+				countedTaskIds.add(activity.taskId);
+				const tasksParams: QueryCommandInput = {
+					TableName: Resource.Packs.name,
+					KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					ExpressionAttributeValues: {
+						":packId": { S: activity.packId },
+						":skPrefix": { S: "TASK#" },
+					},
+				};
+				let tasks: Task[];
+				try {
+					const taskResult = await client.send(new QueryCommand(tasksParams));
+					tasks = itemsToTasks(taskResult.Items);
+				} catch (e) {
+					throw new Error(`Could not retrieve tasks for pack ${activity.packId}: ${e}`);
+				}
+				const taskPoints = tasks.find((item) => item.id === activity.taskId)?.points || 0;
+				currentPoints += taskPoints;
+			}
+		}
+		teamPointsMap.set(userId, currentPoints);
+	}
+	const sortedTeams = Array.from(teamPointsMap.entries()).sort((a, b) => b[1] - a[1]);
+	const winners = sortedTeams.slice(0, 3).map(([userId, points]) => ({ userId, points }));
+	return JSON.stringify({ winners });
+});
+
+export const whoWon: Handler = Util.handler(async (event) => {
+	const { compId } = event.pathParameters || {};
+	if (!compId) {
+		throw new Error("Missing id in path parameters");
+	}
+
+	const activityParams: QueryCommandInput = {
+		TableName: Resource.Competitions.name,
+		IndexName: "CorrectIndex",
+		KeyConditionExpression: "PK = :compId AND correctString = :correctString",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":correctString": { S: "true" },
+		},
+	};
+
+	const teamParams: QueryCommandInput = {
+		TableName: Resource.Competitions.name,
+		KeyConditionExpression: "PK = :compId AND begins_with(SK, :skPrefix)",
+		ExpressionAttributeValues: {
+			":compId": { S: compId },
+			":skPrefix": { S: "TEAM#" },
+		},
+	};
+
+	let activities: Activity[];
+	try {
+		const activityResult = await client.send(new QueryCommand(activityParams));
+		activities = itemsToActivities(activityResult.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve activities for competition ${compId}: ${e}`);
+	}
+
+	let teams: Team[];
+	try {
+		const teamResult = await client.send(new QueryCommand(teamParams));
+		teams = itemsToTeams(teamResult.Items);
+	} catch (e) {
+		throw new Error(`Could not retrieve teams for competition ${compId}: ${e}`);
+	}
+
+	// Group by teamId instead of userId
+	const teamActivitiesMap = new Map<string, Activity[]>();
+	for (const activity of activities) {
+		const team = teams.find((team) => team.students.includes(activity.userId));
+		if (!team) continue; // Skip if no team found
+		if (!teamActivitiesMap.has(team.id)) {
+			teamActivitiesMap.set(team.id, []);
+		}
+		teamActivitiesMap.get(team.id)?.push(activity);
+	}
+
+	// Score calculation per team
+	const teamPointsMap = new Map<string, number>();
+	for (const [teamId, teamActivities] of teamActivitiesMap.entries()) {
+		let currentPoints = 0;
+		const countedTaskIds = new Set<string>();
+
+		for (const activity of teamActivities) {
+			if (!countedTaskIds.has(activity.taskId)) {
+				countedTaskIds.add(activity.taskId);
+				const tasksParams: QueryCommandInput = {
+					TableName: Resource.Packs.name,
+					KeyConditionExpression: "PK = :packId AND begins_with(SK, :skPrefix)",
+					ExpressionAttributeValues: {
+						":packId": { S: activity.packId },
+						":skPrefix": { S: "TASK#" },
+					},
+				};
+				let tasks: Task[];
+				try {
+					const taskResult = await client.send(new QueryCommand(tasksParams));
+					tasks = itemsToTasks(taskResult.Items);
+				} catch (e) {
+					throw new Error(`Could not retrieve tasks for pack ${activity.packId}: ${e}`);
+				}
+				const taskPoints = tasks.find((item) => item.id === activity.taskId)?.points || 0;
+				currentPoints += taskPoints;
+			}
+		}
+		teamPointsMap.set(teamId, currentPoints);
+	}
+
+	const sortedTeams = Array.from(teamPointsMap.entries()).sort((a, b) => b[1] - a[1]);
+	const winners = sortedTeams.slice(0, 3).map(([teamId, points]) => ({ teamId, points }));
+
+	return JSON.stringify({ winners });
 });
