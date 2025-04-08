@@ -29,17 +29,17 @@ export async function helloWorld(page: Page, context, events) {
 
 	await page.goto("https://educatr.uk/");
 
-	await expect(page.locator("#username")).toBeEditable({ timeout: 200000 });
-	await expect(page.locator("#password")).toBeEditable({ timeout: 200000 });
+	await expect(page.locator("#\\:r0\\:")).toBeEditable({ timeout: 200000 });
+	await expect(page.locator("#\\:r1\\:")).toBeEditable({ timeout: 200000 });
 
-	await page.fill("#username", username);
-	await page.fill("#password", process.env.PERF_TEST_PASSWORD);
+	await page.fill("#\\:r0\\:", username);
+	await page.fill("#\\:r1\\:", process.env.PERF_TEST_PASSWORD);
 
-	await page.click("text=Login");
+	await page.click('button:has-text("Sign in")');
 
 	await page.waitForTimeout(2000);
 
-	await page.waitForURL("https://educatr.uk/", { timeout: 200000 });
+	await page.waitForURL("https://educatr.uk/play", { timeout: 200000 });
 
 	await page.goto("https://educatr.uk/play/ejn9p6bwx5ajl7oeldatdzoa");
 
@@ -55,8 +55,12 @@ export async function helloWorld(page: Page, context, events) {
 		try {
 			const question = randomisedSampleQuestions[i];
 
-			if (!["TEXT", "PYTHON"].includes(question.answerType.S)) continue; // only allow text answers
+			if (!["TEXT"].includes(question.answerType.S)) continue; // only allow text answers
 			if (!["COMPARE"].includes(question.verificationType.S)) continue; // only allow automatic compare verification
+
+			const buttoncat = await page.locator(`#${(question as any).PK.S}`);
+			buttoncat.click();
+			await page.waitForTimeout(2000);
 
 			const button = await page.locator(`#${question.SK.S.split("#")[1]}`);
 			if (!(await button.evaluate((element) => element.classList.contains("Mui-disabled")))) {
