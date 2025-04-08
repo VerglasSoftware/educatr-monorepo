@@ -8,7 +8,7 @@
 		"aws:login": "aws-azure-login",
 		"start:dev": "npm run aws:login && npx sst dev",
 		"start:dev:nologin": "npx sst dev",
-		"test": "npx artillery run test/educatr-load-test.yml --record"
+		"test": "npx artillery run test/educatr-load-test.yml"
 	},
 	"devDependencies": {
 		"@tsconfig/node20": "^20.1.4",
