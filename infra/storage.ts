@@ -44,3 +44,6 @@ export const socketConnectionsTable = new sst.aws.Dynamo("SocketConnections", {
 
 export const entraClientId = new sst.Secret("ENTRA_CLIENT_ID");
 export const entraClientSecret = new sst.Secret("ENTRA_CLIENT_SECRET");
+
+export const stripeSecret = new sst.Secret("STRIPE_SECRET");
+export const stripeWebhookSecret = new sst.Secret("STRIPE_WEBHOOK_SECRET");

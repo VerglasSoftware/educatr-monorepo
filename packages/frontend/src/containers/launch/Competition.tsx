@@ -14,7 +14,6 @@ import { Team } from "../../../../functions/src/types/team";
 import { User } from "../../../../functions/src/types/user";
 import NavbarMain from "../../components/launch/Navbar";
 import LeaderboardChart from "../../components/play/LeaderboardChart";
-import "../play/Play.css";
 
 interface SelectedTask {
 	id: string;

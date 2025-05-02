@@ -7,7 +7,6 @@ import Login from "./containers/Login.tsx";
 import Signup from "./containers/Signup.tsx";
 import CompetitionDetail from "./containers/dash/competition/CompetitionDetail.tsx";
 import CompetitionList from "./containers/dash/competition/CompetitionList.tsx";
-import PackDetail from "./containers/dash/packs/PackDetail.tsx";
 import PackList from "./containers/dash/packs/PackList.tsx";
 import TaskEditor from "./containers/dash/packs/TaskEditor.tsx";
 import LaunchCompetition from "./containers/launch/Competition.tsx";
@@ -47,14 +46,6 @@ export default function Links() {
 				element={
 					<ProtectedRoute requiredRole="USER">
 						<PackList />
-					</ProtectedRoute>
-				}
-			/>
-			<Route
-				path="/dash/packs/:id"
-				element={
-					<ProtectedRoute requiredRole="USER">
-						<PackDetail />
 					</ProtectedRoute>
 				}
 			/>

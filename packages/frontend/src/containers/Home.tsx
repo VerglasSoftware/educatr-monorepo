@@ -1,7 +1,10 @@
 import { API, Auth } from "aws-amplify";
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet";
 import "./Home.css";
+import Page from "../_design/components/layout/Page";
+import { useAppContext } from "../lib/contextLib";
+import Text from "../_design/components/core/Text";
+import Container from "../_design/components/layout/Container";
 
 export default function Home() {
 	const [userRole, setUserRole] = useState<string>(null);
@@ -26,14 +29,11 @@ export default function Home() {
 	}, [userRole]);
 
 	return (
-		<div className="Home">
-			<Helmet>
-				<title>Home</title>
-			</Helmet>
-			<div className="lander">
-				<h1>Educatr</h1>
-				<p className="text-muted">Hello, world!</p>
-			</div>
-		</div>
+		<Page title="Home" useAuthContext={useAppContext}>
+			<Container>
+				<Text variant="title" noMarginBottom>Educatr</Text>
+				<Text variant="intro">Welcome to the competition platform</Text>
+			</Container>
+		</Page>
 	);
 }

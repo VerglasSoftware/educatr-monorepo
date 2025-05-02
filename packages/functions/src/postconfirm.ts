@@ -16,7 +16,6 @@ const handler = async (event: PostConfirmationTriggerEvent) => {
 			nickname: event.request.userAttributes.nickname || undefined,
 			given_name: event.request.userAttributes.given_name || undefined,
 			family_name: event.request.userAttributes.family_name || undefined,
-			role: pk.startsWith("entraid") ? "USER" : "STUDENT",
 			picture: event.request.userAttributes.picture || undefined,
 		},
 	};

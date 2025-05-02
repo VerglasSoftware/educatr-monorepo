@@ -1,36 +1,4 @@
-// const vpc = new sst.aws.Vpc("Vpc");
-// export const cluster = new sst.aws.Cluster("ExecutionCluster", { vpc });
-
-// const pistonService = cluster.addService("PistonService", {
-//     image: "ghcr.io/engineer-man/piston:latest",
-//     scaling: {
-//       min: 1,
-//       max: 1,
-//       cpuUtilization: 50,
-//       memoryUtilization: 50,
-//     },
-//     serviceRegistry: {
-//       port: 2000
-//     },
-//     cpu: "0.25 vCPU",
-//     memory: "0.5 GB",
-//     logging: { retention: "1 day" },
-//     dev: false,
-//     architecture: "x86_64"
-// });
-
-// const pistonApi = new sst.aws.ApiGatewayV2("PistonApi", {
-//   vpc,
-//   domain: $app.stage === "prod" ? "exec.educatr.uk" : undefined,
-//   transform: {
-// 		route: {
-// 			args: {
-// 				auth: { iam: $app.stage === "prod" },
-// 			},
-// 		},
-// 	},
-// });
-// pistonApi.routePrivate("$default", pistonService.nodes.cloudmapService.arn);
+const shouldDeployCluster = $app.stage == "prod" || process.env.DEPLOY_CLUSTER_BYPASS == "true";
 
 const securityGroup = new aws.ec2.SecurityGroup("web-secgrp", {
 	ingress: [
@@ -149,7 +117,7 @@ sleep 5s
 
 echo "Deployment completed successfully!!"`;
 
-export const server = new aws.ec2.Instance("ExecuteServer", {
+export const server = shouldDeployCluster && new aws.ec2.Instance("ExecuteServer", {
 	instanceType: "t2.micro",
 	ami: ami.then((ami) => ami.id),
 	userData: userData,
@@ -160,9 +128,10 @@ export const server = new aws.ec2.Instance("ExecuteServer", {
 		volumeSize: 50,
 		volumeType: "gp2",
 	},
+	
 });
 
-export const executeApi = new sst.aws.ApiGatewayV2("ExecuteApi", {
+export const executeApi = shouldDeployCluster && new sst.aws.ApiGatewayV2("ExecuteApi", {
 	domain: $app.stage === "prod" ? "exec.educatr.uk" : undefined,
 	transform: {
 		route: {
@@ -173,7 +142,7 @@ export const executeApi = new sst.aws.ApiGatewayV2("ExecuteApi", {
 	},
 });
 
-server.publicIp.apply((ip) => {
+if (shouldDeployCluster) server.publicIp.apply((ip) => {
 	console.log(`http://${ip}:2358`);
 	executeApi.routeUrl("$default", `http://${ip}:2358`);
 });

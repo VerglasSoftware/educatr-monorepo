@@ -1,101 +1,94 @@
-import { Box, Button, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet";
-import { FaPlus } from "react-icons/fa6";
-import { IoTrashBin } from "react-icons/io5";
+import { IoAdd, IoEllipsisVertical, IoSearch } from "react-icons/io5";
 import { Competition } from "../../../../../functions/src/types/competition";
-import Breadcrumb from "../../../components/dash/breadcrumb";
-import CompetitionTable from "../../../components/dash/competition/CompetitionTable";
+import Page from "../../../_design/components/layout/Page";
+import { useAppContext } from "../../../lib/contextLib";
+import SidebarDash from "../../../components/SidebarDash";
+import Container from "../../../_design/components/layout/Container";
+import Text from "../../../_design/components/core/Text";
+import Breadcrumbs from "../../../_design/components/navigation/Breadcrumbs";
+import Table from "../../../_design/components/core/Table";
+import Dropdown from "../../../_design/components/navigation/Dropdown";
+import Button from "../../../_design/components/core/Button";
+import Input from "../../../_design/components/form/Input";
 import NewCompetitionModal from "../../../components/dash/competition/NewCompetitionModal";
-import "./CompetitionList.css";
 
 export default function CompetitionList() {
 	const [competitions, setCompetitions] = useState<Competition[]>();
 	const [open, setOpen] = useState(false);
-	const [selected, setSelected] = useState<readonly string[]>([]);
+
+	const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>('asc');
+
+	function handleSort() {
+		setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+	}
+
+	const [searchParams, setSearchParams] = useState('');
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const competition = await API.get("api", `/competition`, {});
-				setCompetitions(competition);
+				const competitions = await API.get("api", `/competition`, {});
+				setCompetitions(competitions);
 			} catch (e) {
 				console.log(e);
 			}
 		}
-
 		onLoad();
 	}, []);
 
 	return (
-		competitions && (
-			<div className="Home">
-				<Helmet>
-					<title>Competitions</title>
-				</Helmet>
-				<div>
-					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumb
-							items={[
-								{ label: "Dashboard", href: "/dash" },
-								{ label: "Competitions", href: "/dash/competitions" },
-							]}
-						/>
-					</Box>
-					<Box
-						sx={{
-							display: "flex",
-							mb: 1,
-							gap: 1,
-							flexDirection: "row",
-							alignItems: "center",
-							justifyContent: "space-between",
-						}}>
-						<Typography
-							level="h2"
-							component="h1">
-							Competitions
-						</Typography>
-						<Box sx={{ display: "flex", gap: 1 }}>
-							<Button
-								color="danger"
-								size="sm"
-								onClick={async () => {
-									const confirmed = window.confirm(`Are you sure you want to delete ${selected.length} pack(s)?`);
-									if (!confirmed) return;
-									try {
-										await Promise.all(
-											selected.map(async (id) => {
-												await API.del("api", `/competition/${id}`, {});
-											})
-										);
-									} catch (e) {
-										console.log(e);
-									}
-								}}>
-								<IoTrashBin />
-							</Button>
-							<Button
-								color="primary"
-								startDecorator={<FaPlus />}
-								size="sm"
-								onClick={() => setOpen(true)}>
-								New competition
-							</Button>
-						</Box>
-					</Box>
-					<CompetitionTable
-						selected={selected}
-						setSelected={setSelected}
-						competitions={competitions}
+			<Page title="Competitions" useAuthContext={useAppContext} sidebar={<SidebarDash />}>
+				<Container>
+					<Breadcrumbs
+						items={[
+							{ label: "Dashboard", href: "/dash" },
+							{ label: "Competitions", href: "/dash/competitions" },
+						]}
 					/>
-				</div>
+					<Text variant="title" as="h1" noMarginBottom>Competitions</Text>
+					<Text variant="intro">A competition is a live event, where students compete to finish as many tasks as possible. You can assign students to teams or have them compete individually.</Text>
+
+					<div className="flex flex-row mb-4 gap-4">
+						<Input name="search" label="Search" icon={<IoSearch />} value={searchParams} onChange={(e) => setSearchParams(e.target.value)} />
+						<Button preIcon={<IoAdd />} onClick={() => setOpen(true)}>Create competition</Button>
+					</div>
+
+					<Table loading={!competitions}>
+						<Table.Head>
+						<Table.Row>
+							<Table.HeadCell sortable onSort={handleSort} sortDirection={sortDir}>Name</Table.HeadCell>
+							<Table.HeadCell>Packs</Table.HeadCell>
+							<Table.HeadCell>{''}</Table.HeadCell>
+						</Table.Row>
+						</Table.Head>
+
+						<Table.Body>
+							{
+								competitions?.sort((a, b) => sortDir == 'asc' ? a.name.toLowerCase().localeCompare(b.name.toLowerCase()) : b.name.toLowerCase().localeCompare(a.name.toLowerCase())).map((competition) => (
+									<Table.Row>
+										<Table.Cell>{competition.name}</Table.Cell>
+										<Table.Cell>{competition.packs.length} packs</Table.Cell>
+										<Table.Cell align="center">
+											<Dropdown
+												items={[
+													{ text: 'Edit', href: `/dash/competitions/${competition.id}` },
+												]}
+											>
+												<Button variant="text"><IoEllipsisVertical /></Button>
+											</Dropdown>
+										</Table.Cell>
+									</Table.Row>
+								))
+							}
+						</Table.Body>
+					</Table>
+				</Container>
 				<NewCompetitionModal
 					open={open}
 					setOpen={setOpen}
 				/>
-			</div>
-		)
+			</Page>
 	);
 }

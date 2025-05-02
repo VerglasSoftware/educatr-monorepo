@@ -5,9 +5,7 @@
 		"packages/*"
 	],
 	"scripts": {
-		"aws:login": "aws-azure-login",
-		"start:dev": "npm run aws:login && npx sst dev",
-		"start:dev:nologin": "npx sst dev",
+		"dev": "npx sst dev",
 		"test": "npx artillery run test/educatr-load-test.yml"
 	},
 	"devDependencies": {
@@ -18,10 +16,12 @@
 	"dependencies": {
 		"@artilleryio/playwright-reporter": "^1.0.0",
 		"@aws-sdk/client-apigatewaymanagementapi": "^3.699.0",
+		"@aws-sdk/client-ses": "^3.797.0",
 		"@emotion/react": "^11.14.0",
 		"@emotion/styled": "^11.14.0",
 		"@mui/material": "^6.4.3",
 		"@mui/x-charts": "^7.26.0",
+		"@tailwindcss/vite": "^4.1.4",
 		"@tsparticles/react": "^3.0.0",
 		"@uiball/loaders": "^1.3.1",
 		"@zxing/library": "^0.21.3",
@@ -36,7 +36,10 @@
 		"pdf417-generator": "^1.0.5",
 		"proper-lockfile": "^4.1.2",
 		"react-markdown": "^10.1.0",
+		"react-spinners": "^0.17.0",
 		"sst": "latest",
+		"stripe": "^18.0.0",
+		"tailwindcss": "^4.1.4",
 		"tsparticles": "^3.7.1"
 	}
 }

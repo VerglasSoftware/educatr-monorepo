@@ -1,14 +1,16 @@
 import { userPool, userPoolClient } from "./auth";
 import { executeApi } from "./cluster";
+import { email } from "./email";
 import { socketApi } from "./socketApi";
-import { competitionTable, organisationTable, packTable, socketConnectionsTable, userTable } from "./storage";
+import { competitionTable, organisationTable, packTable, socketConnectionsTable, stripeSecret, stripeWebhookSecret, userTable } from "./storage";
+import { frontend } from "./web";
 
 export const api = new sst.aws.ApiGatewayV2("Api", {
 	domain: $app.stage === "prod" ? "api.educatr.uk" : undefined,
 	transform: {
 		route: {
 			handler: {
-				link: [packTable, organisationTable, competitionTable, socketApi, socketConnectionsTable, userTable, executeApi],
+				link: [packTable, organisationTable, competitionTable, socketApi, socketConnectionsTable, userTable, stripeSecret, stripeWebhookSecret, email],
 			},
 		},
 	},
@@ -434,6 +436,20 @@ api.route(
 	"GET /task/importTasks",
 	{
 		handler: "packages/functions/src/task.importTasks",
+	},
+	{ auth: { jwt: { authorizer: authorizer.id } } }
+);
+
+api.route(
+	"POST /billing/webhook",
+	{
+		handler: "packages/functions/src/billing/webhook/post.handler",
+	},
+);
+api.route(
+	"POST /billing/organisation/request",
+	{
+		handler: "packages/functions/src/billing/organisation/request/post.handler",
 	},
 	{ auth: { jwt: { authorizer: authorizer.id } } }
 );

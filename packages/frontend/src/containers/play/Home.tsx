@@ -6,7 +6,6 @@ import { Competition } from "../../../../functions/src/types/competition";
 import { Team } from "../../../../functions/src/types/team";
 import { User } from "../../../../functions/src/types/user";
 import "./Home.css";
-import "./Play.css";
 
 export default function PlayHome() {
 	const [competitions, setCompetitions] = useState<Competition[]>([]);

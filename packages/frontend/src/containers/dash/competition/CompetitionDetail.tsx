@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardActions, CardOverflow, Divider, FormControl, FormLabel, Input, Option, Select, Stack, Typography } from "@mui/joy";
+import { Box, Button, CardActions, CardOverflow, Divider, FormControl, FormLabel, Option, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
@@ -13,22 +13,41 @@ import { User } from "../../../../../functions/src/types/user";
 import Breadcrumb from "../../../components/dash/breadcrumb";
 import CompetitionPackTable from "../../../components/dash/competition/CompetitionPackTable";
 import TeamCard from "../../../components/dash/competition/TeamCard";
+import Page from "../../../_design/components/layout/Page";
+import { useAppContext } from "../../../lib/contextLib";
+import SidebarDash from "../../../components/SidebarDash";
+import Container from "../../../_design/components/layout/Container";
+import Breadcrumbs from "../../../_design/components/navigation/Breadcrumbs";
+import Text from "../../../_design/components/core/Text";
+import Loader from "../../../_design/components/core/Loader";
+import { Tab, Tabs } from "../../../_design/components/layout/Tabs";
+import Select from "../../../_design/components/form/Select";
+import { Pack } from "../../../../../functions/src/types/pack";
+import Card from "../../../_design/components/layout/Card";
+import { IoAdd, IoAddCircle, IoAddCircleOutline } from "react-icons/io5";
+import Input from "../../../_design/components/form/Input";
 
 export default function CompetitionDetail() {
 	const [organisations, setOrganisations] = useState<Organisation[]>();
 	const [competition, setCompetition] = useState<Competition>();
 	const [teams, setTeams] = useState<Team[]>();
 	const [students, setStudents] = useState<User[]>();
+	const [packs, setPacks] = useState<Pack[]>();
+	const [selectedPacks, setSelectedPacks] = useState<string[]>([]);
+
+	const [newTeamLoading, setNewTeamLoading] = useState(false);
 
 	const { compId } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const [competition, teams, organisations] = await Promise.all([API.get("api", `/competition/${compId}`, {}), API.get("api", `/competition/${compId}/team`, {}), API.get("api", `/organisation`, {})]);
+				const [competition, teams, organisations, packs] = await Promise.all([API.get("api", `/competition/${compId}`, {}), API.get("api", `/competition/${compId}/team`, {}), API.get("api", `/organisation`, {}), API.get("api", `/pack`, {})]);
 				setCompetition(competition);
 				setTeams(teams);
 				setOrganisations(organisations);
+				setPacks(packs);
+				setSelectedPacks(competition.packs);
 			} catch (e) {
 				console.log(e);
 			}
@@ -86,162 +105,159 @@ export default function CompetitionDetail() {
 		teamMembers = teamMembers.concat(teams[member].students);
 	}
 	return (
-		competition &&
-		teams &&
-		organisations &&
-		students && (
-			<div className="Home">
-				<Helmet>
-					<title>{competition.name} - Competitions</title>
-				</Helmet>
-				<div>
-					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumb
-							items={[
-								{ label: "Dashboard", href: "/dash" },
-								{ label: "Competitions", href: "/dash/competitions" },
-								{ label: competition.name, href: `/dash/competitions/${compId}` },
-							]}
-						/>
-					</Box>
-					<Box
-						sx={{
-							display: "flex",
-							mb: 1,
-							gap: 1,
-							flexDirection: { xs: "column", sm: "row" },
-							alignItems: { xs: "start", sm: "center" },
-							flexWrap: "wrap",
-							justifyContent: "space-between",
-						}}>
-						<Typography
-							level="h2"
-							component="h1">
-							{competition.name}
-						</Typography>
-					</Box>
-
-					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
-						<Box sx={{ gridColumn: "span 6" }}>
-							<Card sx={{ flexGrow: "1" }}>
-								<form onSubmit={formik.handleSubmit}>
-									<Stack
-										direction="row"
-										spacing={1}
-										sx={{ my: 1 }}>
-										<Stack
-											spacing={2}
-											sx={{ width: "100%" }}>
-											<Stack spacing={1}>
-												<FormLabel>Name</FormLabel>
-												<FormControl sx={{ gap: 2 }}>
-													<Input
-														size="sm"
-														placeholder="Name"
-														id="name"
-														name="name"
-														value={formik.values.name}
-														onChange={formik.handleChange}
-													/>
-												</FormControl>
-											</Stack>
-											<Stack spacing={1}>
-												<FormLabel>Organisation</FormLabel>
-												<FormControl sx={{ gap: 2 }}>
-													<Select
-														size="sm"
-														placeholder="Organisation"
-														id="organisation"
-														name="organisation"
-														value={formik.values.organisation}
-														onChange={(_, value) => formik.setFieldValue("organisation", value)}
-														required>
-														{organisations?.map((organisation) => {
-															return <Option value={organisation.id}>{organisation.name}</Option>;
-														})}
-													</Select>
-												</FormControl>
-											</Stack>
-										</Stack>
-									</Stack>
-									<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
-										<CardActions sx={{ alignSelf: "flex-end", pt: 2 }}>
-											<Button
-												size="sm"
-												variant="solid"
-												type="submit">
-												Save
-											</Button>
-										</CardActions>
-									</CardOverflow>
-								</form>
-							</Card>
-						</Box>
-						<Box sx={{ gridColumn: "span 6" }}>
-							<CompetitionPackTable competition={competition} />
-						</Box>
-					</Box>
-
-					<Divider sx={{ my: 2 }} />
-
-					<Box
-						sx={{
-							display: "flex",
-							mb: 1,
-							gap: 1,
-							flexDirection: { xs: "column", sm: "row" },
-							alignItems: { xs: "start", sm: "center" },
-							flexWrap: "wrap",
-							justifyContent: "space-between",
-						}}>
-						<Typography
-							level="h3"
-							component="h2">
-							Teams
-						</Typography>
-						<Button
-							color="primary"
-							startDecorator={<FaPlus />}
-							size="sm"
-							onClick={async () => {
-								const newTeam = await API.post("api", `/competition/${compId}/team`, {
-									body: {
-										name: "New team",
-										students: [],
-									},
-								});
-
-								setTeams([...teams, newTeam]);
-							}}>
-							New team
-						</Button>
-					</Box>
-
-					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
-						{teams.map((team) => {
-							console.log("Team", team);
-							return (
-								<Box
-									key={team.id}
-									sx={{ gridColumn: "span 3" }}>
-									<TeamCard
-										team={team}
-										students={students}
-										competition={competition}
-										onDelete={(id) => setTeams(teams.filter((t) => t.id !== id))}
-										onUpdate={(updated) => {
-											setTeams(teams.map((t) => (t.id === updated.id ? updated : t)));
-											toast.success("Team updated", {
+			<Page title={competition && competition.name + " | Competitions"} useAuthContext={useAppContext} sidebar={<SidebarDash />}>
+				<Container>
+					<Breadcrumbs
+						items={[
+							{ label: "Dashboard", href: "/dash" },
+							{ label: "Competitions", href: "/dash/competitions" },
+							{ label: competition && competition.name , href: `/dash/competition/${compId}/edit` }
+						]}
+					/>
+					<Text variant="title" as="h1">{competition && competition.name}</Text>
+					
+					{
+						(!competition) ? (
+							<Loader />
+						) : (
+							<>
+							<Tabs>
+							<Tab id="packs" label="Packs">
+								<Select
+									searchable
+									multiple
+									options={packs && packs.map((pack) => ({
+										label: pack.name,
+										value: pack.id,
+									}))}
+									name="packs"
+									label="Packs"
+									value={selectedPacks}
+									onChange={async (selectedValues) => {
+										const values = typeof selectedValues === "string" ? [selectedValues] : selectedValues;
+										setSelectedPacks(values);
+										try {
+											await API.put("api", `/competition/${compId}`, {
+												body: {
+													...competition,
+													packs: values,
+												},
+											});
+											toast.success("Packs updated successfully", {
 												theme: "light",
 											});
-										}}
-									/>
-								</Box>
-							);
-						})}
-					</Box>
-				</div>
-			</div>
-		)
+										} catch (error) {
+											console.error("Error updating packs:", error);
+											toast.error("Failed to update packs", {
+												theme: "light",
+											});
+										}
+									}}
+								/>
+							</Tab>
+							<Tab id="teams" label="Teams">
+								<div className="grid grid-cols-3 gap-4">
+									{
+										teams && teams.map((team) => {
+											return (
+												<Card>
+													<Input
+														name="name"
+														label="Name"
+														defaultValue={team.name}
+														onBlur={(e) => {
+															const updateTeamName = async () => {
+																try {
+																	await API.put("api", `/competition/${compId}/team/${team.id}`, {
+																		body: {
+																			...team,
+																			name: e.currentTarget.value,
+																		},
+																	});
+																	toast.success("Team name updated successfully", {
+																		theme: "light",
+																	});
+																} catch (error) {
+																	console.error("Error updating team name:", error);
+																	toast.error("Failed to update team name", {
+																		theme: "light",
+																	});
+																}
+															};
+
+															updateTeamName();
+														}}
+													/>
+													<Select
+														searchable
+														multiple
+														options={students ? students
+															.filter((student) => !teamMembers.includes(student.id))
+															.map((student) => ({
+																label: `${student.given_name} ${student.family_name}`,
+																value: student.id,
+															})) : []}
+														name="members"
+														label={`Members (${team.students.length})`}
+														value={team.students}
+														onChange={async (selectedValues) => {
+															const values = typeof selectedValues === "string" ? [selectedValues] : selectedValues;
+															try {
+																await API.put("api", `/competition/${compId}/team/${team.id}`, {
+																	body: {
+																		...team,
+																		students: values,
+																	},
+																});
+																toast.success("Team members updated successfully", {
+																	theme: "light",
+																});
+																setTeams(teams.map((t) => (t.id === team.id ? { ...t, students: values } : t)));
+															} catch (error) {
+																console.error("Error updating team members:", error);
+																toast.error("Failed to update team members", {
+																	theme: "light",
+																});
+															}
+														}}
+													/>
+												</Card>
+											);
+										})
+									}
+									<Card className="justify-center items-center cursor-pointer hover:bg-primary-hover/10" onClick={async () => {
+										setNewTeamLoading(true);
+										try {
+											const newTeam = await API.post("api", `/competition/${compId}/team`, {
+												body: {
+													name: "New team",
+													students: [],
+												},
+											});
+											setTeams([...teams, newTeam]);
+										} catch (error) {
+											console.error("Error creating new team:", error);
+											toast.error("Failed to create new team", {
+												theme: "light",
+											});
+										} finally {
+											setNewTeamLoading(false);
+										}
+									}}>
+										{
+											newTeamLoading ?
+											<Loader />
+											:
+											<IoAddCircleOutline size={25} />
+										}
+									</Card>
+								</div>
+							</Tab>
+							</Tabs>
+							</>
+						)
+					}
+				</Container>
+			</Page>
 	);
 }

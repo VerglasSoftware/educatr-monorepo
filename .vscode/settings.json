@@ -1,5 +1,9 @@
 {
 	"yaml.schemas": {
-		"https://www.artillery.io/schema.json": ["file:///Users/dandabs/educatr-monorepo/test/educatr-load-test.yml", "file:///Users/dandabs/educatr-monorepo/test/asciiart-load-test.yml", "git:/Users/dandabs/educatr-monorepo/test/educatr-load-test.yml?%7B%22path%22%3A%22%2FUsers%2Fdandabs%2Feducatr-monorepo%2Ftest%2Feducatr-load-test.yml%22%2C%22ref%22%3A%22~%22%7D"]
+		"https://www.artillery.io/schema.json": [
+			"file:///Users/dandabs/educatr-monorepo/test/educatr-load-test.yml",
+			"file:///Users/dandabs/educatr-monorepo/test/asciiart-load-test.yml",
+			"git:/Users/dandabs/educatr-monorepo/test/educatr-load-test.yml?%7B%22path%22%3A%22%2FUsers%2Fdandabs%2Feducatr-monorepo%2Ftest%2Feducatr-load-test.yml%22%2C%22ref%22%3A%22~%22%7D"
+		]
 	}
 }

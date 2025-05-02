@@ -2,6 +2,7 @@ import { API, Auth } from "aws-amplify";
 import { ReactElement, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAppContext } from "../lib/contextLib";
+import LoadingPage from "../_design/components/navigation/LoadingPage";
 
 interface ProtectedRouteProps {
 	children: ReactElement;
@@ -18,9 +19,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 		const fetchUserRole = async () => {
 			try {
 				const user = await Auth.currentAuthenticatedUser();
-				const useruser = await API.get("api", `/user/cognito/${user.username}`, {});
-				const role = useruser.role;
-				setUserRole(role);
+				setUserRole(user.attributes["custom:role"] || "USER");
 			} catch (error) {
 				console.error("Error fetching authenticated user", error);
 				setUserRole(null);
@@ -37,7 +36,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 	}, [isAuthenticated]);
 
 	if (loading) {
-		return <div>Loading...</div>;
+		return <LoadingPage />;
 	}
 
 	if (!isAuthenticated) {
