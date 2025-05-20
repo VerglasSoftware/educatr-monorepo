@@ -130,7 +130,7 @@ const Select: React.FC<SelectProps> = ({
     {
       'border-primary/50 hover:border-primary focus-within:border-active': !isError,
       'border-destructive focus-within:border-destructive-active': isError,
-      'bg-transparent': backgroundColour === 'transparent' || disabled || readOnly,
+      'bg-white': backgroundColour === 'transparent' || disabled || readOnly,
       'bg-primary/10': showFilledBackground,
       'bg-destructive/10': isError,
     }

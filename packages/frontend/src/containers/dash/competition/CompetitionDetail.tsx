@@ -1,18 +1,11 @@
-import { Box, Button, CardActions, CardOverflow, Divider, FormControl, FormLabel, Option, Stack, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet";
-import { FaPlus } from "react-icons/fa6";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Competition } from "../../../../../functions/src/types/competition";
-import { Organisation } from "../../../../../functions/src/types/organisation";
 import { Team } from "../../../../../functions/src/types/team";
 import { User } from "../../../../../functions/src/types/user";
-import Breadcrumb from "../../../components/dash/breadcrumb";
-import CompetitionPackTable from "../../../components/dash/competition/CompetitionPackTable";
-import TeamCard from "../../../components/dash/competition/TeamCard";
 import Page from "../../../_design/components/layout/Page";
 import { useAppContext } from "../../../lib/contextLib";
 import SidebarDash from "../../../components/SidebarDash";
@@ -24,11 +17,12 @@ import { Tab, Tabs } from "../../../_design/components/layout/Tabs";
 import Select from "../../../_design/components/form/Select";
 import { Pack } from "../../../../../functions/src/types/pack";
 import Card from "../../../_design/components/layout/Card";
-import { IoAdd, IoAddCircle, IoAddCircleOutline } from "react-icons/io5";
+import { IoAddCircleOutline, IoPencil } from "react-icons/io5";
 import Input from "../../../_design/components/form/Input";
+import Button from "../../../_design/components/core/Button";
+import EditCompetitionModal from "../../../modals/dash/EditCompetitionModal";
 
 export default function CompetitionDetail() {
-	const [organisations, setOrganisations] = useState<Organisation[]>();
 	const [competition, setCompetition] = useState<Competition>();
 	const [teams, setTeams] = useState<Team[]>();
 	const [students, setStudents] = useState<User[]>();
@@ -37,15 +31,16 @@ export default function CompetitionDetail() {
 
 	const [newTeamLoading, setNewTeamLoading] = useState(false);
 
+	const [editCompetitionModalOpen, setEditCompetitionModalOpen] = useState(false);
+
 	const { compId } = useParams();
 
 	useEffect(() => {
 		async function onLoad() {
 			try {
-				const [competition, teams, organisations, packs] = await Promise.all([API.get("api", `/competition/${compId}`, {}), API.get("api", `/competition/${compId}/team`, {}), API.get("api", `/organisation`, {}), API.get("api", `/pack`, {})]);
+				const [competition, teams, packs] = await Promise.all([API.get("api", `/competition/${compId}`, {}), API.get("api", `/competition/${compId}/team`, {}), API.get("api", `/pack`, {})]);
 				setCompetition(competition);
 				setTeams(teams);
-				setOrganisations(organisations);
 				setPacks(packs);
 				setSelectedPacks(competition.packs);
 			} catch (e) {
@@ -114,7 +109,12 @@ export default function CompetitionDetail() {
 							{ label: competition && competition.name , href: `/dash/competition/${compId}/edit` }
 						]}
 					/>
-					<Text variant="title" as="h1">{competition && competition.name}</Text>
+					<div className="flex items-center">
+						<Text variant="title" as="h1">{competition && competition.name}</Text>
+						<Button variant="text" size="large" onClick={() => { setEditCompetitionModalOpen(true) }}>
+							<IoPencil className="text-primary" />
+						</Button>
+					</div>
 					
 					{
 						(!competition) ? (
@@ -192,7 +192,7 @@ export default function CompetitionDetail() {
 														searchable
 														multiple
 														options={students ? students
-															.filter((student) => !teamMembers.includes(student.id))
+															.filter((student) => !(teamMembers.includes(student.id) && !team.students.includes(student.id)))
 															.map((student) => ({
 																label: `${student.given_name} ${student.family_name}`,
 																value: student.id,
@@ -257,6 +257,7 @@ export default function CompetitionDetail() {
 							</>
 						)
 					}
+					<EditCompetitionModal isOpen={editCompetitionModalOpen} onClose={() => setEditCompetitionModalOpen(false)} competitionId={compId} />
 				</Container>
 			</Page>
 	);

@@ -45,7 +45,7 @@ const SidebarDash: React.FC = () => {
                 <ul className="space-y-2 font-medium border-t border-gray-200 pt-4 mt-4" key={organisation.id}>
                     <Text variant="tiny" noMargin>{organisation.name}</Text>
                     <li>
-                    <Link to={{ pathname: '/dash' }} className="flex items-center p-2 text-gray-900 rounded-sm hover:bg-gray-100 group">
+                    <Link to={{ pathname: `/dash/org/${organisation.id}` }} className="flex items-center p-2 text-gray-900 rounded-sm hover:bg-gray-100 group">
                             <IoPieChart size="1.3em" className="me-2 transition duration-75 group-hover:text-primary text-primary/70" />
                             <Text fontWeight="semibold" noMargin>Dashboard</Text>
                     </Link>

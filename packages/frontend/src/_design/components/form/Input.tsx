@@ -54,7 +54,7 @@ const Input: React.FC<InputProps> = ({
     'w-full rounded-sm border focus:outline-none transition-colors focus:ring-2 focus:ring-offset-2 pt-5';
 
   const backgroundClasses = clsx({
-    'bg-transparent': backgroundColour === 'transparent' || disabled || readOnly,
+    'bg-white': backgroundColour === 'transparent' || disabled || readOnly,
     'bg-primary/10': showFilledBackground,
     'bg-destructive/10': isError,
   });

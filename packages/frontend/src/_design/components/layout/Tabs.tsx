@@ -11,7 +11,7 @@ interface TabProps {
 export const Tab: React.FC<TabProps> = ({ children }) => <>{children}</>;
 
 interface TabsProps {
-  children: ReactElement<TabProps>[];
+  children: ReactElement<TabProps>[] | ReactElement<TabProps>;
 }
 
 export const Tabs: React.FC<TabsProps> = ({ children }) => {

@@ -1,18 +1,28 @@
-import { Box, Button, Card, CardActions, CardOverflow, FormControl, FormLabel, Input, Stack, Textarea, Typography } from "@mui/joy";
 import { API } from "aws-amplify";
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import { Organisation } from "../../../../functions/src/types/organisation";
-import Breadcrumb from "../../components/dash/breadcrumb";
-import OrganisationStudentTable from "../../components/dash/organisations/OrganisationStudentTable";
-import "./OrganisationDetail.css";
+import Page from "../../_design/components/layout/Page";
+import SidebarDash from "../../components/SidebarDash";
+import { useAppContext } from "../../lib/contextLib";
+import Container from "../../_design/components/layout/Container";
+import Breadcrumbs from "../../_design/components/navigation/Breadcrumbs";
+import Text from "../../_design/components/core/Text";
+import Loader from "../../_design/components/core/Loader";
+import { Tab, Tabs } from "../../_design/components/layout/Tabs";
+import Table from "../../_design/components/core/Table";
+import { User } from "../../../../functions/src/types/user";
+import EditOrganisationModal from "../../modals/dash/EditOrganisationModal";
+import Button from "../../_design/components/core/Button";
+import { IoAdd, IoPencil } from "react-icons/io5";
+import CreateStudentModal from "../../modals/dash/CreateStudentModal";
 
 export default function OrganisationDetail() {
 	const [organisation, setOrganisation] = useState<Organisation>();
+	const [students, setStudents] = useState<User[]>([]);
 
-	const [name, setName] = useState<string>("");
-	const [logo, setLogo] = useState<string>("");
+	const [editOrganisationModalOpen, setEditOrganisationModalOpen] = useState(false);
+	const [newStudentModalOpen, setNewStudentModalOpen] = useState(false);
 
 	const { id } = useParams();
 
@@ -20,9 +30,9 @@ export default function OrganisationDetail() {
 		async function onLoad() {
 			try {
 				const organisation = await API.get("api", `/organisation/${id}`, {});
+				const students = await API.get("api", `/organisation/${id}/students`, {});
 				setOrganisation(organisation);
-				setName(organisation.name);
-				setLogo(organisation.logo);
+				setStudents(students);
 			} catch (e) {
 				console.log(e);
 			}
@@ -32,100 +42,56 @@ export default function OrganisationDetail() {
 	}, []);
 
 	return (
-		organisation && (
-			<div className="Home">
-				<Helmet>
-					<title>{organisation.name}</title>
-				</Helmet>
-				<div>
-					<Box sx={{ display: "flex", alignItems: "center" }}>
-						<Breadcrumb
-							items={[
-								{ label: "Dashboard", href: "/dash" },
-								{ label: organisation.name, href: `/dash/organisations/${id}` },
-							]}
-						/>
-					</Box>
+			<Page title={`${organisation && organisation.name}`} sidebar={<SidebarDash />} useAuthContext={useAppContext}>
+				<Container>
+					<Breadcrumbs
+						items={[
+							{ label: "Dashboard", href: "/dash" },
+							{ label: organisation && organisation.name }
+						]}
+					/>
+					<div className="flex items-center">
+						<Text variant="title" as="h1">{organisation && organisation.name}</Text>
+						<Button variant="text" size="large" onClick={() => { setEditOrganisationModalOpen(true) }}>
+							<IoPencil className="text-primary" />
+						</Button>
+					</div>
 
-					<Box
-						sx={{
-							display: "flex",
-							mb: 1,
-							gap: 1,
-							flexDirection: { xs: "column", sm: "row" },
-							alignItems: { xs: "start", sm: "center" },
-							flexWrap: "wrap",
-							justifyContent: "space-between",
-						}}>
-						<Typography
-							level="h2"
-							component="h1">
-							{organisation.name}
-						</Typography>
-					</Box>
+					{
+						!organisation ? (
+							<Loader />
+						) : (
+							<Tabs>
+								<Tab id="students" label="Students">
+									<div className="flex items-center justify-end">
+										<Button preIcon={<IoAdd />} onClick={() => setNewStudentModalOpen(true)}>Create student</Button>
+									</div>
+									<Table loading={!students}>
+										<Table.Head>
+											<Table.Row>
+												<Table.Cell>Name</Table.Cell>
+												<Table.Cell>Username</Table.Cell>
+												<Table.Cell>{''}</Table.Cell>
+											</Table.Row>
+										</Table.Head>
+										<Table.Body>
+											{students.map((student) => (
+												<Table.Row key={student.id}>
+													<Table.Cell><img src={student.picture} /> {student.given_name} {student.family_name}</Table.Cell>
+													<Table.Cell>{student.id}</Table.Cell>
+													<Table.Cell>...</Table.Cell>
+												</Table.Row>
+											))}
+										</Table.Body>
+									</Table>
+								</Tab>
+							</Tabs>
+						)
+					}
 
-					<Box sx={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 2 }}>
-						<Box sx={{ gridColumn: "span 6" }}>
-							<Card sx={{ flexGrow: "1" }}>
-								<Stack
-									direction="row"
-									spacing={1}
-									sx={{ my: 1 }}>
-									<Stack
-										spacing={2}
-										sx={{ width: "100%" }}>
-										<Stack spacing={1}>
-											<FormLabel>Name</FormLabel>
-											<FormControl sx={{ gap: 2 }}>
-												<Input
-													size="sm"
-													placeholder="Name"
-													value={name}
-													onChange={(e) => setName(e.target.value)}
-												/>
-											</FormControl>
-										</Stack>
-										<Stack spacing={1}>
-											<FormLabel>Logo</FormLabel>
-											<FormControl sx={{ gap: 2 }}>
-												<Textarea
-													minRows={2}
-													size="sm"
-													placeholder="Logo"
-													value={logo}
-													onChange={(e) => setLogo(e.target.value)}
-												/>
-											</FormControl>
-										</Stack>
-									</Stack>
-								</Stack>
-								<CardOverflow sx={{ borderTop: "1px solid", borderColor: "divider" }}>
-									<CardActions sx={{ alignSelf: "flex-end", pt: 2 }}>
-										<Button
-											size="sm"
-											variant="solid"
-											onClick={async () => {
-												const updatedOrganisation = await API.put("api", `/organisation/${id}`, {
-													body: {
-														name,
-														logo,
-														students: organisation.students || [],
-													},
-												});
-												setOrganisation(updatedOrganisation);
-											}}>
-											Save
-										</Button>
-									</CardActions>
-								</CardOverflow>
-							</Card>
-						</Box>
-						<Box sx={{ gridColumn: "span 6" }}>
-							<OrganisationStudentTable organisation={organisation} />
-						</Box>
-					</Box>
-				</div>
-			</div>
-		)
+					<EditOrganisationModal isOpen={editOrganisationModalOpen} onClose={() => { setEditOrganisationModalOpen(false) }} organisationId={id} />
+					<CreateStudentModal isOpen={newStudentModalOpen} onClose={() => { setNewStudentModalOpen(false) }} organisationId={id} />
+				</Container>
+			</Page>
 	);
 }

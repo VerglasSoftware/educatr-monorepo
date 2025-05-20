@@ -7,7 +7,6 @@ import { Class } from "../../../../functions/src/types/class";
 import { Organisation } from "../../../../functions/src/types/organisation";
 import Breadcrumb from "../../components/dash/breadcrumb";
 import ClassCard from "../../components/dash/organisations/ClassCard";
-import "./ClassDetail.css";
 
 export default function ClassDetail() {
 	const { orgId, classId } = useParams();

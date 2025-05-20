@@ -9,7 +9,6 @@ import { Organisation } from "../../../../functions/src/types/organisation";
 import Breadcrumb from "../../components/dash/breadcrumb";
 import ClassTable from "../../components/dash/organisations/ClassTable";
 import NewClassModal from "../../components/dash/organisations/NewClassModal";
-import "./ClassList.css";
 
 export default function ClassList() {
 	const { orgId } = useParams();

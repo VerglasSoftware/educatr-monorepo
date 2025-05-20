@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { IoAdd, IoEllipsisVertical, IoSearch } from "react-icons/io5";
 import { Pack } from "../../../../../functions/src/types/pack";
 import NewPackModal from "../../../components/dash/packs/NewPackModal";
-import "./PackList.css";
 import Page from "../../../_design/components/layout/Page";
 import { useAppContext } from "../../../lib/contextLib";
 import SidebarDash from "../../../components/SidebarDash";

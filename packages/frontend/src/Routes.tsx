@@ -58,7 +58,7 @@ export default function Links() {
 				}
 			/>
 			<Route
-				path="/dash/:id"
+				path="/dash/org/:id"
 				element={
 					<ProtectedRoute requiredRole="USER">
 						<OrganisationDetail />
